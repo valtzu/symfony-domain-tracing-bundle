@@ -29,6 +29,7 @@ services:
       - "127.0.0.1:${PHP_PORT:-8100}:8080"
     volumes:
       - ./:/app
+      - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
       - caddy_data:/data
       - caddy_config:/config
 

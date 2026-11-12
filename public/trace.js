@@ -17,9 +17,10 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
     on('step', step => {
         steps++;
         status.textContent = status.textContent.replace(/:.*/, `: ${steps} lines recorded…`);
-        console.log(`%c${step.file}:${step.line}%c ${step.code}`, 'color: gray', '', step.function);
+        console.log(`%c[${step.service}] ${step.file}:${step.line}%c ${step.code}`, 'color: gray', '', step.function);
         onStep(step);
     });
+    on('span', span => console.log(`%c→ ${span.service} received ${span.method} ${span.uri}`, 'font-weight: bold'));
     on('end', end => {
         console.groupEnd();
         status.textContent = status.textContent.replace(/:.*/, `: ${steps} lines in ${end.durationMs} ms. Explaining…`);

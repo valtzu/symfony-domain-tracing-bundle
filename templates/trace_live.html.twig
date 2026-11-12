@@ -46,7 +46,7 @@
             followTrace(id, panel, {
                 onRequest: request => after = request.startedAt,
                 onStep: step => {
-                    lines.textContent += `${step.file}:${step.line}  ${step.code}\n`;
+                    lines.textContent += `[${step.service}] ${step.file}:${step.line}  ${step.code}\n`;
                     lines.scrollTop = lines.scrollHeight;
                 },
                 onDone: resolve,

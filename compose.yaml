@@ -7,6 +7,7 @@ services:
       SERVER_NAME: ${SERVER_NAME:-localhost}
       HTTP_PORT: "8080"
       APP_ENV: dev
+      OTEL_SERVICE_NAME: shop
       PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
       PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
       MERCURE_DIRECTIVES: |
@@ -33,6 +34,19 @@ services:
       - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
       - caddy_data:/data
       - caddy_config:/config
+
+  payments:
+    build:
+      context: .
+      target: frankenphp_dev
+    environment:
+      HTTP_PORT: "8080"
+      APP_ENV: dev
+      OTEL_SERVICE_NAME: payments
+      PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
+      CADDY_SERVER_EXTRA_DIRECTIVES: request_header X-Request-Id {http.request.uuid}
+    volumes:
+      - ./:/app
 
   recorder:
     build:

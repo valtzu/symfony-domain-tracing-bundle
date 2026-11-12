@@ -1,0 +1,4 @@
+http_client:
+    scoped_clients:
+        payments.client:
+            base_uri: '%env(PAYMENTS_URL)%'

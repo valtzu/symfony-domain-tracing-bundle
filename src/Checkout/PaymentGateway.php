@@ -3,17 +3,26 @@
 namespace App\Checkout;
 
 use App\Checkout\Model\Customer;
+use Symfony\Component\DependencyInjection\Attribute\Target;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final class PaymentGateway
+final readonly class PaymentGateway
 {
-    private const DECLINED_CUSTOMERS = ['carol' => 'insufficient_funds'];
+    public function __construct(
+        #[Target('payments.client')]
+        private HttpClientInterface $payments,
+    ) {
+    }
 
     public function charge(Customer $customer, int $amountCents): string
     {
-        if ($declineCode = self::DECLINED_CUSTOMERS[$customer->id] ?? null) {
-            throw new CheckoutFailed('payment_declined', \sprintf('Card was declined (%s) for %d cents.', $declineCode, $amountCents));
+        $response = $this->payments->request('POST', '/charges', ['json' => ['customerId' => $customer->id, 'amountCents' => $amountCents]]);
+        $result = $response->toArray(false);
+
+        if (!$result['approved']) {
+            throw new CheckoutFailed('payment_declined', \sprintf('Card was declined (%s) for %d cents.', $result['declineCode'], $amountCents));
         }
 
-        return 'pay_'.bin2hex(random_bytes(6));
+        return $result['paymentId'];
     }
 }

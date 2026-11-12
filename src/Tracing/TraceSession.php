@@ -48,7 +48,7 @@ final class TraceSession
     public function handle(\SimpleXMLElement $message): void
     {
         if ('init' === $message->getName()) {
-            $this->connection->send('eval', '', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
+            $this->connection->send('eval', '', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'traceparent' => \$_SERVER['HTTP_TRACEPARENT'] ?? null, 'service' => \$_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: null), 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
 
             return;
         }
@@ -82,7 +82,9 @@ final class TraceSession
             return;
         }
 
-        $this->store->start($this->request['id'], $this->request);
+        $traceparent = $this->request['traceparent'];
+        unset($this->request['traceparent']);
+        $this->store->start($this->request['id'], $this->request + TraceContext::fromHeaders($traceparent, $this->request['id']));
 
         foreach ($this->sourceFiles() as $path) {
             foreach ($this->methods($path) as [$class, $method]) {

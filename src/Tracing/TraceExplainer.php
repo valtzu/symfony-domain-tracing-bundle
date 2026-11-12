@@ -26,34 +26,67 @@ final readonly class TraceExplainer
     }
 
     /**
+     * Follows the trace that the given request started, including the requests it made to other services.
+     *
      * @return \Generator<array{0: string, 1: mixed}> pairs of event name and data
      */
-    public function follow(string $id, float $timeoutSeconds = 600): \Generator
+    public function follow(string $rootSpanId, float $timeoutSeconds = 600): \Generator
     {
-        $offset = 0;
-        $request = null;
+        $offsets = [$rootSpanId => 0];
+        $spans = [];
+        $ended = [];
+        $traceId = null;
         $pending = [];
         $explanation = '';
-        $ended = false;
         $lastActivity = microtime(true);
 
         while (true) {
-            $read = $this->store->read($id, $offset);
-            foreach ($read['records'] ?? [] as $record) {
-                $lastActivity = microtime(true);
-                match ($record['type']) {
-                    'request' => $request = $record,
-                    'step' => $pending[] = $record,
-                    'end' => $ended = $record,
-                };
-                yield [$record['type'], $record];
-            }
-            $offset = $read['offset'] ?? 0;
+            $records = [];
+            do {
+                foreach (null === $traceId ? [] : $this->store->spansOf($traceId) as $spanId) {
+                    $offsets[$spanId] ??= 0;
+                }
+                $knownSpans = \count($offsets);
 
+                foreach ($offsets as $spanId => $offset) {
+                    $read = $this->store->read($spanId, $offset);
+                    foreach ($read['records'] ?? [] as $record) {
+                        $records[] = ['span' => $spanId] + $record;
+                        $traceId ??= 'request' === $record['type'] && $spanId === $rootSpanId ? $record['traceId'] : null;
+                    }
+                    $offsets[$spanId] = $read['offset'] ?? $offset;
+                }
+            } while (null !== $traceId && \count($this->store->spansOf($traceId)) > $knownSpans);
+            usort($records, static fn (array $a, array $b) => $a['at'] <=> $b['at']);
+
+            foreach ($records as $record) {
+                $lastActivity = microtime(true);
+                $isRoot = $record['span'] === $rootSpanId;
+                switch ($record['type']) {
+                    case 'request':
+                        $spans[$record['span']] = $record;
+                        if (!$isRoot) {
+                            $pending[] = $record;
+                        }
+                        yield [$isRoot ? 'request' : 'span', $record];
+                        break;
+                    case 'step':
+                        $record['service'] = $spans[$record['span']]['service'] ?? null;
+                        $pending[] = $record;
+                        yield ['step', $record];
+                        break;
+                    case 'end':
+                        $ended[$record['span']] = true;
+                        yield [$isRoot ? 'end' : 'spanEnd', $record];
+                        break;
+                }
+            }
+
+            $traceEnded = isset($ended[$rootSpanId]) && \count($ended) === \count($offsets);
             $idle = microtime(true) - $lastActivity;
-            if ($pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_EXPLAINING)) {
+            if ($pending && ($traceEnded || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_EXPLAINING)) {
                 $part = '';
-                foreach ($this->explain($request, $explanation, $pending, false !== $ended) as $text) {
+                foreach ($this->explain($spans[$rootSpanId] ?? null, $spans, $explanation, $pending, $traceEnded) as $text) {
                     $part .= $text;
                     yield ['text', $text];
                 }
@@ -63,7 +96,7 @@ final readonly class TraceExplainer
                 continue;
             }
 
-            if ($ended || $idle > $timeoutSeconds) {
+            if ($traceEnded || $idle > $timeoutSeconds) {
                 return;
             }
 
@@ -72,16 +105,17 @@ final readonly class TraceExplainer
     }
 
     /**
-     * @param list<array> $steps
+     * @param array<string, array> $spans request records by span
+     * @param list<array>          $records
      *
      * @return iterable<string>
      */
-    private function explain(?array $request, string $explanation, array $steps, bool $requestEnded): iterable
+    private function explain(?array $request, array $spans, string $explanation, array $records, bool $traceEnded): iterable
     {
-        $prompt = \sprintf("Request: %s %s\n\n", $request['method'] ?? '?', $request['uri'] ?? '?');
+        $prompt = \sprintf("Request: %s %s to the %s service\n\n", $request['method'] ?? '?', $request['uri'] ?? '?', $request['service'] ?? '?');
         $prompt .= "Explanation so far:\n".('' === $explanation ? '(nothing yet)' : $explanation)."\n\n";
-        $prompt .= "New executed lines:\n".$this->formatSteps($steps)."\n\n";
-        $prompt .= $requestEnded ? 'The request has finished.' : 'The request is still running. More lines will follow.';
+        $prompt .= "New executed lines:\n".$this->formatRecords($records, $spans)."\n\n";
+        $prompt .= $traceEnded ? 'The request has finished.' : 'The request is still running. More lines will follow.';
 
         $result = $this->agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true]);
 
@@ -93,20 +127,35 @@ final readonly class TraceExplainer
     }
 
     /**
-     * @param list<array> $steps
+     * @param list<array>          $records
+     * @param array<string, array> $spans
      */
-    private function formatSteps(array $steps): string
+    private function formatRecords(array $records, array $spans): string
     {
-        $baseDepth = min(array_column($steps, 'depth'));
+        $baseDepths = [];
+        foreach ($records as $record) {
+            if ('step' === $record['type']) {
+                $baseDepths[$record['span']] = min($baseDepths[$record['span']] ?? \PHP_INT_MAX, $record['depth']);
+            }
+        }
+
         $lines = [];
         $function = null;
-        foreach ($steps as $step) {
-            $indent = str_repeat('  ', $step['depth'] - $baseDepth);
-            if ($step['function'] !== $function) {
-                $function = $step['function'];
-                $lines[] = $indent.'in '.$function.'():';
+        foreach ($records as $record) {
+            $service = $spans[$record['span']]['service'] ?? '?';
+            if ('request' === $record['type']) {
+                $caller = array_find($spans, static fn (array $span) => $span['spanId'] === $record['parentSpanId']);
+                $lines[] = \sprintf('[%s] received %s %s from the %s service:', $service, $record['method'], $record['uri'], $caller['service'] ?? 'calling');
+                $function = null;
+                continue;
             }
-            $lines[] = \sprintf('%s  %s:%d  %s', $indent, $step['file'], $step['line'], $step['code']);
+
+            $indent = str_repeat('  ', $record['depth'] - $baseDepths[$record['span']]);
+            if ($record['function'] !== $function) {
+                $function = $record['function'];
+                $lines[] = \sprintf('[%s] %sin %s():', $service, $indent, $function);
+            }
+            $lines[] = \sprintf('[%s] %s  %s:%d  %s', $service, $indent, $record['file'], $record['line'], $record['code']);
         }
 
         return implode("\n", $lines);

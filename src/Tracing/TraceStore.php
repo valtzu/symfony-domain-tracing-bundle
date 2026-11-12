@@ -5,8 +5,9 @@ namespace App\Tracing;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Keeps each trace as a JSON Lines file that grows while the request runs: a "request" record, one "step" record per
- * executed line and an "end" record. Readers can follow the file while it is written.
+ * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs: a "request"
+ * record, one "step" record per executed line and an "end" record. Readers can follow the file while it is written.
+ * A trace index file lists the spans of each trace, in the order they started.
  */
 final readonly class TraceStore
 {
@@ -29,6 +30,19 @@ final readonly class TraceStore
 
         file_put_contents($this->path($id), '');
         $this->append($id, ['type' => 'request', 'startedAt' => microtime(true)] + $request);
+        file_put_contents($this->tracePath($request['traceId']), $id."\n", \FILE_APPEND);
+    }
+
+    /**
+     * @return list<string> span IDs, in the order they started
+     */
+    public function spansOf(string $traceId): array
+    {
+        if (!preg_match('/^[0-9a-f]{32}$/', $traceId) || !is_file($path = $this->tracePath($traceId))) {
+            return [];
+        }
+
+        return file($path, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
     }
 
     public function addStep(string $id, array $step): void
@@ -73,9 +87,10 @@ final readonly class TraceStore
                 continue;
             }
 
-            $startedAt = json_decode((string) fgets($handle = fopen($path, 'r')), true)['startedAt'] ?? 0;
+            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
             fclose($handle);
-            if ($startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
+            $startedAt = $request['startedAt'] ?? 0;
+            if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
                 $newest = [basename($path, '.jsonl'), $startedAt];
             }
         }
@@ -85,11 +100,16 @@ final readonly class TraceStore
 
     private function append(string $id, array $record): void
     {
-        file_put_contents($this->path($id), json_encode($record, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
+        file_put_contents($this->path($id), json_encode($record + ['at' => microtime(true)], \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
     }
 
     private function path(string $id): string
     {
         return $this->directory.'/'.$id.'.jsonl';
+    }
+
+    private function tracePath(string $traceId): string
+    {
+        return $this->directory.'/trace-'.$traceId.'.spans';
     }
 }

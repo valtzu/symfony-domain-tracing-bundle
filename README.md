@@ -58,12 +58,16 @@ trace and the code coverage to the application and writes the lines that ran nex
 
 ## Limits
 
-- Development only: recording makes requests about 5 times slower. Median of 50 requests in the dev environment:
+- Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment of
+  the demo, with the web profiler enabled, in three runs:
 
   | | `GET /` (shop) | `POST /` (shop and payments) |
   |---|---|---|
-  | No extension | 3.9 ms | 7.9 ms |
-  | Recorded | 18–25 ms | 44–52 ms |
+  | No Xdebug | 7.1–7.9 ms | 16–19 ms |
+  | Recorded | 27–29 ms | 59–66 ms |
+  | Xdebug, no recorder running | 31–33 ms | 64–68 ms |
+
+  Most of the time goes to the Xdebug trace and code coverage, not to the recorder.
 
   An earlier version recorded every line with [PHP Debugger](https://php-debugger.dev/) and was about 25 times
   slower (90 ms and 220 ms): a connected debugger disables OPcache for the request, and every breakpoint is checked

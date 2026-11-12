@@ -36,7 +36,7 @@ services:
     build:
       context: .
       target: frankenphp_dev
-    command: ["php", "-d", "php_debugger.mode=off", "bin/console", "app:record-traces"]
+    command: ["php", "-d", "php_debugger.mode=off", "bin/console", "app:record-traces", "--step-delay=${RECORDER_STEP_DELAY:-0}"]
     environment:
       APP_ENV: dev
     volumes:

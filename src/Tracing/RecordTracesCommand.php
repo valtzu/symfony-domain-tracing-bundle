@@ -17,7 +17,7 @@ final readonly class RecordTracesCommand
     ) {
     }
 
-    public function __invoke(SymfonyStyle $io, #[Option] string $listen = 'tcp://0.0.0.0:9003'): int
+    public function __invoke(SymfonyStyle $io, #[Option] string $listen = 'tcp://0.0.0.0:9003', #[Option('Pause after each recorded line, to imitate a step-by-step debugging session')] int $stepDelay = 0): int
     {
         $server = stream_socket_server($listen, $errorCode, $errorMessage) ?: throw new \RuntimeException($errorMessage);
         $io->writeln(\sprintf('Listening on %s', $listen));
@@ -36,7 +36,7 @@ final readonly class RecordTracesCommand
                 if ($socket === $server) {
                     if ($client = stream_socket_accept($server, 0)) {
                         $connection = new DbgpConnection($client);
-                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->sourceDir, __DIR__, $this->store)];
+                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->sourceDir, __DIR__, $this->store, $stepDelay)];
                     }
                     continue;
                 }

@@ -8671,7 +8671,7 @@
                         "$ref": "#/$defs/types/variable"
                     },
                     "http_client": {
-                        "$ref": "#/$defs/types/variable"
+                        "$ref": "#/$defs/nodes/http_client"
                     },
                     "mailer": {
                         "$ref": "#/$defs/types/variable"
@@ -9013,6 +9013,803 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "http_client": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/types/object_null",
+                        "properties": {
+                            "enabled": {
+                                "$ref": "#/$defs/types/boolean",
+                                "default": true
+                            },
+                            "max_host_connections": {
+                                "$ref": "#/$defs/types/integer",
+                                "description": "The maximum number of connections to a single host."
+                            },
+                            "recorder": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "properties": {
+                                            "enabled": {
+                                                "$ref": "#/$defs/types/boolean_null",
+                                                "default": null,
+                                                "description": "Defaults to true when \"framework.test\" is enabled, to false otherwise."
+                                            },
+                                            "redactor": {
+                                                "$ref": "#/$defs/types/scalar",
+                                                "default": null,
+                                                "description": "Service id of a RedactorInterface; when set, \"redact\" and \"redact_except\" are ignored."
+                                            },
+                                            "redact": {
+                                                "$ref": "#/$defs/types/array_null",
+                                                "items": {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                },
+                                                "description": "Header, query-string, form and JSON field names masked in recorded files, in addition to the built-in ones."
+                                            },
+                                            "redact_except": {
+                                                "$ref": "#/$defs/types/array_null",
+                                                "items": {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                },
+                                                "description": "Names never masked, removed from the built-in lists."
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "type": [
+                                            "boolean"
+                                        ]
+                                    }
+                                ],
+                                "default": {
+                                    "enabled": null,
+                                    "redactor": null,
+                                    "redact": [],
+                                    "redact_except": []
+                                },
+                                "description": "Record HTTP exchanges into HAR files and replay them in tests (see RecorderHttpClient)."
+                            },
+                            "default_options": {
+                                "$ref": "#/$defs/types/object_null",
+                                "properties": {
+                                    "vars": {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "additionalProperties": {
+                                            "$ref": "#/$defs/types/variable"
+                                        },
+                                        "description": "Associative array: the default vars used to expand the templated URI."
+                                    },
+                                    "headers": {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "additionalProperties": {
+                                            "$ref": "#/$defs/types/variable"
+                                        },
+                                        "description": "Associative array: header => value(s)."
+                                    },
+                                    "max_redirects": {
+                                        "$ref": "#/$defs/types/integer",
+                                        "description": "The maximum number of redirects to follow."
+                                    },
+                                    "http_version": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "The default HTTP version, typically 1.1 or 2.0, leave to null for the best version."
+                                    },
+                                    "resolve": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/$defs/types/object_null",
+                                                "additionalProperties": {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                }
+                                            },
+                                            {
+                                                "$ref": "#/$defs/types/array_null",
+                                                "items": {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                }
+                                            }
+                                        ],
+                                        "description": "Associative array: domain => IP."
+                                    },
+                                    "proxy": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "The URL of the proxy to pass requests through or null for automatic detection."
+                                    },
+                                    "no_proxy": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A comma separated list of hosts that do not require a proxy to be reached."
+                                    },
+                                    "timeout": {
+                                        "$ref": "#/$defs/types/number",
+                                        "description": "The idle timeout, defaults to the \"default_socket_timeout\" ini parameter."
+                                    },
+                                    "max_duration": {
+                                        "$ref": "#/$defs/types/number",
+                                        "description": "The maximum execution time for the request+response as a whole."
+                                    },
+                                    "max_connect_duration": {
+                                        "$ref": "#/$defs/types/number",
+                                        "description": "The maximum duration allowed for DNS + TCP + TLS connection; a value lower than or equal to 0 means unlimited."
+                                    },
+                                    "bindto": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A network interface name, IP address, a host name or a UNIX socket to bind to."
+                                    },
+                                    "verify_peer": {
+                                        "$ref": "#/$defs/types/boolean",
+                                        "description": "Indicates if the peer should be verified in a TLS context."
+                                    },
+                                    "verify_host": {
+                                        "$ref": "#/$defs/types/boolean",
+                                        "description": "Indicates if the host should exist as a certificate common name."
+                                    },
+                                    "cafile": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A certificate authority file."
+                                    },
+                                    "capath": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A directory that contains multiple certificate authority files."
+                                    },
+                                    "local_cert": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A PEM formatted certificate file."
+                                    },
+                                    "local_pk": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A private key file."
+                                    },
+                                    "passphrase": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "The passphrase used to encrypt the \"local_pk\" file."
+                                    },
+                                    "ciphers": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "A list of TLS ciphers separated by colons, commas or spaces (e.g. \"RC3-SHA:TLS13-AES-128-GCM-SHA256\"...)."
+                                    },
+                                    "peer_fingerprint": {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "properties": {
+                                            "sha1": {
+                                                "$ref": "#/$defs/types/variable"
+                                            },
+                                            "pin-sha256": {
+                                                "$ref": "#/$defs/types/variable"
+                                            },
+                                            "md5": {
+                                                "$ref": "#/$defs/types/variable"
+                                            }
+                                        },
+                                        "additionalProperties": false,
+                                        "description": "Associative array: hashing algorithm => hash(es)."
+                                    },
+                                    "crypto_method": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "description": "The minimum version of TLS to accept; must be one of STREAM_CRYPTO_METHOD_TLSv*_CLIENT constants."
+                                    },
+                                    "extra": {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "additionalProperties": {
+                                            "$ref": "#/$defs/types/variable"
+                                        },
+                                        "description": "Extra options for specific HTTP client."
+                                    },
+                                    "rate_limiter": {
+                                        "$ref": "#/$defs/types/scalar",
+                                        "default": null,
+                                        "description": "Rate limiter name to use for throttling requests."
+                                    },
+                                    "caching": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/$defs/types/object_null",
+                                                "properties": {
+                                                    "enabled": {
+                                                        "$ref": "#/$defs/types/boolean",
+                                                        "default": false
+                                                    },
+                                                    "cache_pool": {
+                                                        "$ref": "#/$defs/types/string_null",
+                                                        "default": "cache.http_client",
+                                                        "description": "The taggable cache pool to use for storing the responses."
+                                                    },
+                                                    "shared": {
+                                                        "$ref": "#/$defs/types/boolean",
+                                                        "default": true,
+                                                        "description": "Indicates whether the cache is shared (public) or private."
+                                                    },
+                                                    "max_ttl": {
+                                                        "$ref": "#/$defs/types/integer",
+                                                        "minimum": 1,
+                                                        "default": 86400,
+                                                        "description": "The maximum TTL (in seconds) allowed for cached responses."
+                                                    }
+                                                },
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": [
+                                                    "boolean"
+                                                ]
+                                            }
+                                        ],
+                                        "default": {
+                                            "enabled": false,
+                                            "cache_pool": "cache.http_client",
+                                            "shared": true,
+                                            "max_ttl": 86400
+                                        },
+                                        "description": "Caching configuration."
+                                    },
+                                    "retry_failed": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/$defs/types/object_null",
+                                                "properties": {
+                                                    "enabled": {
+                                                        "$ref": "#/$defs/types/boolean",
+                                                        "default": false
+                                                    },
+                                                    "base_uris": {
+                                                        "anyOf": [
+                                                            {
+                                                                "$ref": "#/$defs/types/array_null",
+                                                                "items": {
+                                                                    "$ref": "#/$defs/types/string_null"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": [
+                                                                    "string"
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "description": "Additional URIs to retry against, tried in turn after the base URI, one per attempt."
+                                                    },
+                                                    "retry_strategy": {
+                                                        "$ref": "#/$defs/types/scalar",
+                                                        "default": null,
+                                                        "description": "service id to override the retry strategy."
+                                                    },
+                                                    "http_codes": {
+                                                        "anyOf": [
+                                                            {
+                                                                "$ref": "#/$defs/types/object_null",
+                                                                "additionalProperties": {
+                                                                    "$ref": "#/$defs/types/object_null",
+                                                                    "properties": {
+                                                                        "code": {
+                                                                            "$ref": "#/$defs/types/integer"
+                                                                        },
+                                                                        "methods": {
+                                                                            "anyOf": [
+                                                                                {
+                                                                                    "$ref": "#/$defs/types/array_null",
+                                                                                    "items": {
+                                                                                        "$ref": "#/$defs/types/string_null"
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "type": [
+                                                                                        "string"
+                                                                                    ]
+                                                                                }
+                                                                            ],
+                                                                            "description": "A list of HTTP methods that triggers a retry for this status code. When empty, all methods are retried."
+                                                                        }
+                                                                    },
+                                                                    "patternProperties": {
+                                                                        "^method$": {
+                                                                            "anyOf": [
+                                                                                {
+                                                                                    "$ref": "#/$defs/types/string_null"
+                                                                                },
+                                                                                {
+                                                                                    "anyOf": [
+                                                                                        {
+                                                                                            "$ref": "#/$defs/types/array_null",
+                                                                                            "items": {
+                                                                                                "$ref": "#/$defs/types/string_null"
+                                                                                            }
+                                                                                        },
+                                                                                        {
+                                                                                            "type": [
+                                                                                                "string"
+                                                                                            ]
+                                                                                        }
+                                                                                    ],
+                                                                                    "description": "A list of HTTP methods that triggers a retry for this status code. When empty, all methods are retried."
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "additionalProperties": false
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "string"
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "description": "A list of HTTP status code that triggers a retry."
+                                                    },
+                                                    "max_retries": {
+                                                        "$ref": "#/$defs/types/integer",
+                                                        "minimum": 0,
+                                                        "default": 3
+                                                    },
+                                                    "delay": {
+                                                        "$ref": "#/$defs/types/integer",
+                                                        "minimum": 0,
+                                                        "default": 1000,
+                                                        "description": "Time in ms to delay (or the initial value when multiplier is used)."
+                                                    },
+                                                    "multiplier": {
+                                                        "$ref": "#/$defs/types/number",
+                                                        "minimum": 1,
+                                                        "default": 2,
+                                                        "description": "If greater than 1, delay will grow exponentially for each retry: delay * (multiple ^ retries)."
+                                                    },
+                                                    "max_delay": {
+                                                        "$ref": "#/$defs/types/integer",
+                                                        "minimum": 0,
+                                                        "default": 0,
+                                                        "description": "Max time in ms that a retry should ever be delayed (0 = infinite)."
+                                                    },
+                                                    "jitter": {
+                                                        "$ref": "#/$defs/types/number",
+                                                        "minimum": 0,
+                                                        "maximum": 1,
+                                                        "default": 0.1,
+                                                        "description": "Randomness in percent (between 0 and 1) to apply to the delay."
+                                                    }
+                                                },
+                                                "patternProperties": {
+                                                    "^http_code$": {
+                                                        "$ref": "#/$defs/types/variable"
+                                                    }
+                                                },
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": [
+                                                    "boolean"
+                                                ]
+                                            }
+                                        ],
+                                        "default": {
+                                            "enabled": false,
+                                            "base_uris": [],
+                                            "retry_strategy": null,
+                                            "http_codes": [],
+                                            "max_retries": 3,
+                                            "delay": 1000,
+                                            "multiplier": 2,
+                                            "max_delay": 0,
+                                            "jitter": 0.1
+                                        }
+                                    }
+                                },
+                                "patternProperties": {
+                                    "^var$": {
+                                        "$ref": "#/$defs/types/variable"
+                                    },
+                                    "^header$": {
+                                        "$ref": "#/$defs/types/variable"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "mock_response_factory": {
+                                "$ref": "#/$defs/types/scalar",
+                                "description": "`true` to always return empty 200 responses, or the id of the service to use to generate mock responses - which should be either an invokable or an iterable."
+                            },
+                            "scoped_clients": {
+                                "$ref": "#/$defs/types/object_null",
+                                "additionalProperties": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/$defs/types/object_null",
+                                            "properties": {
+                                                "scope": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The regular expression that the request URL must match before adding the other options. When none is provided, the base URI is used instead."
+                                                },
+                                                "base_uri": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The URI to resolve relative URLs, following rules in RFC 3985, section 2."
+                                                },
+                                                "auth_basic": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "An HTTP Basic authentication \"username:password\"."
+                                                },
+                                                "auth_bearer": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A token enabling HTTP Bearer authorization."
+                                                },
+                                                "auth_ntlm": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A \"username:password\" pair to use Microsoft NTLM authentication (requires the cURL extension)."
+                                                },
+                                                "query": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/$defs/types/object_null",
+                                                            "additionalProperties": {
+                                                                "$ref": "#/$defs/types/scalar"
+                                                            }
+                                                        },
+                                                        {
+                                                            "$ref": "#/$defs/types/array_null",
+                                                            "items": {
+                                                                "$ref": "#/$defs/types/scalar"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "description": "Associative array of query string values merged with the base URI."
+                                                },
+                                                "mock_response_factory": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "`true` to always return empty 200 responses, `false` to disable mocking, or the id of the service to use to generate mock responses (invokable or iterable)."
+                                                },
+                                                "headers": {
+                                                    "$ref": "#/$defs/types/object_null",
+                                                    "additionalProperties": {
+                                                        "$ref": "#/$defs/types/variable"
+                                                    },
+                                                    "description": "Associative array: header => value(s)."
+                                                },
+                                                "max_redirects": {
+                                                    "$ref": "#/$defs/types/integer",
+                                                    "description": "The maximum number of redirects to follow."
+                                                },
+                                                "http_version": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The default HTTP version, typically 1.1 or 2.0, leave to null for the best version."
+                                                },
+                                                "resolve": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/$defs/types/object_null",
+                                                            "additionalProperties": {
+                                                                "$ref": "#/$defs/types/scalar"
+                                                            }
+                                                        },
+                                                        {
+                                                            "$ref": "#/$defs/types/array_null",
+                                                            "items": {
+                                                                "$ref": "#/$defs/types/scalar"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "description": "Associative array: domain => IP."
+                                                },
+                                                "proxy": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The URL of the proxy to pass requests through or null for automatic detection."
+                                                },
+                                                "no_proxy": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A comma separated list of hosts that do not require a proxy to be reached."
+                                                },
+                                                "timeout": {
+                                                    "$ref": "#/$defs/types/number",
+                                                    "description": "The idle timeout, defaults to the \"default_socket_timeout\" ini parameter."
+                                                },
+                                                "max_duration": {
+                                                    "$ref": "#/$defs/types/number",
+                                                    "description": "The maximum execution time for the request+response as a whole."
+                                                },
+                                                "max_connect_duration": {
+                                                    "$ref": "#/$defs/types/number",
+                                                    "description": "The maximum duration allowed for DNS + TCP + TLS connection; a value lower than or equal to 0 means unlimited."
+                                                },
+                                                "bindto": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A network interface name, IP address, a host name or a UNIX socket to bind to."
+                                                },
+                                                "verify_peer": {
+                                                    "$ref": "#/$defs/types/boolean",
+                                                    "description": "Indicates if the peer should be verified in a TLS context."
+                                                },
+                                                "verify_host": {
+                                                    "$ref": "#/$defs/types/boolean",
+                                                    "description": "Indicates if the host should exist as a certificate common name."
+                                                },
+                                                "cafile": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A certificate authority file."
+                                                },
+                                                "capath": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A directory that contains multiple certificate authority files."
+                                                },
+                                                "local_cert": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A PEM formatted certificate file."
+                                                },
+                                                "local_pk": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A private key file."
+                                                },
+                                                "passphrase": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The passphrase used to encrypt the \"local_pk\" file."
+                                                },
+                                                "ciphers": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "A list of TLS ciphers separated by colons, commas or spaces (e.g. \"RC3-SHA:TLS13-AES-128-GCM-SHA256\"...)."
+                                                },
+                                                "peer_fingerprint": {
+                                                    "$ref": "#/$defs/types/object_null",
+                                                    "properties": {
+                                                        "sha1": {
+                                                            "$ref": "#/$defs/types/variable"
+                                                        },
+                                                        "pin-sha256": {
+                                                            "$ref": "#/$defs/types/variable"
+                                                        },
+                                                        "md5": {
+                                                            "$ref": "#/$defs/types/variable"
+                                                        }
+                                                    },
+                                                    "additionalProperties": false,
+                                                    "description": "Associative array: hashing algorithm => hash(es)."
+                                                },
+                                                "crypto_method": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "description": "The minimum version of TLS to accept; must be one of STREAM_CRYPTO_METHOD_TLSv*_CLIENT constants."
+                                                },
+                                                "extra": {
+                                                    "$ref": "#/$defs/types/object_null",
+                                                    "additionalProperties": {
+                                                        "$ref": "#/$defs/types/variable"
+                                                    },
+                                                    "description": "Extra options for specific HTTP client."
+                                                },
+                                                "rate_limiter": {
+                                                    "$ref": "#/$defs/types/scalar",
+                                                    "default": null,
+                                                    "description": "Rate limiter name to use for throttling requests."
+                                                },
+                                                "caching": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/$defs/types/object_null",
+                                                            "properties": {
+                                                                "enabled": {
+                                                                    "$ref": "#/$defs/types/boolean",
+                                                                    "default": false
+                                                                },
+                                                                "cache_pool": {
+                                                                    "$ref": "#/$defs/types/string_null",
+                                                                    "default": "cache.http_client",
+                                                                    "description": "The taggable cache pool to use for storing the responses."
+                                                                },
+                                                                "shared": {
+                                                                    "$ref": "#/$defs/types/boolean",
+                                                                    "default": true,
+                                                                    "description": "Indicates whether the cache is shared (public) or private."
+                                                                },
+                                                                "max_ttl": {
+                                                                    "$ref": "#/$defs/types/integer",
+                                                                    "minimum": 1,
+                                                                    "default": 86400,
+                                                                    "description": "The maximum TTL (in seconds) allowed for cached responses."
+                                                                }
+                                                            },
+                                                            "additionalProperties": false
+                                                        },
+                                                        {
+                                                            "type": [
+                                                                "boolean"
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "default": {
+                                                        "enabled": false,
+                                                        "cache_pool": "cache.http_client",
+                                                        "shared": true,
+                                                        "max_ttl": 86400
+                                                    },
+                                                    "description": "Caching configuration."
+                                                },
+                                                "retry_failed": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/$defs/types/object_null",
+                                                            "properties": {
+                                                                "enabled": {
+                                                                    "$ref": "#/$defs/types/boolean",
+                                                                    "default": false
+                                                                },
+                                                                "base_uris": {
+                                                                    "anyOf": [
+                                                                        {
+                                                                            "$ref": "#/$defs/types/array_null",
+                                                                            "items": {
+                                                                                "$ref": "#/$defs/types/string_null"
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": [
+                                                                                "string"
+                                                                            ]
+                                                                        }
+                                                                    ],
+                                                                    "description": "Additional URIs to retry against, tried in turn after the base URI, one per attempt."
+                                                                },
+                                                                "retry_strategy": {
+                                                                    "$ref": "#/$defs/types/scalar",
+                                                                    "default": null,
+                                                                    "description": "service id to override the retry strategy."
+                                                                },
+                                                                "http_codes": {
+                                                                    "anyOf": [
+                                                                        {
+                                                                            "$ref": "#/$defs/types/object_null",
+                                                                            "additionalProperties": {
+                                                                                "$ref": "#/$defs/types/object_null",
+                                                                                "properties": {
+                                                                                    "code": {
+                                                                                        "$ref": "#/$defs/types/integer"
+                                                                                    },
+                                                                                    "methods": {
+                                                                                        "anyOf": [
+                                                                                            {
+                                                                                                "$ref": "#/$defs/types/array_null",
+                                                                                                "items": {
+                                                                                                    "$ref": "#/$defs/types/string_null"
+                                                                                                }
+                                                                                            },
+                                                                                            {
+                                                                                                "type": [
+                                                                                                    "string"
+                                                                                                ]
+                                                                                            }
+                                                                                        ],
+                                                                                        "description": "A list of HTTP methods that triggers a retry for this status code. When empty, all methods are retried."
+                                                                                    }
+                                                                                },
+                                                                                "patternProperties": {
+                                                                                    "^method$": {
+                                                                                        "anyOf": [
+                                                                                            {
+                                                                                                "$ref": "#/$defs/types/string_null"
+                                                                                            },
+                                                                                            {
+                                                                                                "anyOf": [
+                                                                                                    {
+                                                                                                        "$ref": "#/$defs/types/array_null",
+                                                                                                        "items": {
+                                                                                                            "$ref": "#/$defs/types/string_null"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "type": [
+                                                                                                            "string"
+                                                                                                        ]
+                                                                                                    }
+                                                                                                ],
+                                                                                                "description": "A list of HTTP methods that triggers a retry for this status code. When empty, all methods are retried."
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                },
+                                                                                "additionalProperties": false
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": [
+                                                                                "integer",
+                                                                                "string"
+                                                                            ]
+                                                                        }
+                                                                    ],
+                                                                    "description": "A list of HTTP status code that triggers a retry."
+                                                                },
+                                                                "max_retries": {
+                                                                    "$ref": "#/$defs/types/integer",
+                                                                    "minimum": 0,
+                                                                    "default": 3
+                                                                },
+                                                                "delay": {
+                                                                    "$ref": "#/$defs/types/integer",
+                                                                    "minimum": 0,
+                                                                    "default": 1000,
+                                                                    "description": "Time in ms to delay (or the initial value when multiplier is used)."
+                                                                },
+                                                                "multiplier": {
+                                                                    "$ref": "#/$defs/types/number",
+                                                                    "minimum": 1,
+                                                                    "default": 2,
+                                                                    "description": "If greater than 1, delay will grow exponentially for each retry: delay * (multiple ^ retries)."
+                                                                },
+                                                                "max_delay": {
+                                                                    "$ref": "#/$defs/types/integer",
+                                                                    "minimum": 0,
+                                                                    "default": 0,
+                                                                    "description": "Max time in ms that a retry should ever be delayed (0 = infinite)."
+                                                                },
+                                                                "jitter": {
+                                                                    "$ref": "#/$defs/types/number",
+                                                                    "minimum": 0,
+                                                                    "maximum": 1,
+                                                                    "default": 0.1,
+                                                                    "description": "Randomness in percent (between 0 and 1) to apply to the delay."
+                                                                }
+                                                            },
+                                                            "patternProperties": {
+                                                                "^http_code$": {
+                                                                    "$ref": "#/$defs/types/variable"
+                                                                }
+                                                            },
+                                                            "additionalProperties": false
+                                                        },
+                                                        {
+                                                            "type": [
+                                                                "boolean"
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "default": {
+                                                        "enabled": false,
+                                                        "base_uris": [],
+                                                        "retry_strategy": null,
+                                                        "http_codes": [],
+                                                        "max_retries": 3,
+                                                        "delay": 1000,
+                                                        "multiplier": 2,
+                                                        "max_delay": 0,
+                                                        "jitter": 0.1
+                                                    }
+                                                }
+                                            },
+                                            "patternProperties": {
+                                                "^header$": {
+                                                    "$ref": "#/$defs/types/variable"
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        {
+                                            "type": [
+                                                "string"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "patternProperties": {
+                            "^scoped_client$": {
+                                "$ref": "#/$defs/types/variable"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": [
+                            "boolean"
+                        ]
+                    }
+                ],
+                "default": {
+                    "enabled": true,
+                    "recorder": {
+                        "enabled": null,
+                        "redactor": null,
+                        "redact": [],
+                        "redact_except": []
+                    },
+                    "scoped_clients": []
+                }
             },
             "property_access": {
                 "anyOf": [
@@ -9773,6 +10570,9 @@
         "framework": {
             "$ref": "#/$defs/nodes/framework"
         },
+        "http_client": {
+            "$ref": "#/$defs/nodes/http_client"
+        },
         "property_access": {
             "$ref": "#/$defs/nodes/property_access"
         },
@@ -9810,6 +10610,9 @@
                 },
                 "framework": {
                     "$ref": "#/$defs/nodes/framework"
+                },
+                "http_client": {
+                    "$ref": "#/$defs/nodes/http_client"
                 },
                 "property_access": {
                     "$ref": "#/$defs/nodes/property_access"

@@ -21,3 +21,10 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    app.platform.claude_code:
+        class: Symfony\AI\Platform\Platform
+        factory: [Symfony\AI\Platform\Bridge\ClaudeCode\Factory, createPlatform]
+        arguments:
+            $workingDirectory: '%kernel.project_dir%/var'
+            $timeout: 600

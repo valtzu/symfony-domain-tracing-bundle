@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Live trace{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/trace.css">
+<style>
+    :root { --bg: #f6f6f4; --text: #1d1d1b; --muted: #6b6b66; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #161615; --text: #ecece8; --muted: #9a9a94; } }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 960px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; }
+    h1 { margin: 0; font-size: 22px; }
+    .hint { color: var(--muted); margin: 0; }
+    .trace-lines { margin: 12px 0 0; max-height: 240px; overflow: auto; font: 12px/1.5 ui-monospace, monospace; color: var(--muted); white-space: pre; }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+    <h1>Live trace</h1>
+    <p class="hint">Each request that starts after this page opened appears here while it runs. The explanation follows the recorded lines.</p>
+    <div id="traces"></div>
+</main>
+<script type="module">
+    import { followTrace } from '/trace.js';
+
+    const traces = document.getElementById('traces');
+    let after = {{ now|json_encode|raw }};
+
+    async function waitForNextTrace() {
+        while (true) {
+            const { id } = await (await fetch(`/_traces/newest?after=${after}`)).json();
+            if (id) {
+                return id;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+
+    while (true) {
+        const id = await waitForNextTrace();
+        const panel = traces.insertBefore(document.createElement('section'), traces.firstChild);
+        const lines = document.createElement('pre');
+        lines.className = 'trace-lines';
+        await new Promise(resolve => {
+            followTrace(id, panel, {
+                onRequest: request => after = request.startedAt,
+                onStep: step => {
+                    lines.textContent += `${step.file}:${step.line}  ${step.code}\n`;
+                    lines.scrollTop = lines.scrollHeight;
+                },
+                onDone: resolve,
+            });
+            panel.appendChild(lines);
+        });
+    }
+</script>
+{% endblock %}

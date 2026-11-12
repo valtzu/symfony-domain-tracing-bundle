@@ -22,7 +22,7 @@ final class TraceSession
     private const NAMESPACE = 'App\\';
 
     private ?array $request = null;
-    private array $steps = [];
+    private ?int $lastStepDepth = null;
     private int $depth = 0;
     private float $startedAt;
 
@@ -40,6 +40,7 @@ final class TraceSession
         private readonly string $sourceDir,
         private readonly string $excludedDir,
         private readonly TraceStore $store,
+        private readonly int $stepDelayMs = 0,
     ) {
         $this->startedAt = microtime(true);
     }
@@ -64,7 +65,7 @@ final class TraceSession
     public function abort(): void
     {
         if (!$this->finished && null !== $this->request) {
-            $this->save();
+            $this->end();
         }
         $this->finished = true;
     }
@@ -80,6 +81,8 @@ final class TraceSession
 
             return;
         }
+
+        $this->store->start($this->request['id'], $this->request);
 
         foreach ($this->sourceFiles() as $path) {
             foreach ($this->methods($path) as [$class, $method]) {
@@ -106,7 +109,7 @@ final class TraceSession
     private function onBreak(\SimpleXMLElement $message): void
     {
         if ('break' !== (string) $message['status']) {
-            $this->save();
+            $this->end();
             $this->connection->send('detach');
             $this->finished = true;
 
@@ -131,7 +134,7 @@ final class TraceSession
         }
 
         if (!$this->isTraced($path)) {
-            $calledFromTracedCode = $this->depth > (end($this->steps)['depth'] ?? \PHP_INT_MAX);
+            $calledFromTracedCode = $this->depth > ($this->lastStepDepth ?? \PHP_INT_MAX);
             $this->connection->send($calledFromTracedCode ? 'step_out' : 'run');
 
             return;
@@ -173,21 +176,22 @@ final class TraceSession
 
     private function record(string $path, int $line, string $function): void
     {
-        $this->steps[] = [
+        $this->lastStepDepth = $this->depth;
+        $this->store->addStep($this->request['id'], [
             'file' => substr($path, \strlen(\dirname($this->sourceDir)) + 1),
             'line' => $line,
             'function' => $function,
             'depth' => $this->depth,
             'code' => trim($this->sourceLine($path, $line)),
-        ];
+        ]);
+        if ($this->stepDelayMs) {
+            usleep($this->stepDelayMs * 1000);
+        }
     }
 
-    private function save(): void
+    private function end(): void
     {
-        $this->store->save($this->request['id'], $this->request + [
-            'durationMs' => (int) round((microtime(true) - $this->startedAt) * 1000),
-            'steps' => $this->steps,
-        ]);
+        $this->store->end($this->request['id'], (int) round((microtime(true) - $this->startedAt) * 1000));
     }
 
     /**

@@ -1,0 +1,13 @@
+.trace-panel {
+    --trace-bg: #ffffff; --trace-text: #1d1d1b; --trace-muted: #6b6b66; --trace-line: #e2e2dd; --trace-bad: #b3261e;
+    background: var(--trace-bg); color: var(--trace-text); border: 1px solid var(--trace-line); border-radius: 8px;
+    padding: 16px; font: 15px/1.5 system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+    .trace-panel { --trace-bg: #20201e; --trace-text: #ecece8; --trace-muted: #9a9a94; --trace-line: #34342f; --trace-bad: #f08a80; }
+}
+.trace-panel h2 { margin: 0 0 4px; font-size: 16px; }
+.trace-panel p { margin: 8px 0 0; }
+.trace-panel .trace-status { margin: 0; color: var(--trace-muted); font-size: 13px; }
+.trace-panel .trace-error { color: var(--trace-bad); }
+.trace-panel-docked { max-width: 960px; margin: 0 auto 24px; width: calc(100% - 32px); box-sizing: border-box; }

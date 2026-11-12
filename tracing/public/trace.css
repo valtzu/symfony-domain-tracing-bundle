@@ -35,9 +35,9 @@
 .waterfall-marker.error { background: var(--trace-bad); opacity: 1; }
 .waterfall-row.failed .waterfall-name { color: var(--trace-bad); }
 .waterfall-row.running .waterfall-bar { opacity: .6; }
-.waterfall-events { margin: 0; padding: 2px 0 6px; list-style: none; color: var(--trace-muted); font-size: 12px; min-width: 560px; border-bottom: 1px solid var(--trace-line); }
-.waterfall-events li::before { content: "• "; }
-.waterfall-events li.error { color: var(--trace-bad); }
+.trace-panel .waterfall-event { margin: 0; padding-top: 3px; padding-bottom: 3px; color: var(--trace-muted); font-size: 12px; min-width: 560px; border-bottom: 1px solid var(--trace-line); }
+.trace-panel .waterfall-event::before { content: "• "; }
+.trace-panel .waterfall-event.error { color: var(--trace-bad); }
 .service-0 { --trace-color: var(--trace-service-0); }
 .service-1 { --trace-color: var(--trace-service-1); }
 .service-2 { --trace-color: var(--trace-service-2); }

@@ -21,6 +21,10 @@ function createWaterfall(container) {
         return services.indexOf(service) % SERVICE_COLORS;
     };
 
+    /**
+     * The rows of the waterfall: each span followed by its events and its child spans, in time order, so that an event
+     * appears between the operations it happened between.
+     */
     const ordered = () => {
         const children = new Map();
         for (const span of spans.values()) {
@@ -29,9 +33,17 @@ function createWaterfall(container) {
         }
         const rows = [];
         const visit = (parent, depth) => {
-            for (const span of (children.get(parent) ?? []).sort((a, b) => a.start - b.start)) {
-                rows.push({ span, depth });
-                visit(span.id, depth + 1);
+            const items = [
+                ...(children.get(parent) ?? []).map(span => ({ at: span.start, span })),
+                ...(null === parent ? [] : events.get(parent) ?? []).map(event => ({ at: event.at, event })),
+            ].sort((a, b) => a.at - b.at || (a.event ? 1 : -1));
+            for (const item of items) {
+                if (item.span) {
+                    rows.push({ span: item.span, depth });
+                    visit(item.span.id, depth + 1);
+                } else {
+                    rows.push({ event: item.event, depth });
+                }
             }
         };
         visit(null, 0);
@@ -46,8 +58,9 @@ function createWaterfall(container) {
         if (!rows.length) {
             return;
         }
-        const start = Math.min(...rows.map(row => row.span.start));
-        const range = Math.max(latest - start, ...rows.map(row => (row.span.end ?? latest) - start), 0.001);
+        const spanRows = rows.filter(row => row.span);
+        const start = Math.min(...spanRows.map(row => row.span.start));
+        const range = Math.max(latest - start, ...spanRows.map(row => (row.span.end ?? latest) - start), 0.001);
 
         const table = document.createElement('div');
         table.className = 'waterfall';
@@ -55,7 +68,15 @@ function createWaterfall(container) {
         axis.className = 'waterfall-axis';
         axis.innerHTML = `<span></span><span class="waterfall-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left: ${f * 100}%">${milliseconds(f * range)}</span>`).join('')}</span>`;
 
-        for (const { span, depth } of rows) {
+        for (const { span, event, depth } of rows) {
+            if (event) {
+                const item = table.appendChild(document.createElement('p'));
+                item.className = `waterfall-event${event.error ? ' error' : ''}`;
+                item.style.paddingLeft = `${depth * 14}px`;
+                item.textContent = event.text;
+                continue;
+            }
+
             const end = span.end ?? latest;
             const spanEvents = events.get(span.id) ?? [];
             const failed = spanEvents.some(event => event.error);
@@ -96,17 +117,6 @@ function createWaterfall(container) {
                 marker.className = `waterfall-marker${event.error ? ' error' : ''}`;
                 marker.style.left = `${(event.at - start) / range * 100}%`;
                 marker.title = event.text;
-            }
-
-            if (spanEvents.length) {
-                const list = table.appendChild(document.createElement('ul'));
-                list.className = 'waterfall-events';
-                list.style.paddingLeft = `${depth * 14 + 18}px`;
-                for (const event of spanEvents) {
-                    const item = list.appendChild(document.createElement('li'));
-                    item.className = event.error ? 'error' : '';
-                    item.textContent = event.text;
-                }
             }
         }
 

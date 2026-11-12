@@ -27,7 +27,7 @@
         "symfony/css-selector": "8.2.*",
         "symfony/stopwatch": "8.2.*",
         "symfony/web-profiler-bundle": "8.2.*",
-        "valtzu/symfony-domain-tracing-bundle": "*@dev"
+        "valtzu/domain-tracing-bundle": "*@dev"
     },
     "repositories": [
         {

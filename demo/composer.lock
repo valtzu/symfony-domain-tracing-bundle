@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "69fe42c5b33dd202b4acb54bfeb233d0",
+    "content-hash": "318b4417a9dd8f97f53e57eb287c81ac",
     "packages": [
         {
             "name": "psr/cache",
@@ -7089,12 +7089,12 @@
             "published-time": "2026-11-04T12:37:07+00:00"
         },
         {
-            "name": "valtzu/symfony-domain-tracing-bundle",
+            "name": "valtzu/domain-tracing-bundle",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "..",
-                "reference": "8baa00140942da00d55f7572818e7fdf7394e216"
+                "reference": "b8a62c5d6fbc2298da26f1c373103ad682fb1466"
             },
             "require": {
                 "php": ">=8.4",
@@ -7104,8 +7104,7 @@
                 "symfony/console": "8.2.*",
                 "symfony/framework-bundle": "8.2.*",
                 "symfony/process": "8.2.*",
-                "symfony/twig-bundle": "8.2.*",
-                "symfony/yaml": "8.2.*"
+                "symfony/twig-bundle": "8.2.*"
             },
             "require-dev": {
                 "phpunit/phpunit": "^13.4"
@@ -7200,7 +7199,7 @@
     "aliases": [],
     "minimum-stability": "beta",
     "stability-flags": {
-        "valtzu/symfony-domain-tracing-bundle": 20
+        "valtzu/domain-tracing-bundle": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

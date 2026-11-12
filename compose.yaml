@@ -8,6 +8,7 @@ services:
       HTTP_PORT: "8080"
       APP_ENV: dev
       OTEL_SERVICE_NAME: shop
+      TRACING_UI_URL: http://localhost:${TRACING_PORT:-8200}
       PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
       PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
       MERCURE_DIRECTIVES: |
@@ -23,15 +24,12 @@ services:
             }
         }
       HOT_RELOAD_DIRECTIVES: hot_reload
-      CADDY_SERVER_EXTRA_DIRECTIVES: request_header X-Request-Id {http.request.uuid}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${PHP_PORT:-8100}:8080"
     volumes:
       - ./:/app
-      - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
-      - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
       - caddy_data:/data
       - caddy_config:/config
 
@@ -44,31 +42,40 @@ services:
       APP_ENV: dev
       OTEL_SERVICE_NAME: payments
       PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
-      CADDY_SERVER_EXTRA_DIRECTIVES: request_header X-Request-Id {http.request.uuid}
     volumes:
       - ./:/app
+
+  # The tracing app: a separate application with its own image, in tracing/
 
   recorder:
-    build:
-      context: .
-      target: frankenphp_dev
-    command: ["php", "-d", "php_debugger.mode=off", "bin/console", "app:record-traces", "--step-delay=${RECORDER_STEP_DELAY:-0}"]
-    environment:
-      APP_ENV: dev
+    build: ./tracing
+    command: ["php", "bin/console", "app:record-traces", "--step-delay=${RECORDER_STEP_DELAY:-0}"]
     volumes:
-      - ./:/app
+      - ./tracing:/app
 
   tracing-worker:
-    build:
-      context: .
-      target: frankenphp_dev
-    command: ["php", "-d", "php_debugger.mode=off", "bin/console", "app:process-traces"]
+    build: ./tracing
+    command: ["php", "bin/console", "app:process-traces"]
     environment:
-      APP_ENV: dev
+      TRACE_GIT_REPOSITORIES: /repositories/shop
+      GIT_OPTIONAL_LOCKS: "0"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     volumes:
-      - ./:/app
+      - ./tracing:/app
+      - ./:/repositories/shop:ro
       - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
       - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
+
+  tracing:
+    build: ./tracing
+    environment:
+      CADDY_SERVER_EXTRA_DIRECTIVES: header Access-Control-Allow-Origin *
+    ports:
+      - "127.0.0.1:${TRACING_PORT:-8200}:8080"
+    volumes:
+      - ./tracing:/app
 
   jaeger:
     image: jaegertracing/jaeger:2.5.0

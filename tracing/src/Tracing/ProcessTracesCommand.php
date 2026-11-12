@@ -133,7 +133,7 @@ final readonly class ProcessTracesCommand
     private static function withNames(array $spans, array $names): array
     {
         foreach ($spans as &$span) {
-            $span['name'] = $names[$span['function']] ?? $span['name'];
+            $span['name'] = $names[$span['function'] ?? ''] ?? $span['name'];
         }
 
         return $spans;

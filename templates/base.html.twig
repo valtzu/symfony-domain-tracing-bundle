@@ -11,11 +11,12 @@
         {% block javascripts %}
         {% endblock %}
 
-        {% set trace_id = app.request.pathInfo starts with '/_' ? null : app.request.headers.get('x-request-id') %}
-        {% if trace_id %}
-        <link rel="stylesheet" href="/trace.css">
+        {% set trace_id = app.request.headers.get('x-request-id') %}
+        {% set tracing_ui_url = app.request.server.get('TRACING_UI_URL') %}
+        {% if trace_id and tracing_ui_url %}
+        <link rel="stylesheet" href="{{ tracing_ui_url }}/trace.css">
         <script type="module">
-            import { followTrace } from '/trace.js';
+            import { followTrace } from {{ (tracing_ui_url ~ '/trace.js')|json_encode|raw }};
             const panel = document.body.appendChild(document.createElement('aside'));
             panel.classList.add('trace-panel-docked');
             followTrace({{ trace_id|json_encode|raw }}, panel);

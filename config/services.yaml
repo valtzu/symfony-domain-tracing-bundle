@@ -18,16 +18,7 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
-        exclude: '../src/Tracing/Resources/'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    app.platform.claude_code:
-        class: Symfony\AI\Platform\Platform
-        # public so that tests can replace it with a mock platform
-        public: true
-        factory: [Symfony\AI\Platform\Bridge\ClaudeCode\Factory, createPlatform]
-        arguments:
-            $workingDirectory: '%kernel.project_dir%/var'
-            $timeout: 600

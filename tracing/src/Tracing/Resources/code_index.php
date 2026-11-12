@@ -2,7 +2,7 @@
 
 // Runs inside the traced process through a DBGp "eval", so the recorder needs no access to the code of the services
 // it records. Keep it self-contained: the traced process does not have the classes of the recorder.
-return static function (bool $full, string $excludedPrefix): string {
+return static function (bool $full): string {
     $root = null;
     foreach (\Composer\Autoload\ClassLoader::getRegisteredLoaders() as $vendorDir => $loader) {
         $root = \dirname($vendorDir);
@@ -18,7 +18,7 @@ return static function (bool $full, string $excludedPrefix): string {
             }
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
                 $class = $prefix.strtr(substr($file->getPathname(), \strlen($directory) + 1, -4), '/', '\\');
-                if ('php' === $file->getExtension() && !str_starts_with($class, $excludedPrefix)) {
+                if ('php' === $file->getExtension()) {
                     $files[$file->getPathname()] = ['class' => $class, 'modified' => $file->getMTime()];
                 }
             }

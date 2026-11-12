@@ -48,7 +48,7 @@ final class TraceController extends AbstractController
                     };
                     foreach ($changes as [$change, $span]) {
                         $function = null === $span['function'] ? null : $builder->function($span['function']);
-                        $span['name'] = $names[$span['function']] ?? (null === $function ? null : $namer->cachedName($span['service'], $span['function'], $function['code'])) ?? $span['name'];
+                        $span['name'] = $names[$span['function'] ?? ''] ?? (null === $function ? null : $namer->cachedName($span['service'], $span['function'], $function['code'])) ?? $span['name'];
                         $send('span', ['change' => $change] + $span);
                     }
                 }
@@ -79,7 +79,7 @@ final class TraceController extends AbstractController
         ]);
     }
 
-    #[Route('/_traces/live', methods: ['GET'])]
+    #[Route('/', methods: ['GET'])]
     public function live(): Response
     {
         return $this->render('trace_live.html.twig', ['now' => microtime(true)]);

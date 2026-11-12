@@ -2,6 +2,7 @@
 
 namespace App\Tracing;
 
+
 /**
  * Records every executed line of the application code of one request, through a DBGp connection from PHP Debugger.
  *
@@ -17,6 +18,11 @@ namespace App\Tracing;
  * the application runs next. The engine reports a return breakpoint with the position of the caller, while the stack
  * still shows the method that returns.
  *
+ * When the request has no X-Request-Id header, the session gives it one, so the page can find its trace. The session
+ * also sends the trace context to the services that the request calls: when the request is about to make an
+ * HTTP request with Symfony HttpClient, it adds a traceparent header to the options of that request. The services need
+ * no code or configuration for it.
+ *
  * Recording starts when the entrypoint (a controller or a command) runs its first method other than the constructor.
  * The framework code, the constructor and the services built for the action arguments are not part of the flow.
  */
@@ -26,6 +32,11 @@ final class TraceSession
     private static array $codeIndexes = [];
 
     private const AUTOLOADER = 'Composer\\Autoload\\ClassLoader';
+    private const HTTP_CLIENTS = [
+        'Symfony\\Component\\HttpClient\\CurlHttpClient',
+        'Symfony\\Component\\HttpClient\\NativeHttpClient',
+        'Symfony\\Component\\HttpClient\\AmpHttpClient',
+    ];
 
     private ?array $request = null;
     private ?array $codeIndex = null;
@@ -36,6 +47,9 @@ final class TraceSession
     private bool $recording = false;
     private float $stoppedSince;
     private ?string $breakPosition = null;
+
+    /** @var list<string> what each pending eval command is for, in the order they were sent */
+    private array $pendingEvals = [];
 
     /** @var array<string, true> */
     private array $describedFunctions = [];
@@ -55,15 +69,16 @@ final class TraceSession
     {
         if ('init' === $message->getName()) {
             $this->connection->send('feature_set', '-n max_data -v 0');
-            $this->connection->send('eval', '', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'traceparent' => \$_SERVER['HTTP_TRACEPARENT'] ?? null, 'service' => \$_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: null), 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
+            $this->evaluate('request', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'traceparent' => \$_SERVER['HTTP_TRACEPARENT'] ?? null, 'service' => \$_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: null), 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
 
             return;
         }
 
         match ((string) $message['command']) {
-            'eval' => match (true) {
-                null === $this->request => $this->start($this->evalResult($message)),
-                default => $this->onCodeIndex($this->evalResult($message)),
+            'eval' => match (array_shift($this->pendingEvals)) {
+                'request' => $this->start($this->evalResult($message)),
+                'codeIndex' => $this->onCodeIndex($this->evalResult($message)),
+                default => null,
             },
             'breakpoint_set' => $this->autoloaderBreakpoint ??= (string) $message['id'],
             'run', 'step_over', 'step_out' => null === $this->codeIndex ? $this->onAutoloaderBreak($message) : $this->onBreak($message),
@@ -84,6 +99,11 @@ final class TraceSession
     private function start(array $request): void
     {
         $this->request = $request;
+
+        if (null !== $request['method'] && !TraceStore::isValidId($request['id'] ?? '')) {
+            $this->request['id'] = self::newRequestId();
+            $this->evaluate('ignore', \sprintf('$_SERVER[\'HTTP_X_REQUEST_ID\'] = %s', var_export($this->request['id'], true)));
+        }
 
         if (!$this->shouldRecord()) {
             $this->connection->send('detach');
@@ -112,7 +132,7 @@ final class TraceSession
 
         $this->stoppedSince = microtime(true);
         $this->connection->send('breakpoint_remove', '-d '.$this->autoloaderBreakpoint);
-        $this->connection->send('eval', '', $this->codeIndexCall(false));
+        $this->evaluate('codeIndex', $this->codeIndexCall(false));
     }
 
     private function onCodeIndex(array $result): void
@@ -120,7 +140,7 @@ final class TraceSession
         if (!isset($result['files'])) {
             $this->codeIndexCacheKey = $this->request['service'].'#'.$result['fingerprint'];
             if (!isset(self::$codeIndexes[$this->codeIndexCacheKey])) {
-                $this->connection->send('eval', '', $this->codeIndexCall(true));
+                $this->evaluate('codeIndex', $this->codeIndexCall(true));
 
                 return;
             }
@@ -134,6 +154,9 @@ final class TraceSession
     {
         $this->codeIndex = $codeIndex;
 
+        foreach (self::HTTP_CLIENTS as $client) {
+            $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m request', $client));
+        }
         foreach ($codeIndex['files'] as $path => $file) {
             foreach ($file['methods'] as $method => $lines) {
                 $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m %s', $file['class'], $method));
@@ -179,6 +202,10 @@ final class TraceSession
         $path = substr((string) $frame['filename'], \strlen('file://'));
         $function = (string) $frame['where'];
         $file = $this->codeIndex['files'][$path] ?? null;
+
+        if (\in_array(strstr($function, '->', true), self::HTTP_CLIENTS, true) && str_ends_with($function, '->request')) {
+            $this->evaluate('ignore', \sprintf('$options[\'headers\'][\'traceparent\'] ??= %s', var_export(TraceContext::traceparent($this->request), true)));
+        }
 
         if ($this->recording && null !== $file && $this->breakPosition !== $frame['filename'].':'.$frame['lineno']) {
             $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince));
@@ -258,7 +285,22 @@ final class TraceSession
     {
         $closure = preg_replace('/^.*?return\s+(static function.*);\s*$/s', '$1', file_get_contents(__DIR__.'/Resources/code_index.php'));
 
-        return \sprintf('(%s)(%s, %s)', $closure, var_export($full, true), var_export(__NAMESPACE__.'\\', true));
+        return \sprintf('(%s)(%s)', $closure, var_export($full, true));
+    }
+
+    private function evaluate(string $purpose, string $code): void
+    {
+        $this->pendingEvals[] = $purpose;
+        $this->connection->send('eval', '', $code);
+    }
+
+    private static function newRequestId(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = \chr(\ord($bytes[6]) & 0x0F | 0x40);
+        $bytes[8] = \chr(\ord($bytes[8]) & 0x3F | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 
     private function evalResult(\SimpleXMLElement $message): array

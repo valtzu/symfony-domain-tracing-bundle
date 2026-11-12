@@ -1,7 +1,9 @@
+name: symfony-ai-stacktrace
+
 services:
   shop:
     build:
-      context: ./demo
+      context: .
       target: frankenphp_dev
     environment:
       SERVER_NAME: ${SERVER_NAME:-localhost}
@@ -29,14 +31,14 @@ services:
       - "127.0.0.1:${PHP_PORT:-8100}:8080"
     working_dir: /app/demo
     volumes:
-      - ./:/app
+      - ../:/app
       - traces:/app/demo/var/share/traces
       - caddy_data:/data
       - caddy_config:/config
 
   payments:
     build:
-      context: ./demo
+      context: .
       target: frankenphp_dev
     environment:
       HTTP_PORT: "8080"
@@ -45,13 +47,13 @@ services:
       XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-tracing}
     working_dir: /app/demo
     volumes:
-      - ./:/app
+      - ../:/app
       - traces:/app/demo/var/share/traces
 
   # Records the requests of the services above, and names and describes them with Claude Code
   tracing:
     build:
-      context: ./demo
+      context: .
       target: frankenphp_dev
     command: ["php", "bin/console", "ai-stacktrace:run"]
     environment:
@@ -64,7 +66,7 @@ services:
       GIT_CONFIG_VALUE_0: "*"
     working_dir: /app/demo
     volumes:
-      - ./:/app
+      - ../:/app
       - traces:/app/demo/var/share/traces
       - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
       - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json

@@ -24,6 +24,7 @@ The worker uses `~/.local/bin/claude` and `~/.claude/.credentials.json`; set `CL
 when they are somewhere else.
 
 ```shell
+cd demo
 docker compose build
 docker compose run --rm --no-deps shop composer install
 docker compose up -d

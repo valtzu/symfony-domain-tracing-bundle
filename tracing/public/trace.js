@@ -1,5 +1,6 @@
 const SERVICE_COLORS = 4;
 const BASE_URL = new URL('/', import.meta.url);
+const ROW_ENTER_MILLISECONDS = 250;
 
 /**
  * A waterfall of the spans of a trace, like the trace view of Jaeger, that grows while the trace is recorded.
@@ -13,6 +14,7 @@ function createWaterfall(container) {
     let describing = true;
     let recordingEnded = false;
     let frame = null;
+    const shownAt = new Map();
 
     const serviceColor = service => {
         if (!services.includes(service)) {
@@ -50,6 +52,19 @@ function createWaterfall(container) {
         return rows;
     };
 
+    /**
+     * The waterfall is rebuilt on each update, so a new row continues its enter animation from where the previous
+     * element of that row stopped.
+     */
+    const enter = (element, key) => {
+        const now = performance.now();
+        const age = now - (shownAt.get(key) ?? shownAt.set(key, now).get(key));
+        if (age < ROW_ENTER_MILLISECONDS) {
+            element.classList.add('waterfall-enter');
+            element.style.animationDelay = `-${age}ms`;
+        }
+    };
+
     const milliseconds = seconds => seconds * 1000 >= 10 ? `${(seconds * 1000).toFixed(0)} ms` : `${(seconds * 1000).toFixed(2)} ms`;
 
     function render() {
@@ -72,6 +87,7 @@ function createWaterfall(container) {
             if (event) {
                 const item = table.appendChild(document.createElement('div'));
                 item.className = `waterfall-row waterfall-event${event.error ? ' error' : ''}`;
+                enter(item, event);
                 const text = item.appendChild(document.createElement('div'));
                 text.className = 'waterfall-event-text';
                 text.style.paddingLeft = `${depth * 14}px`;
@@ -98,6 +114,7 @@ function createWaterfall(container) {
             const failed = spanEvents.some(event => event.error);
             const row = table.appendChild(document.createElement('div'));
             row.className = `waterfall-row service-${serviceColor(span.service)}${failed ? ' failed' : ''}${null === span.end ? ' running' : ''}`;
+            enter(row, span.id);
 
             const label = row.appendChild(document.createElement('div'));
             label.className = 'waterfall-label';

@@ -17,7 +17,9 @@
 .trace-panel .trace-links a { color: inherit; font-size: 13px; }
 .trace-panel-docked { max-width: 960px; margin: 0 auto 24px; width: calc(100% - 32px); box-sizing: border-box; }
 
-.waterfall { margin-top: 12px; font-size: 13px; overflow-x: auto; overflow-y: hidden; }
+.waterfall { margin-top: 12px; font-size: 13px; overflow-x: auto; overflow-y: hidden; interpolate-size: allow-keywords; }
+.waterfall-enter { overflow: hidden; animation: waterfall-enter 250ms ease-out both; }
+@keyframes waterfall-enter { from { height: 0; min-height: 0; opacity: 0; } }
 .waterfall-axis, .waterfall-row { display: grid; grid-template-columns: minmax(180px, 34%) 1fr; gap: 8px; align-items: center; min-width: 560px; }
 .waterfall-axis { color: var(--trace-muted); font-size: 11px; height: 18px; border-bottom: 1px solid var(--trace-line); }
 .waterfall-ticks { position: relative; height: 100%; }
@@ -62,4 +64,5 @@
 @media (prefers-reduced-motion: reduce) {
     .trace-spinner { animation-duration: 3s; }
     .waterfall-row.running .waterfall-bar { animation: none; }
+    .waterfall-enter { animation: none; }
 }

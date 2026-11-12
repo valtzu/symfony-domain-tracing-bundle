@@ -30,6 +30,7 @@ final class TraceDecoder
             'file' => $this->addFile($request, $record),
             'function' => $this->addFunction($request, $record),
             'step' => $this->decodeStep($request, $record),
+            'lines' => ['file' => $this->files[$request][$record['file']]['path'] ?? null] + $record,
             default => $record,
         };
     }
@@ -53,6 +54,7 @@ final class TraceDecoder
             'function' => $record['function'],
             'file' => $file['path'],
             'line' => $record['line'],
+            'endLine' => $record['endLine'],
             'code' => null === $record['line'] ? '' : implode("\n", \array_slice($file['lines'], $record['line'] - 1, $record['endLine'] - $record['line'] + 1)),
             'at' => $record['at'],
         ];

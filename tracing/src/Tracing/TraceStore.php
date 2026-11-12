@@ -65,6 +65,14 @@ final readonly class TraceStore
         $this->append($id, ['type' => 'arguments', 'depth' => $depth, 'values' => $arguments, 'at' => $at]);
     }
 
+    /**
+     * @param list<int> $lines the lines of the file that ran during the request
+     */
+    public function addExecutedLines(string $id, int $file, array $lines, float $at): void
+    {
+        $this->append($id, ['type' => 'lines', 'file' => $file, 'lines' => $lines, 'at' => $at]);
+    }
+
     public function describeFile(string $id, array $file): void
     {
         $this->append($id, ['type' => 'file'] + $file);
@@ -96,7 +104,8 @@ final readonly class TraceStore
     private const MAX_AGE_TO_PROCESS_SECONDS = 300;
 
     /**
-     * @return list<string> IDs of the recent requests that started a trace and have not been processed yet, oldest first
+     * @return list<string> IDs of the recent requests that started a trace and have not been processed yet, newest first,
+     *                      so that the request someone just made does not wait behind older ones
      */
     public function unprocessedRoots(): array
     {
@@ -112,7 +121,7 @@ final readonly class TraceStore
                 $roots[$id] = $request['startedAt'];
             }
         }
-        asort($roots);
+        arsort($roots);
 
         return array_keys($roots);
     }

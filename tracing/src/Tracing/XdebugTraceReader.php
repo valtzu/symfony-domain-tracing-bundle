@@ -5,7 +5,9 @@ namespace App\Tracing;
 /**
  * Follows the trace file that Xdebug writes for one request (trace format 1: tab-separated function entries, exits
  * and return values) and records the calls of application methods, from the first method of the entrypoint other than
- * its constructor. The framework code and the services built before that are not part of the flow.
+ * its constructor. The framework code and the services built before that are not part of the flow. When the trace
+ * ends, it records which lines of these methods ran, from the code coverage that the prepend file of the service
+ * writes next to the trace file.
  *
  * @see https://xdebug.org/docs/trace#trace_format
  */
@@ -85,6 +87,7 @@ final class XdebugTraceReader
         }
         if (str_starts_with($line, 'TRACE END')) {
             $this->flushExit();
+            $this->readExecutedLines();
             $this->ended = true;
 
             return;
@@ -161,6 +164,16 @@ final class XdebugTraceReader
             $this->pendingExit = null;
             unset($this->recordedCalls[$exit['number']]);
             $this->store->addExit($this->requestId, $exit['depth'], $exit['at'], $exit['details']);
+        }
+    }
+
+    private function readExecutedLines(): void
+    {
+        $coverage = json_decode((string) @file_get_contents($this->path.'.lines.json'), true);
+        foreach (\is_array($coverage) ? $coverage : [] as $path => $lines) {
+            if (isset($this->files[$path]) && \is_array($lines)) {
+                $this->store->addExecutedLines($this->requestId, $this->files[$path], array_map(intval(...), $lines), (float) $this->endedAt());
+            }
         }
     }
 

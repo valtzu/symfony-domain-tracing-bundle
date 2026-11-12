@@ -42,6 +42,7 @@ final class SpanBuilder
             'step' => $this->step($record),
             'exit' => $this->exit($record),
             'arguments' => $this->setArguments($record),
+            'lines' => $this->setExecutedLines($record),
             'end' => $this->closeRequest($record['request'], $record['at']),
             default => [],
         };
@@ -170,6 +171,25 @@ final class SpanBuilder
         $this->spans[$span['id']] = $span;
         $stack[] = $span['id'];
         $changes[] = ['open', $span];
+
+        return $changes;
+    }
+
+    /**
+     * Gives each span of the request the lines of its method that ran during the request. When a method ran more than
+     * once, these are the lines of all its calls.
+     */
+    private function setExecutedLines(array $record): array
+    {
+        $changes = [];
+        foreach ($this->spans as $id => $span) {
+            $function = null === $span['function'] ? null : $this->functions[$span['function']] ?? null;
+            if ($span['request'] !== $record['request'] || null === $function || $function['file'] !== $record['file'] || null === $function['line']) {
+                continue;
+            }
+            $this->spans[$id]['executedLines'] = array_values(array_filter($record['lines'], static fn (int $line) => $line >= $function['line'] && $line <= $function['endLine']));
+            $changes[] = ['open', $this->spans[$id]];
+        }
 
         return $changes;
     }

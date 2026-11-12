@@ -51,6 +51,7 @@ final readonly class OtlpExporter
                     'code.file.path' => $span['file'] ?? null,
                     'code.line.number' => $span['line'] ?? null,
                     'app.arguments' => isset($span['arguments']) ? json_encode($span['arguments'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : null,
+                    'app.executed_lines' => isset($span['executedLines']) ? implode(',', $span['executedLines']) : null,
                     'app.return_value' => \array_key_exists('returnValue', $span) ? json_encode($span['returnValue'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : null,
                 ], static fn ($value) => null !== $value)),
                 'events' => array_map(static fn (array $event) => [

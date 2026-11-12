@@ -5,8 +5,8 @@ Business-level traces of PHP requests, without instrumenting the code.
 ## What
 
 [Xdebug](https://xdebug.org/) traces the calls of the application methods of each request, with their arguments,
-return values and times, and a recorder that takes part in each request as a debugging client (DBGp) follows the
-request across services. A worker turns the recording into OpenTelemetry spans, gives each method a business name ("Apply
+return values and times, and records which lines of them ran. A recorder that takes part in each request as a
+debugging client (DBGp) follows the request across services. A worker turns the recording into OpenTelemetry spans, gives each method a business name ("Apply
 discounts", "Charge card") and describes what happened in it ("Card declined: insufficient funds") with
 [Symfony AI](https://symfony.com/doc/current/ai/index.html) and Claude Code. The result streams into a waterfall
 next to the page while the request runs, and ends up in Jaeger.
@@ -55,23 +55,23 @@ Then place an order in the demo shop and watch the panel under the page.
   - `tracing` serves the live view and the event stream for the panel.
 
 A service needs the Xdebug settings of `frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
-trace to the application namespaces, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at
+trace and the code coverage to the application and writes the lines that ran next to the trace, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at
 `/traces`, and an `OTEL_SERVICE_NAME`.
 
 ## Limits
 
-- Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment:
+- Development only: recording makes requests about 5 times slower. Median of 50 requests in the dev environment:
 
   | | `GET /` (shop) | `POST /` (shop and payments) |
   |---|---|---|
   | No extension | 3.9 ms | 7.9 ms |
-  | Recorded | 16 ms | 32–37 ms |
+  | Recorded | 18–25 ms | 44–52 ms |
 
   An earlier version recorded every line with [PHP Debugger](https://php-debugger.dev/) and was about 25 times
   slower (90 ms and 220 ms): a connected debugger disables OPcache for the request, and every breakpoint is checked
   on each function call.
-- Xdebug records the calls of application methods, not each line, so a trace does not show which branch ran inside
-  a method. The arguments and return values usually tell.
+- The lines that ran come from the code coverage of the whole request. When a method runs more than once in a request,
+  its span shows the lines of all its calls together.
 - The times in a trace include the overhead of Xdebug.
 - Only Symfony HttpClient carries the trace to other services.
 - A return value is known only when the caller uses it; PHP discards an unused one.

@@ -75,9 +75,15 @@ final readonly class ProcessTracesCommand
                 $spans = self::withNames($builder->spans(), $names);
                 $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), $events);
                 $code = [];
-                foreach ($pending as $step) {
-                    if (!isset($described[$step['function']]) && null !== $function = $builder->function($step['function'])) {
-                        $code[$step['function']] = $described[$step['function']] = $function['code'];
+                $functions = array_unique([...array_column($pending, 'function'), ...array_keys($described)]);
+                foreach ($functions as $name) {
+                    $executedLines = self::executedLines($spans, $name);
+                    if (\array_key_exists($name, $described) && ($described[$name] || null === $executedLines)) {
+                        continue;
+                    }
+                    if (null !== $function = $builder->function($name)) {
+                        $code[$name] = self::markExecutedLines($function, $executedLines ?? []);
+                        $described[$name] = null !== $executedLines;
                     }
                 }
                 foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended, $code) as $event) {
@@ -126,16 +132,32 @@ final readonly class ProcessTracesCommand
 
     /**
      * @param array<string, array> $spans
+     *
+     * @return list<int>|null the lines of the function that ran, from all its calls, or null when they are not known yet
      */
-    private static function rootSpanId(array $spans, string $rootId): string
+    private static function executedLines(array $spans, string $function): ?array
     {
+        $lines = null;
         foreach ($spans as $span) {
-            if ('server' === $span['kind'] && $span['request'] === $rootId) {
-                return $span['id'];
+            if ($span['function'] === $function && isset($span['executedLines'])) {
+                $lines = array_merge($lines ?? [], $span['executedLines']);
             }
         }
 
-        return '';
+        return null === $lines ? null : array_values(array_unique($lines));
+    }
+
+    /**
+     * @param list<int> $executedLines
+     */
+    private static function markExecutedLines(array $function, array $executedLines): string
+    {
+        $marked = [];
+        foreach (explode("\n", $function['code']) as $index => $line) {
+            $marked[] = (\in_array($function['line'] + $index, $executedLines, true) ? '▶ ' : '  ').$line;
+        }
+
+        return implode("\n", $marked);
     }
 
     /**

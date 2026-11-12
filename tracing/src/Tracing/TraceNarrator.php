@@ -60,23 +60,31 @@ final readonly class TraceNarrator
             }
             $buffer .= $delta->getText();
             while (false !== $newline = strpos($buffer, "\n")) {
-                yield from $this->toEvent(substr($buffer, 0, $newline), $steps, $rootSpanId);
+                yield from $this->toEvent(substr($buffer, 0, $newline), $steps, $spans, $rootSpanId);
                 $buffer = substr($buffer, $newline + 1);
             }
         }
-        yield from $this->toEvent($buffer, $steps, $rootSpanId);
+        yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
     }
 
     /**
+     * Places an event at the start of the call it is about, or at its end when the event is about how the call ended,
+     * such as what it returned or why it failed. The outcome of the request is placed at its end.
+     *
      * @return iterable<array{span: string, at: float, text: string, error: bool}>
      */
-    private function toEvent(string $line, array $steps, ?string $rootSpanId): iterable
+    private function toEvent(string $line, array $steps, array $spans, ?string $rootSpanId): iterable
     {
         $event = json_decode(trim($line), true);
         $outcome = true === ($event['outcome'] ?? false) && null !== $rootSpanId;
         $step = $outcome ? end($steps) : $steps[$event['line'] ?? -1] ?? null;
-        if ($step && \is_string($event['text'] ?? null) && '' !== trim($event['text'])) {
-            yield ['span' => $outcome ? $rootSpanId : $step['span'], 'at' => $step['at'], 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
+        if (!$step || !\is_string($event['text'] ?? null) || '' === trim($event['text'])) {
+            return;
         }
+
+        $spanId = $outcome ? $rootSpanId : $step['span'];
+        $at = $outcome || 'return' === ($event['when'] ?? null) ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
+
+        yield ['span' => $spanId, 'at' => $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
     }
 }

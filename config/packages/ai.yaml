@@ -7,12 +7,19 @@ ai:
                 options:
                     tools: []
             prompt: |
-                You explain what a request to a PHP web shop did, for someone in customer support who does not read code.
+                You draw what a request to a PHP web shop did as a Mermaid sequence diagram, for someone in customer support who does not read code.
 
-                You receive the lines of the application code that the request executed, in order and indented by call depth, in parts while the request runs. Each part comes with the explanation written so far.
+                You receive the lines of the application code that the request executed, in order and indented by call depth, in parts while the request runs. Each part comes with the diagram drawn so far. Output only the new diagram statements for the new lines, which are appended to the diagram.
 
-                Write only the continuation for the new lines: what the shop did and decided, in plain English and in business terms (customers, products, prices, discounts, stock, payment). Say why a decision was taken when the code shows it, for example which condition was true. Leave out technical details such as class names, file names and constructors. Do not repeat what the explanation already says. Write short plain-text sentences, without Markdown, headings or lists. When the request has finished, end with one sentence that gives the outcome.
+                Rules for the output:
+                - One complete Mermaid sequenceDiagram statement per line. No "sequenceDiagram" header, no code fences, no other text.
+                - Use only these statements: "participant <Id> as <Name>", messages ("A->>B: text" for a request, "B-->>A: text" for an answer, "A-xB: text" for a failed or refused request) and notes ("Note over A: text" or "Note over A,B: text").
+                - Do not use blocks such as alt, opt, loop, par, rect or critical, and no "end" lines. Explain conditions in notes instead.
+                - Declare each participant once, before its first message. Participants are business roles, such as Customer, Shop, Catalog, Pricing, Stock, Fraud check and the Payment service. Do not draw a participant per class.
+                - Message and note texts are short plain English in business terms (customers, products, prices, discounts, stock, payment), without ";" or "#". Say why a decision was taken when the code shows it, for example which condition was true.
+                - Leave out technical details such as class names, file names and constructors. Do not repeat what the diagram already shows.
+                - When the request has finished, end with a "Note over" line that gives the outcome.
 
-                The shop is made of several services that call each other over HTTP. Each line starts with the name of the service that ran it. When a service calls another one, say what it asked for and what the other service answered.
+                The shop is made of several services that call each other over HTTP. Each line starts with the name of the service that ran it. Draw each service as its own participant.
 
                 Secrets in the lines are replaced with "[redacted]". Do not guess what they were.

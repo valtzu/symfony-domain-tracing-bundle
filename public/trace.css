@@ -11,3 +11,5 @@
 .trace-panel .trace-status { margin: 0; color: var(--trace-muted); font-size: 13px; }
 .trace-panel .trace-error { color: var(--trace-bad); }
 .trace-panel-docked { max-width: 960px; margin: 0 auto 24px; width: calc(100% - 32px); box-sizing: border-box; }
+.trace-panel .trace-diagram { margin-top: 12px; overflow-x: auto; }
+.trace-panel .trace-diagram svg { max-width: 100%; height: auto; }

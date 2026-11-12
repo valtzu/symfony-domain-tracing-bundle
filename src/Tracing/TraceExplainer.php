@@ -9,8 +9,8 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Follows a trace while it is recorded and explains it part by part, so the explanation keeps up with a request that
- * runs slowly, for example when someone steps through it with a debugger.
+ * Follows a trace while it is recorded and explains it part by part as Mermaid sequence diagram statements, so the
+ * diagram keeps up with a request that runs slowly, for example when someone steps through it with a debugger.
  */
 final readonly class TraceExplainer
 {
@@ -37,7 +37,7 @@ final readonly class TraceExplainer
         $ended = [];
         $traceId = null;
         $pending = [];
-        $explanation = '';
+        $diagram = '';
         $lastActivity = microtime(true);
 
         while (true) {
@@ -86,11 +86,11 @@ final readonly class TraceExplainer
             $idle = microtime(true) - $lastActivity;
             if ($pending && ($traceEnded || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_EXPLAINING)) {
                 $part = '';
-                foreach ($this->explain($spans[$rootSpanId] ?? null, $spans, $explanation, $pending, $traceEnded) as $text) {
+                foreach ($this->explain($spans[$rootSpanId] ?? null, $spans, $diagram, $pending, $traceEnded) as $text) {
                     $part .= $text;
                     yield ['text', $text];
                 }
-                $explanation .= ('' === $explanation ? '' : "\n\n").trim($part);
+                $diagram .= rtrim($part)."\n";
                 $pending = [];
                 yield ['part', null];
                 continue;
@@ -110,10 +110,10 @@ final readonly class TraceExplainer
      *
      * @return iterable<string>
      */
-    private function explain(?array $request, array $spans, string $explanation, array $records, bool $traceEnded): iterable
+    private function explain(?array $request, array $spans, string $diagram, array $records, bool $traceEnded): iterable
     {
         $prompt = \sprintf("Request: %s %s to the %s service\n\n", $request['method'] ?? '?', $request['uri'] ?? '?', $request['service'] ?? '?');
-        $prompt .= "Explanation so far:\n".('' === $explanation ? '(nothing yet)' : $explanation)."\n\n";
+        $prompt .= "Diagram so far:\n".('' === $diagram ? '(nothing yet)' : $diagram)."\n\n";
         $prompt .= "New executed lines:\n".$this->formatRecords($records, $spans)."\n\n";
         $prompt .= $traceEnded ? 'The request has finished.' : 'The request is still running. More lines will follow.';
 

@@ -17,6 +17,7 @@ final class TraceController extends AbstractController
     #[Route('/_tracing/{id}/events', name: 'ai_stacktrace_events', methods: ['GET'])]
     public function events(
         string $id,
+        Request $request,
         TraceStore $store,
         BlobStore $blobs,
         OperationNamer $namer,
@@ -24,8 +25,13 @@ final class TraceController extends AbstractController
         if (!TraceStore::isValidId($id)) {
             throw $this->createNotFoundException();
         }
+        $id = $store->rootOf($id);
+        $describe = $request->query->getBoolean('describe');
+        if ($describe) {
+            $store->requestDescription($id);
+        }
 
-        return new StreamedResponse(function () use ($id, $store, $blobs, $namer) {
+        return new StreamedResponse(function () use ($id, $describe, $store, $blobs, $namer) {
             $send = static function (string $event, mixed $data): void {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
@@ -51,6 +57,10 @@ final class TraceController extends AbstractController
                         $span['name'] = $names[$span['function'] ?? ''] ?? (null === $function ? null : $namer->cachedName($span['service'], $span['function'], $function['code'])) ?? $span['name'];
                         $send('span', ['change' => $change] + $span);
                     }
+                }
+
+                if (!$describe && $follower->hasEnded()) {
+                    break;
                 }
 
                 $narration = $store->readNarration($id, $narrationOffset);

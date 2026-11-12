@@ -5,13 +5,12 @@ const ROW_ENTER_MILLISECONDS = 250;
 /**
  * A waterfall of the spans of a trace, like the trace view of Jaeger, that grows while the trace is recorded.
  */
-function createWaterfall(container) {
+function createWaterfall(container, describing) {
     const spans = new Map();
     const events = new Map();
     const names = new Map();
     const services = [];
     let latest = 0;
-    let describing = true;
     let recordingEnded = false;
     let frame = null;
     const shownAt = new Map();
@@ -201,15 +200,15 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
     panel.innerHTML = '<h2>What happened</h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     panel.querySelector('.trace-status').prepend(spinner());
     const status = panel.querySelector('.trace-status-text');
-    const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'));
+    const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'), describe);
     let steps = 0;
 
-    const source = new EventSource(new URL(`${id}/events`, BASE_URL));
+    const source = new EventSource(new URL(`${id}/events${describe ? '?describe=1' : ''}`, BASE_URL));
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {
@@ -228,7 +227,7 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
     on('end', () => {
         console.groupEnd();
         waterfall.recordingEnded();
-        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls. Describing…`);
+        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls.${describe ? ' Describing…' : ''}`);
     });
     on('name', record => waterfall.name(record.function, record.name));
     on('event', event => waterfall.event(event));

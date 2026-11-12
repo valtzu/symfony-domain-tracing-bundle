@@ -106,25 +106,38 @@ final readonly class TraceStore
         return $this->readLines($this->narrationPath($rootId), $offset) ?? ['records' => [], 'offset' => $offset];
     }
 
-    private const MAX_AGE_TO_PROCESS_SECONDS = 30;
+    /**
+     * @return string the ID of the request that started the trace of the given request
+     */
+    public function rootOf(string $id): string
+    {
+        $request = $this->read($id)['records'][0] ?? [];
+
+        return $this->spansOf($request['traceId'] ?? '')[0] ?? $id;
+    }
 
     /**
-     * @return list<string> IDs of the requests that started a trace in the last 30 seconds and have not been processed
-     *                      yet, newest first,
-     *                      so that the request someone just made does not wait behind older ones
+     * Asks for a description of a trace. Only the traces that someone looks at are described, because a description
+     * costs AI usage.
+     */
+    public function requestDescription(string $rootId): void
+    {
+        if ($this->has($rootId) && !is_file($this->narrationPath($rootId))) {
+            touch($this->requestedPath($rootId));
+        }
+    }
+
+    /**
+     * @return list<string> IDs of the traces that someone asked to describe and that have not been processed yet, the
+     *                      most recently asked first
      */
     public function unprocessedRoots(): array
     {
         $roots = [];
-        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
-            $id = basename($path, '.jsonl');
-            if (!self::isValidId($id) || is_file($this->narrationPath($id)) || filemtime($path) < time() - self::MAX_AGE_TO_PROCESS_SECONDS) {
-                continue;
-            }
-            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
-            fclose($handle);
-            if (\array_key_exists('parentSpanId', $request) && null === $request['parentSpanId'] && $request['startedAt'] >= microtime(true) - self::MAX_AGE_TO_PROCESS_SECONDS) {
-                $roots[$id] = $request['startedAt'];
+        foreach (glob($this->directory.'/*.requested') ?: [] as $path) {
+            $id = basename($path, '.requested');
+            if (self::isValidId($id) && !is_file($this->narrationPath($id))) {
+                $roots[$id] = filemtime($path);
             }
         }
         arsort($roots);
@@ -193,6 +206,11 @@ final readonly class TraceStore
     private function narrationPath(string $rootId): string
     {
         return $this->directory.'/'.$rootId.'.narration';
+    }
+
+    private function requestedPath(string $rootId): string
+    {
+        return $this->directory.'/'.$rootId.'.requested';
     }
 
     private function tracePath(string $traceId): string

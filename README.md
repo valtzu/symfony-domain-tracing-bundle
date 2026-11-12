@@ -50,7 +50,7 @@ Then open the live traces and place an order in the demo shop.
     stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
     directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
   - The worker process builds the spans, names the operations (once per method and code version), describes the
-    request, and removes secrets before anything goes to the AI. It reads the source from the git repositories in
+    request when someone opens its "Domain traces" panel in the profiler, and removes secrets before anything goes to the AI. It reads the source from the git repositories in
     `TRACE_GIT_REPOSITORIES`, including uncommitted files.
 
 A service needs the Xdebug settings of `demo/frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the

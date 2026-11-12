@@ -23,7 +23,7 @@
         <div id="ai-stacktrace"></div>
         <script type="module">
             import { followTrace } from {{ path('ai_stacktrace_asset', {file: 'trace.js'})|json_encode|raw }};
-            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('ai-stacktrace'));
+            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('ai-stacktrace'), { describe: true });
         </script>
     {% else %}
         <h2>Domain traces</h2>

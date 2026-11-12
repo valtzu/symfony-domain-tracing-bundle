@@ -30,6 +30,7 @@ services:
     volumes:
       - ./:/app
       - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
+      - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
       - caddy_data:/data
       - caddy_config:/config
 

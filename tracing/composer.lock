@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f86934ed6b4dc5edae0c5812e985bc56",
+    "content-hash": "17975c088f75e1a37592824b86666ace",
     "packages": [
         {
             "name": "doctrine/deprecations",
@@ -594,71 +594,6 @@
             },
             "time": "2024-09-11T13:17:53+00:00",
             "published-time": "2024-09-11T13:21:14+00:00"
-        },
-        {
-            "name": "rybakit/msgpack",
-            "version": "v0.11.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/rybakit/msgpack.php.git",
-                "reference": "0de15432ab0b6ecf5626c5941d412624854798d2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/rybakit/msgpack.php/zipball/0de15432ab0b6ecf5626c5941d412624854798d2",
-                "reference": "0de15432ab0b6ecf5626c5941d412624854798d2",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.2",
-                "php-64bit": "*"
-            },
-            "require-dev": {
-                "ext-decimal": "*",
-                "ext-gmp": "*",
-                "friendsofphp/php-cs-fixer": "^3",
-                "phpunit/phpunit": "^11",
-                "vimeo/psalm": "^5 || ^6"
-            },
-            "suggest": {
-                "ext-decimal": "For converting overflowed integers to Decimal objects",
-                "ext-gmp": "For converting overflowed integers to GMP objects"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "MessagePack\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Eugene Leonovich",
-                    "email": "gen.work@gmail.com"
-                }
-            ],
-            "description": "A pure PHP implementation of the MessagePack serialization format.",
-            "keywords": [
-                "messagepack",
-                "msgpack",
-                "pure",
-                "streaming"
-            ],
-            "support": {
-                "issues": "https://github.com/rybakit/msgpack.php/issues",
-                "source": "https://github.com/rybakit/msgpack.php/tree/v0.11.3"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/rybakit",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-11-08T19:44:08+00:00",
-            "published-time": "2026-11-08T19:50:07+00:00"
         },
         {
             "name": "symfony/ai-agent",

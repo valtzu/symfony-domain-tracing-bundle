@@ -15,6 +15,8 @@ final class TraceFollower
     /** @var array<string, true> */
     private array $ended = [];
 
+    /** @var array<string, float> start time by request */
+    private array $startedAt = [];
 
     private readonly TraceDecoder $decoder;
 
@@ -40,6 +42,13 @@ final class TraceFollower
             foreach ($this->offsets as $requestId => $offset) {
                 $read = $this->store->read($requestId, $offset);
                 foreach ($read['records'] ?? [] as $record) {
+                    if (array_is_list($record)) {
+                        [$function, $line, $depth, $microseconds] = $record;
+                        $record = ['type' => 'step', 'fn' => $function, 'line' => $line, 'depth' => $depth, 'at' => $this->startedAt[$requestId] + $microseconds / 1e6];
+                    }
+                    if ('request' === $record['type']) {
+                        $this->startedAt[$requestId] = $record['at'];
+                    }
                     $recordsByRequest[$requestId][] = ['request' => $requestId] + $record;
                     if ('request' === $record['type'] && $requestId === $this->rootId) {
                         $this->traceId = $record['traceId'];

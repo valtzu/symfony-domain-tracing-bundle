@@ -47,8 +47,7 @@ Then place an order in the demo shop and watch the panel under the page.
 - `tracing/`: the tracing app, with its own image.
   - `recorder` is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
     it, sets the `X-Request-Id` and adds the `traceparent` header to outgoing Symfony HttpClient requests. A trace
-    refers to code by git blob ID and line, in a binary MessagePack format: about 7 KB for a checkout that runs 65
-    lines in two services, with the arguments and return values of each call.
+    refers to code by git blob ID and line.
   - `tracing-worker` builds the spans, names the operations (once per method and code version), describes the
     request, removes secrets before anything goes to the AI, and exports to Jaeger with OTLP. It reads the source
     from the git repositories in `TRACE_GIT_REPOSITORIES`, including uncommitted files.

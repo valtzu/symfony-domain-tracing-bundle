@@ -5,24 +5,17 @@ namespace App\Tracing;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Keeps each span (one request to one service) as a file that grows while the request runs: a "request" record, one
- * record per executed line, call and return, and an "end" record, in the binary format of {@see TraceCodec}. Readers
- * can follow the file while it is written. A trace index file lists the spans of each trace, in the order they
- * started. The descriptions that the worker adds are JSON Lines, next to the span file of the request that started
- * the trace.
+ * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs: a "request"
+ * record, one step per executed line and an "end" record. A step is the array [function, line, call depth,
+ * microseconds since the request started], because it is the most frequent record. Readers can follow the file while it is written.
+ * A trace index file lists the spans of each trace, in the order they started.
  */
-final class TraceStore
+final readonly class TraceStore
 {
-    private readonly TraceCodec $codec;
-
-    /** @var array<string, float> start time by request, to encode and decode the times of its records */
-    private array $startedAt = [];
-
     public function __construct(
         #[Autowire('%kernel.project_dir%/var/traces')]
-        private readonly string $directory,
+        private string $directory,
     ) {
-        $this->codec = new TraceCodec();
     }
 
     public static function isValidId(string $id): bool
@@ -37,7 +30,6 @@ final class TraceStore
         }
 
         file_put_contents($this->path($id), '');
-        $this->startedAt[$id] = $request['at'];
         $this->append($id, ['type' => 'request', 'startedAt' => microtime(true)] + $request);
         file_put_contents($this->tracePath($request['traceId']), $id."\n", \FILE_APPEND);
     }
@@ -54,9 +46,9 @@ final class TraceStore
         return file($path, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
     }
 
-    public function addStep(string $id, int $function, int $line, int $depth, float $at): void
+    public function addStep(string $id, int $function, int $line, int $depth, int $microseconds): void
     {
-        $this->append($id, ['type' => 'step', 'fn' => $function, 'line' => $line, 'depth' => $depth, 'at' => $at]);
+        file_put_contents($this->path($id), json_encode([$function, $line, $depth, $microseconds])."\n", \FILE_APPEND);
     }
 
     /**
@@ -106,12 +98,13 @@ final class TraceStore
     public function unprocessedRoots(): array
     {
         $roots = [];
-        foreach (glob($this->directory.'/*.trace') ?: [] as $path) {
-            $id = basename($path, '.trace');
+        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
+            $id = basename($path, '.jsonl');
             if (!self::isValidId($id) || is_file($this->narrationPath($id))) {
                 continue;
             }
-            $request = $this->readRequest($path);
+            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
+            fclose($handle);
             if (\array_key_exists('parentSpanId', $request) && null === $request['parentSpanId']) {
                 $roots[$id] = $request['startedAt'];
             }
@@ -126,20 +119,7 @@ final class TraceStore
      */
     public function read(string $id, int $offset = 0): ?array
     {
-        if (!self::isValidId($id) || !is_file($path = $this->path($id))) {
-            return null;
-        }
-
-        if (0 !== $offset && !isset($this->startedAt[$id])) {
-            $this->startedAt[$id] = $this->readRequest($path)['at'] ?? 0.0;
-        }
-
-        $decoded = $this->codec->decode((string) file_get_contents($path, offset: $offset), 0 === $offset ? null : $this->startedAt[$id]);
-        if (0 === $offset && $decoded['records']) {
-            $this->startedAt[$id] = $decoded['records'][0]['at'];
-        }
-
-        return ['records' => $decoded['records'], 'offset' => $offset + $decoded['consumed']];
+        return self::isValidId($id) ? $this->readLines($this->path($id), $offset) : null;
     }
 
     private function readLines(string $path, int $offset): ?array
@@ -166,15 +146,16 @@ final class TraceStore
     public function newestStartedAfter(float $timestamp): ?string
     {
         $newest = null;
-        foreach (glob($this->directory.'/*.trace') ?: [] as $path) {
+        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
             if (filemtime($path) < floor($timestamp)) {
                 continue;
             }
 
-            $request = $this->readRequest($path);
+            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
+            fclose($handle);
             $startedAt = $request['startedAt'] ?? 0;
             if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
-                $newest = [basename($path, '.trace'), $startedAt];
+                $newest = [basename($path, '.jsonl'), $startedAt];
             }
         }
 
@@ -183,19 +164,12 @@ final class TraceStore
 
     private function append(string $id, array $record): void
     {
-        file_put_contents($this->path($id), $this->codec->encode($record, $this->startedAt[$id]), \FILE_APPEND);
-    }
-
-    private function readRequest(string $path): array
-    {
-        $record = $this->codec->decode((string) file_get_contents($path, length: 4096), null)['records'][0] ?? [];
-
-        return 'request' === ($record['type'] ?? null) ? $record : [];
+        file_put_contents($this->path($id), json_encode($record + ['at' => microtime(true)], \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
     }
 
     private function path(string $id): string
     {
-        return $this->directory.'/'.$id.'.trace';
+        return $this->directory.'/'.$id.'.jsonl';
     }
 
     private function narrationPath(string $rootId): string

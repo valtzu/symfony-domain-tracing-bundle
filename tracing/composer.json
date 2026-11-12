@@ -7,7 +7,6 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "rybakit/msgpack": "^0.11.3",
         "symfony/ai-agent": "^1.0@beta",
         "symfony/ai-bundle": "^1.0@beta",
         "symfony/ai-claude-code-platform": "^1.0@beta",

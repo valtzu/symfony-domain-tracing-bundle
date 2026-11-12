@@ -62,4 +62,4 @@ the trace grow.
 
 - Development only: the debugger slows requests down, and the recorded times are approximate.
 - Only Symfony HttpClient carries the trace to other services.
-- PHP Debugger does not report `int` and `bool` return values.
+- A return value is known only when the caller uses it; PHP discards an unused one.

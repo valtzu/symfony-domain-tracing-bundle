@@ -234,7 +234,7 @@ final class TraceSession
         }
 
         if ($this->recording && null !== $file && $this->breakPosition !== $frame['filename'].':'.$frame['lineno']) {
-            $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince), $this->returnValue ? ['return' => $this->values->convert($this->returnValue, $this->codeIndex['namespaces'])] : []);
+            $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince), null !== $this->returnValue ? ['return' => $this->values->convert($this->returnValue, $this->codeIndex['namespaces'])] : []);
             unset($this->frames[$this->depth]);
             $this->lastStepDepth = $this->depth - 1;
             $this->resume('step_over');

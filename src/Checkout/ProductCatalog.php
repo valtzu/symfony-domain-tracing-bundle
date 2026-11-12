@@ -28,6 +28,22 @@ final class ProductCatalog
         ];
     }
 
+    /**
+     * @return list<Product>
+     */
+    public function products(): array
+    {
+        return array_values($this->products);
+    }
+
+    /**
+     * @return list<Coupon>
+     */
+    public function coupons(): array
+    {
+        return array_values($this->coupons);
+    }
+
     public function product(string $sku): Product
     {
         return $this->products[$sku] ?? throw new CheckoutFailed('unknown_product', \sprintf('Product "%s" does not exist.', $sku));

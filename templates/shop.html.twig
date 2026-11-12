@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% macro eur(cents) %}{{ (cents / 100)|number_format(2, '.', ' ') }} €{% endmacro %}
+{% from _self import eur %}
+
+{% block title %}Demo shop{% endblock %}
+
+{% block stylesheets %}
+<style>
+    :root { --bg: #f6f6f4; --card: #fff; --text: #1d1d1b; --muted: #6b6b66; --line: #e2e2dd; --accent: #2f5d50; --ok: #2f7d32; --warn: #a66300; --bad: #b3261e; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #20201e; --text: #ecece8; --muted: #9a9a94; --line: #34342f; --accent: #7fb8a6; --ok: #7cc47f; --warn: #e0a64a; --bad: #f08a80; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 960px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+    @media (min-width: 800px) { main { grid-template-columns: 3fr 2fr; align-items: start; } }
+    h1 { grid-column: 1 / -1; margin: 0; font-size: 22px; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+    h2 { margin: 0 0 12px; font-size: 16px; }
+    label { display: block; color: var(--muted); font-size: 13px; margin: 12px 0 4px; }
+    select, input { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-weight: 500; font-size: 13px; }
+    td.num, th.num { text-align: right; }
+    input[type=number] { width: 72px; }
+    button { margin-top: 16px; width: 100%; padding: 10px; border: 0; border-radius: 6px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1px solid currentColor; }
+    .confirmed { color: var(--ok); } .pending_review { color: var(--warn); } .rejected { color: var(--bad); }
+    .total td { font-weight: 600; border-bottom: 0; }
+    code { font-size: 13px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+    <h1>Demo shop</h1>
+
+    <section>
+        <h2>New order</h2>
+        <form method="post">
+            <label for="customer">Customer</label>
+            <select id="customer" name="customer">
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}" {{ customer.id == form.customer ? 'selected' }}>
+                        {{ customer.name }} ({{ customer.tier.value }}, since {{ customer.registeredAt|date('Y-m-d') }}{{ customer.blocked ? ', blocked' }})
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label>Products</label>
+            <table>
+                <tr><th>Product</th><th class="num">Price</th><th class="num">Qty</th></tr>
+                {% for product in products %}
+                    <tr>
+                        <td>{{ product.name }} <span class="hint">{{ product.sku }}</span></td>
+                        <td class="num">{{ eur(product.priceCents) }}</td>
+                        <td class="num"><input type="number" min="0" name="quantities[{{ product.sku }}]" value="{{ form.quantities[product.sku] ?? 0 }}" aria-label="Quantity of {{ product.name }}"></td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <label for="coupon">Coupon</label>
+            <input id="coupon" name="coupon" value="{{ form.coupon }}" list="coupons" autocomplete="off">
+            <datalist id="coupons">
+                {% for coupon in coupons %}<option value="{{ coupon.code }}">{% endfor %}
+            </datalist>
+
+            <label for="country">Ship to</label>
+            <select id="country" name="country">
+                {% for code, name in countries %}
+                    <option value="{{ code }}" {{ code == form.country ? 'selected' }}>{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Place order</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Result</h2>
+        {% if order %}
+            <p><span class="badge {{ order.status.value }}">{{ order.status.value|replace({'_': ' '}) }}</span> <code>{{ order.id }}</code></p>
+            <table>
+                {% for line in order.quote.lines %}
+                    <tr><td>{{ line.quantity }} × {{ line.product.name }}</td><td class="num">{{ eur(line.product.priceCents * line.quantity) }}</td></tr>
+                {% endfor %}
+                <tr><td>Subtotal</td><td class="num">{{ eur(order.quote.subtotalCents) }}</td></tr>
+                {% for name, cents in order.quote.discounts %}
+                    <tr><td>Discount <span class="hint">{{ name }}</span></td><td class="num">−{{ eur(cents) }}</td></tr>
+                {% endfor %}
+                <tr><td>Shipping</td><td class="num">{{ order.quote.shippingCents ? eur(order.quote.shippingCents) : 'free' }}</td></tr>
+                <tr class="total"><td>Total</td><td class="num">{{ eur(order.quote.totalCents) }}</td></tr>
+            </table>
+            <p class="hint">{{ order.paymentId ? 'Payment ' ~ order.paymentId : 'Not charged: waiting for manual review.' }}</p>
+        {% elseif error %}
+            <p><span class="badge rejected">rejected</span> <code>{{ error.reason }}</code></p>
+            <p>{{ error.message }}</p>
+        {% else %}
+            <p class="hint">Place an order to see the result.</p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

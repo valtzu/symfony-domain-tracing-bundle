@@ -20,6 +20,14 @@ final class CustomerRepository
         ];
     }
 
+    /**
+     * @return list<Customer>
+     */
+    public function all(): array
+    {
+        return array_values($this->customers);
+    }
+
     public function find(string $id): ?Customer
     {
         return $this->customers[$id] ?? null;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
-use App\Ai\SecretRedactor;
+use Valtzu\AiStacktrace\Ai\SecretRedactor;
 
 /**
  * Parses a value as Xdebug writes it in a trace file, such as 'carol', [0 => 1], class App\Customer { public string

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ai;
+namespace Valtzu\AiStacktrace\Ai;
 
 /**
  * Replaces secrets in text before it leaves the application: the values of secret environment variables, credentials

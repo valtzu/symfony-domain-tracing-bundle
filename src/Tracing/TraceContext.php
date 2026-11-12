@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 /**
  * W3C Trace Context (https://www.w3.org/TR/trace-context/) of a recorded request. Each request is a span: its span ID

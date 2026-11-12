@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -9,7 +9,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Follows each new trace while it is recorded: builds its spans, names the operations and describes what happened in
  * them. The results are written next to the trace, so that a page can show them while they come.
  */
-#[AsCommand('app:process-traces', 'Name and describe the recorded traces')]
+#[AsCommand('ai-stacktrace:process', 'Name and describe the recorded traces')]
 final readonly class ProcessTracesCommand
 {
     private const MAX_STEPS_PER_PART = 80;

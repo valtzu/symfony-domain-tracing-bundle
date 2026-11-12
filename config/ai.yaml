@@ -1,7 +1,7 @@
 ai:
     agent:
         operation_namer:
-            platform: 'app.platform.claude_code'
+            platform: 'ai_stacktrace.platform'
             model:
                 name: 'opus'
                 options:
@@ -15,7 +15,7 @@ ai:
 
                 Secrets in the code are replaced with "[redacted]". Do not guess what they were.
         trace_narrator:
-            platform: 'app.platform.claude_code'
+            platform: 'ai_stacktrace.platform'
             model:
                 name: 'opus'
                 options:

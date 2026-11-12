@@ -9,16 +9,16 @@ services:
       APP_ENV: dev
       OTEL_SERVICE_NAME: shop
       PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
-      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-recorder}
+      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-tracing}
       MERCURE_DIRECTIVES: |
         mercure {
             anonymous
             issuer https://localhost {
                 publisher {
-                    jwt {file./app/frankenphp/dev-mercure-secret} HS256
+                    jwt {file./app/demo/frankenphp/dev-mercure-secret} HS256
                 }
                 subscriber {
-                    jwt {file./app/frankenphp/dev-mercure-secret} HS256
+                    jwt {file./app/demo/frankenphp/dev-mercure-secret} HS256
                 }
             }
         }
@@ -27,9 +27,10 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${PHP_PORT:-8100}:8080"
+    working_dir: /app/demo
     volumes:
-      - ./demo:/app
-      - ./var/xdebug-traces:/traces
+      - ./:/app
+      - traces:/app/demo/var/share/traces
       - caddy_data:/data
       - caddy_config:/config
 
@@ -41,49 +42,34 @@ services:
       HTTP_PORT: "8080"
       APP_ENV: dev
       OTEL_SERVICE_NAME: payments
-      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-recorder}
-    volumes:
-      - ./demo:/app
-      - ./var/xdebug-traces:/traces
-
-  # The tracing app
-
-  recorder:
-    build: .
-    command: ["php", "bin/console", "app:record-traces"]
+      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-tracing}
+    working_dir: /app/demo
     volumes:
       - ./:/app
-      - ./var/xdebug-traces:/traces
+      - traces:/app/demo/var/share/traces
 
-  tracing-worker:
-    build: .
-    command: ["php", "bin/console", "app:process-traces"]
+  # Records the requests of the services above, and names and describes them with Claude Code
+  tracing:
+    build:
+      context: ./demo
+      target: frankenphp_dev
+    command: ["php", "bin/console", "ai-stacktrace:run"]
     environment:
-      TRACE_GIT_REPOSITORIES: /repositories/shop
+      APP_ENV: dev
+      XDEBUG_MODE: "off"
+      TRACE_GIT_REPOSITORIES: /app
       GIT_OPTIONAL_LOCKS: "0"
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: safe.directory
       GIT_CONFIG_VALUE_0: "*"
+    working_dir: /app/demo
     volumes:
       - ./:/app
-      - ./:/repositories/shop:ro
+      - traces:/app/demo/var/share/traces
       - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
       - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
-
-  tracing:
-    build: .
-    environment:
-      TRACE_GIT_REPOSITORIES: /repositories/shop
-      GIT_OPTIONAL_LOCKS: "0"
-      GIT_CONFIG_COUNT: "1"
-      GIT_CONFIG_KEY_0: safe.directory
-      GIT_CONFIG_VALUE_0: "*"
-    ports:
-      - "127.0.0.1:${TRACING_PORT:-8200}:8080"
-    volumes:
-      - ./:/app
-      - ./:/repositories/shop:ro
 
 volumes:
   caddy_data:
   caddy_config:
+  traces:

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 /**
  * One connection from the debugger engine, speaking DBGp: https://xdebug.org/docs/dbgp.

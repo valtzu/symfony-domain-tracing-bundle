@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 /**
  * Reads the decoded records of a trace while they are written: those of the request that started it and those of the requests

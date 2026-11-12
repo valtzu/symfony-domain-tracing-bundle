@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 

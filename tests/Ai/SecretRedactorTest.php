@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Tests\Ai;
+namespace Valtzu\AiStacktrace\Tests\Ai;
 
-use App\Ai\SecretRedactor;
+use Valtzu\AiStacktrace\Ai\SecretRedactor;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

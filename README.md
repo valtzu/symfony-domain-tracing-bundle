@@ -26,7 +26,6 @@ when they are somewhere else.
 ```shell
 docker compose build
 docker compose run --rm --no-deps php composer install
-docker compose run --rm --no-deps recorder composer install
 docker compose up -d
 ```
 
@@ -35,26 +34,27 @@ Then open the live traces and place an order in the demo shop.
 | What | URL |
 |---|---|
 | Demo shop | http://localhost:8100 |
-| Live traces | http://localhost:8200 |
+| Live traces | http://localhost:8100/_tracing/ |
 
 ## How it is put together
 
-- The root directory is the tracing app.
+- The root directory is a Symfony bundle, `AiStacktraceBundle`. An application installs it in dev and imports its
+  routes, which serve the live view and its event stream under `/_tracing/`.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
-  no tracing code. It has its own image.
-- The tracing app runs as three containers:
-  - `recorder` is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
+  no tracing code. It requires the bundle from the parent directory.
+- The `tracing` container runs `bin/console ai-stacktrace:run` with the image of the demo:
+  - The recorder is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
     it, sets the `X-Request-Id`, and adds the `traceparent` header to outgoing Symfony HttpClient requests. It only
     stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
     directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
-  - `tracing-worker` builds the spans, names the operations (once per method and code version), describes the
-    request, and removes secrets before anything goes to the AI. It reads the source
-    from the git repositories in `TRACE_GIT_REPOSITORIES`, including uncommitted files.
-  - `tracing` serves the live view and its event stream.
+  - The worker process builds the spans, names the operations (once per method and code version), describes the
+    request, and removes secrets before anything goes to the AI. It reads the source from the git repositories in
+    `TRACE_GIT_REPOSITORIES`, including uncommitted files.
 
 A service needs the Xdebug settings of `demo/frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
-trace and the code coverage to the application and writes the lines that ran next to the trace, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at
-`/traces`, and an `OTEL_SERVICE_NAME`.
+trace and the code coverage to the application and writes the lines that ran next to the trace,
+`XDEBUG_CONFIG=client_host=tracing`, the shared trace directory mounted at `var/share/traces`, and an
+`OTEL_SERVICE_NAME`.
 
 ## Limits
 

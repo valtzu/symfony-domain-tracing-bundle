@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 /**
  * Follows the trace file that Xdebug writes for one request (trace format 1: tab-separated function entries, exits

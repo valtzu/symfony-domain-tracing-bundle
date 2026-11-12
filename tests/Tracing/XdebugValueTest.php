@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Tests\Tracing;
+namespace Valtzu\AiStacktrace\Tests\Tracing;
 
-use App\Ai\SecretRedactor;
-use App\Tracing\XdebugValue;
+use Valtzu\AiStacktrace\Ai\SecretRedactor;
+use Valtzu\AiStacktrace\Tracing\XdebugValue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

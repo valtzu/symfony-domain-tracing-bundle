@@ -3,7 +3,8 @@
 // Limits the Xdebug trace and the code coverage to the application, from the PSR-4 autoload section of the nearest
 // composer.json. The lines that ran are written next to the trace file when the request ends.
 (static function (): void {
-    if (!\function_exists('xdebug_set_filter')) {
+    $modes = \function_exists('xdebug_info') ? xdebug_info('mode') : [];
+    if (!\in_array('trace', $modes, true)) {
         return;
     }
 
@@ -17,7 +18,7 @@
 
     xdebug_set_filter(XDEBUG_FILTER_TRACING, XDEBUG_NAMESPACE_INCLUDE, array_keys($autoload));
 
-    if (!\function_exists('xdebug_start_code_coverage')) {
+    if (!\in_array('coverage', $modes, true)) {
         return;
     }
 

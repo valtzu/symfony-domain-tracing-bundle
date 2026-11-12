@@ -1,9 +1,10 @@
-{% extends 'base.html.twig' %}
-
-{% block title %}Live trace{% endblock %}
-
-{% block stylesheets %}
-<link rel="stylesheet" href="/trace.css">
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live trace</title>
+<link rel="stylesheet" href="{{ path('ai_stacktrace_asset', {file: 'trace.css'}) }}">
 <style>
     :root { --bg: #f6f6f4; --text: #1d1d1b; --muted: #6b6b66; }
     @media (prefers-color-scheme: dark) { :root { --bg: #161615; --text: #ecece8; --muted: #9a9a94; } }
@@ -13,23 +14,22 @@
     .hint { color: var(--muted); margin: 0; }
     .trace-lines { margin: 12px 0 0; max-height: 240px; overflow: auto; font: 12px/1.5 ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>
-{% endblock %}
-
-{% block body %}
+</head>
+<body>
 <main>
     <h1>Live trace</h1>
     <p class="hint">Each request that starts after this page opened appears here while it runs. The description follows the recorded calls.</p>
     <div id="traces"></div>
 </main>
 <script type="module">
-    import { followTrace } from '/trace.js';
+    import { followTrace } from {{ path('ai_stacktrace_asset', {file: 'trace.js'})|json_encode|raw }};
 
     const traces = document.getElementById('traces');
     let after = {{ now|json_encode|raw }};
 
     async function waitForNextTrace() {
         while (true) {
-            const { id } = await (await fetch(`/_traces/newest?after=${after}`)).json();
+            const { id } = await (await fetch(`{{ path('ai_stacktrace_newest') }}?after=${after}`)).json();
             if (id) {
                 return id;
             }
@@ -55,4 +55,5 @@
         });
     }
 </script>
-{% endblock %}
+</body>
+</html>

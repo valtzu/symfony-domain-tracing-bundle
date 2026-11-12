@@ -25,8 +25,15 @@
         "phpunit/phpunit": "^13.4",
         "symfony/browser-kit": "8.2.*",
         "symfony/css-selector": "8.2.*",
-        "symfony/web-profiler-bundle": "8.2.*"
+        "symfony/web-profiler-bundle": "8.2.*",
+        "valtzu/symfony-ai-stacktrace": "*@dev"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": ".."
+        }
+    ],
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,

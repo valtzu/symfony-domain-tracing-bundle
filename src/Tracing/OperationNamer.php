@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tracing;
+namespace Valtzu\AiStacktrace\Tracing;
 
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\AgentInterface;

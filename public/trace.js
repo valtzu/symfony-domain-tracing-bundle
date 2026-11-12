@@ -1,5 +1,5 @@
 const SERVICE_COLORS = 4;
-const BASE_URL = new URL('/', import.meta.url);
+const BASE_URL = new URL('./', import.meta.url);
 const ROW_ENTER_MILLISECONDS = 250;
 
 /**
@@ -209,7 +209,7 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
     const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'));
     let steps = 0;
 
-    const source = new EventSource(new URL(`_trace/${id}/events`, BASE_URL));
+    const source = new EventSource(new URL(`${id}/events`, BASE_URL));
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {

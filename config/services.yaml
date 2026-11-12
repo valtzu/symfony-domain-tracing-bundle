@@ -3,13 +3,13 @@ services:
         autowire: true
         autoconfigure: true
 
-    App\:
+    Valtzu\AiStacktrace\:
         resource: '../src/'
         exclude:
-            - '../src/Kernel.php'
+            - '../src/AiStacktraceBundle.php'
             - '../src/Tracing/Resources/'
 
-    app.platform.claude_code:
+    ai_stacktrace.platform:
         class: Symfony\AI\Platform\Platform
         # public so that tests can replace it with a mock platform
         public: true

@@ -1,0 +1,3 @@
+when@dev:
+    ai_stacktrace:
+        resource: '@AiStacktraceBundle/config/routes.yaml'

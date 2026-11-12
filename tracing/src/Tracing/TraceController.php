@@ -18,6 +18,7 @@ final class TraceController extends AbstractController
     public function events(
         string $id,
         TraceStore $store,
+        BlobStore $blobs,
         OperationNamer $namer,
         #[Autowire('%env(JAEGER_UI_URL)%')] string $jaegerUiUrl,
     ): Response {
@@ -25,13 +26,13 @@ final class TraceController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return new StreamedResponse(function () use ($id, $store, $namer, $jaegerUiUrl) {
+        return new StreamedResponse(function () use ($id, $store, $blobs, $namer, $jaegerUiUrl) {
             $send = static function (string $event, mixed $data): void {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
             };
 
-            $follower = new TraceFollower($store, $id);
+            $follower = new TraceFollower($store, $blobs, $id);
             $builder = new SpanBuilder();
             $names = [];
             $narrationOffset = 0;

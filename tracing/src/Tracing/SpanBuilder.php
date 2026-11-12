@@ -40,6 +40,7 @@ final class SpanBuilder
             'function' => $this->describeFunction($record),
             'step' => $this->step($record),
             'exit' => $this->exit($record),
+            'arguments' => $this->setArguments($record),
             'end' => $this->closeRequest($record['request'], $record['at']),
             default => [],
         };
@@ -158,10 +159,23 @@ final class SpanBuilder
         return $changes;
     }
 
+    private function setArguments(array $record): array
+    {
+        $spanId = end($this->stacks[$record['request']]);
+        if ($spanId && $this->spans[$spanId]['depth'] === $record['depth']) {
+            $this->spans[$spanId]['arguments'] = $record['values'];
+        }
+
+        return [];
+    }
+
     private function exit(array $record): array
     {
         $changes = [];
         $stack = &$this->stacks[$record['request']];
+        if ($stack && \array_key_exists('return', $record) && $this->spans[end($stack)]['depth'] === $record['depth']) {
+            $this->spans[end($stack)]['returnValue'] = $record['return'];
+        }
         while ($stack && $this->spans[end($stack)]['depth'] >= $record['depth']) {
             $changes[] = $this->close(array_pop($stack), $record['at']);
         }

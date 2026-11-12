@@ -19,6 +19,7 @@ final readonly class ProcessTracesCommand
 
     public function __construct(
         private TraceStore $store,
+        private BlobStore $blobs,
         private OperationNamer $namer,
         private TraceNarrator $narrator,
         private OtlpExporter $exporter,
@@ -47,7 +48,7 @@ final readonly class ProcessTracesCommand
     private function process(string $rootId): void
     {
         $this->store->addNarration($rootId, ['type' => 'start']);
-        $follower = new TraceFollower($this->store, $rootId);
+        $follower = new TraceFollower($this->store, $this->blobs, $rootId);
         $builder = new SpanBuilder();
         $names = [];
         $events = [];

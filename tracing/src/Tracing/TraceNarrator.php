@@ -35,7 +35,10 @@ final readonly class TraceNarrator
             $span = $spans[$step['span']];
             if ($span['id'] !== $operation) {
                 $operation = $span['id'];
-                $prompt .= \sprintf("[%s] in operation \"%s\" (%s):\n", $span['service'], $span['name'], $span['function'] ?? $span['uri']);
+                $prompt .= \sprintf("[%s] in operation \"%s\" (%s)%s%s:\n", $span['service'], $span['name'], $span['function'] ?? $span['uri'],
+                    isset($span['arguments']) ? ', called with '.json_encode($span['arguments'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : '',
+                    \array_key_exists('returnValue', $span) ? ', returned '.json_encode($span['returnValue'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : '',
+                );
             }
             $prompt .= \sprintf("  %d: %s\n", $index, $step['code']);
         }

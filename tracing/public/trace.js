@@ -63,7 +63,11 @@ function createWaterfall(container) {
             const label = row.appendChild(document.createElement('div'));
             label.className = 'waterfall-label';
             label.style.paddingLeft = `${depth * 14}px`;
-            label.title = span.function ?? span.uri ?? '';
+            label.title = [
+                span.function ?? span.uri ?? '',
+                span.arguments ? `called with ${JSON.stringify(span.arguments)}` : '',
+                'returnValue' in span ? `returned ${JSON.stringify(span.returnValue)}` : '',
+            ].filter(Boolean).join('\n');
             label.innerHTML = '<span class="waterfall-service"></span><span class="waterfall-name"></span>';
             label.querySelector('.waterfall-service').textContent = span.service;
             label.querySelector('.waterfall-name').textContent = names.get(span.function) ?? span.name;

@@ -72,10 +72,16 @@ services:
     build: ./tracing
     environment:
       CADDY_SERVER_EXTRA_DIRECTIVES: header Access-Control-Allow-Origin *
+      TRACE_GIT_REPOSITORIES: /repositories/shop
+      GIT_OPTIONAL_LOCKS: "0"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     ports:
       - "127.0.0.1:${TRACING_PORT:-8200}:8080"
     volumes:
       - ./tracing:/app
+      - ./:/repositories/shop:ro
 
   jaeger:
     image: jaegertracing/jaeger:2.5.0

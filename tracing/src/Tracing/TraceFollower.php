@@ -3,7 +3,7 @@
 namespace App\Tracing;
 
 /**
- * Reads the records of a trace while they are written: those of the request that started it and those of the requests
+ * Reads the decoded records of a trace while they are written: those of the request that started it and those of the requests
  * it made to other services, merged in time order.
  */
 final class TraceFollower
@@ -15,11 +15,18 @@ final class TraceFollower
     /** @var array<string, true> */
     private array $ended = [];
 
+    /** @var array<string, float> start time by request */
+    private array $startedAt = [];
+
+    private readonly TraceDecoder $decoder;
+
     public function __construct(
         private readonly TraceStore $store,
+        BlobStore $blobs,
         public readonly string $rootId,
     ) {
         $this->offsets = [$rootId => 0];
+        $this->decoder = new TraceDecoder($blobs);
     }
 
     /**
@@ -27,7 +34,7 @@ final class TraceFollower
      */
     public function poll(): array
     {
-        $records = [];
+        $recordsByRequest = [];
         do {
             $this->discoverRequests();
             $knownRequests = \count($this->offsets);
@@ -35,7 +42,14 @@ final class TraceFollower
             foreach ($this->offsets as $requestId => $offset) {
                 $read = $this->store->read($requestId, $offset);
                 foreach ($read['records'] ?? [] as $record) {
-                    $records[] = ['request' => $requestId] + $record;
+                    if (array_is_list($record)) {
+                        [$function, $line, $depth, $microseconds] = $record;
+                        $record = ['type' => 'step', 'fn' => $function, 'line' => $line, 'depth' => $depth, 'at' => $this->startedAt[$requestId] + $microseconds / 1e6];
+                    }
+                    if ('request' === $record['type']) {
+                        $this->startedAt[$requestId] = $record['at'];
+                    }
+                    $recordsByRequest[$requestId][] = ['request' => $requestId] + $record;
                     if ('request' === $record['type'] && $requestId === $this->rootId) {
                         $this->traceId = $record['traceId'];
                     }
@@ -48,9 +62,31 @@ final class TraceFollower
             $this->discoverRequests();
         } while (\count($this->offsets) > $knownRequests);
 
-        usort($records, static fn (array $a, array $b) => $a['at'] <=> $b['at']);
+        return array_values(array_filter(array_map($this->decoder->decode(...), self::mergeByTime($recordsByRequest))));
+    }
 
-        return $records;
+    /**
+     * Merges the records of the requests in time order, keeping the order of the records of each request, because a
+     * table record must come before the records that refer to it.
+     *
+     * @param array<string, list<array>> $recordsByRequest
+     *
+     * @return list<array>
+     */
+    private static function mergeByTime(array $recordsByRequest): array
+    {
+        $merged = [];
+        while ($recordsByRequest = array_filter($recordsByRequest)) {
+            $next = array_key_first($recordsByRequest);
+            foreach ($recordsByRequest as $requestId => $records) {
+                if ($records[0]['at'] < $recordsByRequest[$next][0]['at']) {
+                    $next = $requestId;
+                }
+            }
+            $merged[] = array_shift($recordsByRequest[$next]);
+        }
+
+        return $merged;
     }
 
     public function hasEnded(): bool

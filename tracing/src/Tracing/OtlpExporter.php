@@ -46,7 +46,13 @@ final readonly class OtlpExporter
                 'endTimeUnixNano' => self::nanoseconds($span['end'] ?? $span['start']),
                 'attributes' => self::attributes('server' === $span['kind']
                     ? ['http.request.method' => $span['method'], 'url.path' => parse_url($span['uri'], \PHP_URL_PATH)]
-                    : ['code.function.name' => $span['function'], 'code.file.path' => $span['file'], 'code.line.number' => $span['line']]),
+                    : array_filter([
+                        'code.function.name' => $span['function'],
+                        'code.file.path' => $span['file'],
+                        'code.line.number' => $span['line'],
+                        'app.arguments' => isset($span['arguments']) ? json_encode($span['arguments'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : null,
+                        'app.return_value' => \array_key_exists('returnValue', $span) ? json_encode($span['returnValue'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : null,
+                    ], static fn ($value) => null !== $value)),
                 'events' => array_map(static fn (array $event) => [
                     'timeUnixNano' => self::nanoseconds($event['at']),
                     'name' => $event['text'],

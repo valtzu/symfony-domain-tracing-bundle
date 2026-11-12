@@ -6,7 +6,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs: a "request"
- * record, one "step" record per executed line and an "end" record. Readers can follow the file while it is written.
+ * record, one step per executed line and an "end" record. A step is the array [function, line, call depth,
+ * microseconds since the request started], because it is the most frequent record. Readers can follow the file while it is written.
  * A trace index file lists the spans of each trace, in the order they started.
  */
 final readonly class TraceStore
@@ -45,17 +46,27 @@ final readonly class TraceStore
         return file($path, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
     }
 
-    public function addStep(string $id, array $step): void
+    public function addStep(string $id, int $function, int $line, int $depth, int $microseconds): void
     {
-        $this->append($id, ['type' => 'step'] + $step);
+        file_put_contents($this->path($id), json_encode([$function, $line, $depth, $microseconds])."\n", \FILE_APPEND);
     }
 
     /**
      * The frames at the given call depth and deeper returned.
      */
-    public function addExit(string $id, int $depth, float $at): void
+    public function addExit(string $id, int $depth, float $at, array $details = []): void
     {
-        $this->append($id, ['type' => 'exit', 'depth' => $depth, 'at' => $at]);
+        $this->append($id, ['type' => 'exit', 'depth' => $depth, 'at' => $at] + $details);
+    }
+
+    public function addArguments(string $id, int $depth, array $arguments, float $at): void
+    {
+        $this->append($id, ['type' => 'arguments', 'depth' => $depth, 'values' => $arguments, 'at' => $at]);
+    }
+
+    public function describeFile(string $id, array $file): void
+    {
+        $this->append($id, ['type' => 'file'] + $file);
     }
 
     public function describeFunction(string $id, array $function): void

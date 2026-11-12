@@ -32,12 +32,13 @@ return static function (bool $full): string {
     }
 
     foreach ($files as $path => &$file) {
-        $file['source'] = file_get_contents($path);
+        $source = file_get_contents($path);
+        $file['blob'] = sha1('blob '.\strlen($source)."\0".$source);
         $file['methods'] = [];
         $file['entrypoint'] = false;
         $file['closureLines'] = [];
 
-        $tokens = \PhpToken::tokenize($file['source']);
+        $tokens = \PhpToken::tokenize($source);
         foreach ($tokens as $i => $token) {
             $next = $i;
             while (($nextToken = $tokens[++$next] ?? null) && ($nextToken->isIgnorable() || '&' === $nextToken->text)) {
@@ -55,11 +56,11 @@ return static function (bool $full): string {
         $file['entrypoint'] = (bool) ($class->getAttributes('Symfony\Component\Console\Attribute\AsCommand') ?: $class->getAttributes('Symfony\Component\Routing\Attribute\Route'));
         foreach ($class->getMethods() as $method) {
             if ($method->getFileName() === $path) {
-                $file['methods'][$method->getName()] = [$method->getStartLine(), $method->getEndLine()];
+                $file['methods'][$method->getName()] = [$method->getStartLine(), $method->getEndLine(), array_map(static fn ($parameter) => $parameter->getName(), $method->getParameters())];
                 $file['entrypoint'] = $file['entrypoint'] || $method->getAttributes('Symfony\Component\Routing\Attribute\Route');
             }
         }
     }
 
-    return json_encode(['fingerprint' => $fingerprint, 'root' => $root, 'files' => $files]);
+    return json_encode(['fingerprint' => $fingerprint, 'root' => $root, 'namespaces' => array_keys($composer['autoload']['psr-4'] ?? []), 'files' => $files]);
 };

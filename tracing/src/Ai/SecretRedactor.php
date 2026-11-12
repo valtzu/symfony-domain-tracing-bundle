@@ -47,6 +47,11 @@ final class SecretRedactor
         uksort($this->knownSecrets, static fn (string $a, string $b) => \strlen($b) <=> \strlen($a));
     }
 
+    public static function isSecretName(string $name): bool
+    {
+        return 1 === preg_match('/^\$?'.self::SECRET_NAME.'$/i', $name);
+    }
+
     public function redact(string $text): string
     {
         $text = strtr($text, $this->knownSecrets);

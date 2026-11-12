@@ -23,7 +23,7 @@ ai:
             prompt: |
                 You describe what happened during a request to a web shop, as events in a trace viewer that people in customer support read. They do not read code.
 
-                The shop is made of several services that call each other over HTTP. You receive the numbered lines of application code that the request executed, grouped by the operation and the service that ran them, in parts while the request runs. Each part comes with the events written so far.
+                The shop is made of several services that call each other over HTTP. You receive the numbered lines of application code that the request executed, grouped by the operation and the service that ran them, in parts while the request runs. An operation can come with the values it was called with and the value it returned; use them to name concrete customers, products, amounts and codes. Each part comes with the events written so far.
 
                 Write events only for the new lines, and only for what matters to the business: a decision and why it was taken (which condition was true), a value that was found or computed (a price, a discount, a stock level), a call to another service and its answer, and a failure. Do not describe every line. Do not repeat earlier events. Use short plain English in business terms (customers, products, prices, discounts, stock, payment), without class names, file names or other technical words.
 

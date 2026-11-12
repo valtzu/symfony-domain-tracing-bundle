@@ -11,6 +11,7 @@ final readonly class RecordTracesCommand
 {
     public function __construct(
         private TraceStore $store,
+        private DbgpValue $values,
     ) {
     }
 
@@ -34,7 +35,7 @@ final readonly class RecordTracesCommand
                 if ($socket === $server) {
                     if ($client = stream_socket_accept($server, 0)) {
                         $connection = new DbgpConnection($client);
-                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->store, $clock, $stepDelay)];
+                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->store, $clock, $this->values, $stepDelay)];
                     }
                     continue;
                 }

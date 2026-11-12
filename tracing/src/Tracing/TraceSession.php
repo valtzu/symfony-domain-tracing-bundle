@@ -2,6 +2,8 @@
 
 namespace App\Tracing;
 
+use App\Ai\SecretRedactor;
+
 
 /**
  * Records every executed line of the application code of one request, through a DBGp connection from PHP Debugger.
@@ -22,6 +24,9 @@ namespace App\Tracing;
  * also sends the trace context to the services that the request calls: when the request is about to make an
  * HTTP request with Symfony HttpClient, it adds a traceparent header to the options of that request. The services need
  * no code or configuration for it.
+ *
+ * A trace refers to code by git blob ID and line, without source code. Each method call records its arguments and its
+ * return value, limited in depth and size, without secrets.
  *
  * Recording starts when the entrypoint (a controller or a command) runs its first method other than the constructor.
  * The framework code, the constructor and the services built for the action arguments are not part of the flow.
@@ -51,8 +56,20 @@ final class TraceSession
     /** @var list<string> what each pending eval command is for, in the order they were sent */
     private array $pendingEvals = [];
 
-    /** @var array<string, true> */
-    private array $describedFunctions = [];
+    /** @var array<string, int> index in the file table of the request, by path */
+    private array $files = [];
+
+    /** @var array<string, int> index in the function table of the request, by function */
+    private array $functions = [];
+
+    /** @var array<int, string> the function running at each call depth */
+    private array $frames = [];
+
+    /** @var list<array{int, list<string>}> call depth and parameter names of the pending "context_get" commands */
+    private array $pendingArguments = [];
+
+    private ?\SimpleXMLElement $returnValue = null;
+    private float $requestStartedAt = 0.0;
 
     public bool $finished = false;
 
@@ -60,6 +77,7 @@ final class TraceSession
         private readonly DbgpConnection $connection,
         private readonly TraceStore $store,
         private readonly TraceClock $clock,
+        private readonly DbgpValue $values,
         private readonly int $stepDelayMs = 0,
     ) {
         $this->stoppedSince = microtime(true);
@@ -84,6 +102,7 @@ final class TraceSession
             'run', 'step_over', 'step_out' => null === $this->codeIndex ? $this->onAutoloaderBreak($message) : $this->onBreak($message),
             'stack_depth' => $this->depth = (int) $message['depth'],
             'stack_get' => $this->onFrame($message->stack[0]),
+            'context_get' => $this->onArguments($message),
             default => null,
         };
     }
@@ -116,7 +135,8 @@ final class TraceSession
         $traceparent = $this->request['traceparent'];
         unset($this->request['traceparent']);
         $this->request += TraceContext::fromHeaders($traceparent, $this->request['id']);
-        $this->store->start($this->request['id'], $this->request + ['at' => $this->clock->now($this->request['traceId'])]);
+        $this->requestStartedAt = $this->clock->now($this->request['traceId']);
+        $this->store->start($this->request['id'], $this->request + ['at' => $this->requestStartedAt]);
 
         $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m loadClass', self::AUTOLOADER));
         $this->resume('run');
@@ -154,6 +174,10 @@ final class TraceSession
     {
         $this->codeIndex = $codeIndex;
 
+        $this->connection->send('feature_set', '-n max_data -v 256');
+        $this->connection->send('feature_set', '-n max_depth -v 2');
+        $this->connection->send('feature_set', '-n max_children -v 16');
+        $this->connection->send('feature_set', '-n breakpoint_include_return_value -v 1');
         foreach (self::HTTP_CLIENTS as $client) {
             $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m request', $client));
         }
@@ -191,7 +215,9 @@ final class TraceSession
             return;
         }
 
-        $position = $message->children('https://xdebug.org/dbgp/xdebug')->message?->attributes();
+        $engine = $message->children('https://xdebug.org/dbgp/xdebug');
+        $this->returnValue = $engine->return_value?->children('urn:debugger_protocol_v1')->property[0] ?? null;
+        $position = $engine->message?->attributes();
         $this->breakPosition = $position ? $position['filename'].':'.$position['lineno'] : null;
         $this->connection->send('stack_depth');
         $this->connection->send('stack_get', '-d 0');
@@ -208,7 +234,8 @@ final class TraceSession
         }
 
         if ($this->recording && null !== $file && $this->breakPosition !== $frame['filename'].':'.$frame['lineno']) {
-            $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince));
+            $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince), $this->returnValue ? ['return' => $this->values->convert($this->returnValue, $this->codeIndex['namespaces'])] : []);
+            unset($this->frames[$this->depth]);
             $this->lastStepDepth = $this->depth - 1;
             $this->resume('step_over');
 
@@ -236,6 +263,7 @@ final class TraceSession
 
         if (str_starts_with($function, $file['class'].'->') || str_starts_with($function, $file['class'].'::')) {
             $this->record($path, $file, (int) $frame['lineno'], $function);
+            $this->captureArgumentsOnEntry($function, $file['methods'][substr($function, \strlen($file['class']) + 2)][2] ?? []);
         }
         $this->resume('step_over');
     }
@@ -251,29 +279,69 @@ final class TraceSession
 
     private function record(string $path, array $file, int $line, string $function): void
     {
-        $relativePath = substr($path, \strlen($this->codeIndex['root']) + 1);
-        $method = substr($function, \strlen($file['class']) + 2);
+        $at = $this->clock->now($this->request['traceId'], $this->stoppedSince);
 
-        if (!isset($this->describedFunctions[$function]) && isset($file['methods'][$method])) {
-            $this->describedFunctions[$function] = true;
-            [$startLine, $endLine] = $file['methods'][$method];
+        if (!isset($this->files[$path])) {
+            $this->files[$path] = \count($this->files);
+            $this->store->describeFile($this->request['id'], [
+                'file' => $this->files[$path],
+                'blob' => $file['blob'],
+                'path' => substr($path, \strlen($this->codeIndex['root']) + 1),
+                'at' => $at,
+            ]);
+        }
+
+        if (!isset($this->functions[$function])) {
+            $this->functions[$function] = \count($this->functions);
+            [$startLine, $endLine] = $file['methods'][substr($function, \strlen($file['class']) + 2)] ?? [null, null];
             $this->store->describeFunction($this->request['id'], [
+                'fn' => $this->functions[$function],
                 'function' => $function,
-                'file' => $relativePath,
+                'file' => $this->files[$path],
                 'line' => $startLine,
-                'code' => implode("\n", \array_slice(explode("\n", $file['source']), $startLine - 1, $endLine - $startLine + 1)),
+                'endLine' => $endLine,
+                'at' => $at,
             ]);
         }
 
         $this->lastStepDepth = $this->depth;
-        $this->store->addStep($this->request['id'], [
-            'at' => $this->clock->now($this->request['traceId'], $this->stoppedSince),
-            'file' => $relativePath,
-            'line' => $line,
-            'function' => $function,
-            'depth' => $this->depth,
-            'code' => trim(explode("\n", $file['source'])[$line - 1] ?? ''),
-        ]);
+        $this->store->addStep($this->request['id'], $this->functions[$function], $line, $this->depth, (int) round(($at - $this->requestStartedAt) * 1e6));
+    }
+
+    /**
+     * @param list<string> $parameters
+     */
+    private function captureArgumentsOnEntry(string $function, array $parameters): void
+    {
+        if (($this->frames[$this->depth] ?? null) === $function) {
+            return;
+        }
+
+        foreach (array_keys($this->frames) as $depth) {
+            if ($depth >= $this->depth) {
+                unset($this->frames[$depth]);
+            }
+        }
+        $this->frames[$this->depth] = $function;
+
+        if ($parameters) {
+            $this->pendingArguments[] = [$this->depth, $parameters];
+            $this->connection->send('context_get', '-d 0');
+        }
+    }
+
+    private function onArguments(\SimpleXMLElement $message): void
+    {
+        [$depth, $parameters] = array_shift($this->pendingArguments);
+        $arguments = [];
+        foreach ($message->children('urn:debugger_protocol_v1')->property as $property) {
+            $name = ltrim((string) $property->attributes()['name'], '$');
+            if (\in_array($name, $parameters, true)) {
+                $arguments[$name] = SecretRedactor::isSecretName($name) ? SecretRedactor::PLACEHOLDER : $this->values->convert($property, $this->codeIndex['namespaces']);
+            }
+        }
+
+        $this->store->addArguments($this->request['id'], $depth, $arguments, $this->clock->now($this->request['traceId'], $this->stoppedSince));
     }
 
     private function end(): void

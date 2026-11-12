@@ -1,12 +1,17 @@
-ai:
-    agent:
-        operation_namer:
-            platform: 'domain_tracing.platform'
-            model:
-                name: 'opus'
-                options:
-                    tools: []
-            prompt: |
+<?php
+
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function (ContainerConfigurator $container): void {
+    $container->extension('ai', [
+        'agent' => [
+            'operation_namer' => [
+                'platform' => 'domain_tracing.platform',
+                'model' => [
+                    'name' => 'opus',
+                    'options' => ['tools' => []],
+                ],
+                'prompt' => <<<'PROMPT'
                 You name the operations of a web shop for a trace viewer that people in customer support read. They do not read code.
 
                 You receive methods of the application, each with the service it belongs to and its code. Give each one a short business name of two to five words in sentence case, starting with a verb, such as "Apply discounts", "Check stock" or "Charge card". Say what the operation does for the business, not how the code does it. Do not use class names, method names or technical words such as request, response, controller, constructor or render, unless the operation has no business meaning; then describe what it does in plain words, such as "Show shop page".
@@ -14,13 +19,15 @@ ai:
                 Answer with one JSON object per line and nothing else, such as {"operation": 0, "name": "Apply discounts"}. Give a name to every operation.
 
                 Secrets in the code are replaced with "[redacted]". Do not guess what they were.
-        trace_narrator:
-            platform: 'domain_tracing.platform'
-            model:
-                name: 'opus'
-                options:
-                    tools: []
-            prompt: |
+                PROMPT,
+            ],
+            'trace_narrator' => [
+                'platform' => 'domain_tracing.platform',
+                'model' => [
+                    'name' => 'opus',
+                    'options' => ['tools' => []],
+                ],
+                'prompt' => <<<'PROMPT'
                 You describe what happened during a request to a web shop, as events in a trace viewer that people in customer support read. They do not read code.
 
                 The shop is made of several services that call each other over HTTP. You receive the numbered calls of application methods that the request made, indented by call depth, with the service that ran them, the values they were called with and the values they returned, in parts while the request runs. Use the values to name concrete customers, products, amounts and codes. The code of each method comes once, the first time it is called; lines that start with "▶" ran during the request, from all the calls of the method, and the other lines did not run. Use them to tell exactly which branch the code took, and do not guess. Each part comes with the events written so far.
@@ -30,3 +37,8 @@ ai:
                 Answer with one JSON object per line and nothing else: {"line": 12, "when": "return", "text": "Coupon has expired", "error": false}. "line" is the number of the call that the event is about. "when" is "return" when the event is about how the call ended, such as what it returned, found or refused, and "call" when it is about the call itself, such as what it was asked to do. Set "error" to true only when the operation failed or refused something, such as a declined card or missing stock. When the request has finished, end with one outcome event for the whole request, without a line number: {"outcome": true, "text": "Order not placed: card declined", "error": true}.
 
                 Secrets in the lines are replaced with "[redacted]". Do not guess what they were.
+                PROMPT,
+            ],
+        ],
+    ]);
+};

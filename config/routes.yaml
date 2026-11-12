@@ -1,3 +1,0 @@
-domain_tracing:
-    resource: ../src/Tracing/TraceController.php
-    type: attribute

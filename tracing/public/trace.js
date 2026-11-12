@@ -70,10 +70,26 @@ function createWaterfall(container) {
 
         for (const { span, event, depth } of rows) {
             if (event) {
-                const item = table.appendChild(document.createElement('p'));
-                item.className = `waterfall-event${event.error ? ' error' : ''}`;
-                item.style.paddingLeft = `${depth * 14}px`;
-                item.textContent = event.text;
+                const item = table.appendChild(document.createElement('div'));
+                item.className = `waterfall-row waterfall-event${event.error ? ' error' : ''}`;
+                const text = item.appendChild(document.createElement('div'));
+                text.className = 'waterfall-event-text';
+                text.style.paddingLeft = `${depth * 14}px`;
+                text.textContent = event.text;
+                const track = item.appendChild(document.createElement('div'));
+                track.className = 'waterfall-track';
+                const position = (event.at - start) / range;
+                const dot = track.appendChild(document.createElement('span'));
+                dot.className = 'waterfall-dot';
+                dot.style.left = `${position * 100}%`;
+                const time = track.appendChild(document.createElement('span'));
+                time.className = 'waterfall-duration';
+                time.textContent = milliseconds(event.at - start);
+                if (position > 0.85) {
+                    time.style.right = `calc(${(1 - position) * 100}% + 8px)`;
+                } else {
+                    time.style.left = `calc(${position * 100}% + 8px)`;
+                }
                 continue;
             }
 

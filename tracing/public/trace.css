@@ -35,9 +35,14 @@
 .waterfall-marker.error { background: var(--trace-bad); opacity: 1; }
 .waterfall-row.failed .waterfall-name { color: var(--trace-bad); }
 .waterfall-row.running .waterfall-bar { opacity: .6; }
-.trace-panel .waterfall-event { margin: 0; padding-top: 3px; padding-bottom: 3px; color: var(--trace-muted); font-size: 12px; min-width: 560px; border-bottom: 1px solid var(--trace-line); }
-.trace-panel .waterfall-event::before { content: "• "; }
-.trace-panel .waterfall-event.error { color: var(--trace-bad); }
+.waterfall-event { color: var(--trace-muted); font-size: 12px; }
+.waterfall-event-text { padding-top: 3px; padding-bottom: 3px; }
+.waterfall-event-text::before { content: "• "; }
+.waterfall-event.error { color: var(--trace-bad); }
+.waterfall-event .waterfall-track { align-self: stretch; height: auto; min-height: 24px; }
+.waterfall-dot { position: absolute; top: 50%; width: 7px; height: 7px; border-radius: 50%; background: var(--trace-muted); transform: translate(-50%, -50%); }
+.waterfall-event.error .waterfall-dot { background: var(--trace-bad); }
+.waterfall-event .waterfall-duration { top: 50%; transform: translateY(-50%); }
 .service-0 { --trace-color: var(--trace-service-0); }
 .service-1 { --trace-color: var(--trace-service-1); }
 .service-2 { --trace-color: var(--trace-service-2); }

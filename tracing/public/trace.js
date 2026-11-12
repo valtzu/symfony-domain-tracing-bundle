@@ -81,7 +81,7 @@ function createWaterfall(container) {
                 const position = (event.at - start) / range;
                 const dot = track.appendChild(document.createElement('span'));
                 dot.className = 'waterfall-dot';
-                dot.style.left = `${position * 100}%`;
+                dot.style.left = `clamp(4px, ${position * 100}%, 100% - 4px)`;
                 const time = track.appendChild(document.createElement('span'));
                 time.className = 'waterfall-duration';
                 time.textContent = milliseconds(event.at - start);
@@ -131,7 +131,7 @@ function createWaterfall(container) {
             for (const event of spanEvents) {
                 const marker = track.appendChild(document.createElement('span'));
                 marker.className = `waterfall-marker${event.error ? ' error' : ''}`;
-                marker.style.left = `${(event.at - start) / range * 100}%`;
+                marker.style.left = `min(${(event.at - start) / range * 100}%, 100% - 2px)`;
                 marker.title = event.text;
             }
         }

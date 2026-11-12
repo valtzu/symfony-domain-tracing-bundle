@@ -40,9 +40,10 @@ Then place an order in the demo shop and watch the panel under the page.
 
 ## How it is put together
 
-- `src/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
-  no tracing code.
-- `tracing/`: the tracing app, with its own image.
+- The root directory is the tracing app.
+- `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
+  no tracing code. It has its own image.
+- The tracing app runs as three containers:
   - `recorder` is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
     it, sets the `X-Request-Id`, and adds the `traceparent` header to outgoing Symfony HttpClient requests. It only
     stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
@@ -52,7 +53,7 @@ Then place an order in the demo shop and watch the panel under the page.
     from the git repositories in `TRACE_GIT_REPOSITORIES`, including uncommitted files.
   - `tracing` serves the live view and the event stream for the panel.
 
-A service needs the Xdebug settings of `frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
+A service needs the Xdebug settings of `demo/frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
 trace and the code coverage to the application and writes the lines that ran next to the trace, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at
 `/traces`, and an `OTEL_SERVICE_NAME`.
 

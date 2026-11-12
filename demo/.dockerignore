@@ -1,0 +1,10 @@
+.git
+.env.local
+.env.*.local
+compose*.yaml
+Dockerfile
+var/
+vendor/
+.claude/
+.idea/
+.phpunit.cache/

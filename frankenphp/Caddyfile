@@ -1,0 +1,61 @@
+# The Caddyfile is an easy way to configure FrankenPHP and the Caddy web server.
+#
+# https://frankenphp.dev/docs/config
+# https://caddyserver.com/docs/caddyfile
+{
+	skip_install_trust
+	auto_https disable_redirects
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+# Caddy's automatic HTTP->HTTPS redirect always points to the default HTTPS
+# port (443) and ignores any custom https_port, which breaks it when the
+# HTTPS port is remapped (e.g. 8443, since non-root Docker can't bind 443).
+# So auto_https redirects are disabled above and handled explicitly here —
+# but only outside prod: local dev has no trusted cert, so redirecting
+# plain http:// requests to https:// there just trades a URL that works
+# for one every browser (and tooling, e.g. Claude Code's preview browser)
+# blocks on the self-signed cert warning. A production stack that is only
+# reached over plain http on loopback (behind a socket proxy) leaves
+# FORCE_HTTPS unset and is not redirected either.
+:{$HTTP_PORT:80} {
+	@https expression {env.FORCE_HTTPS} == "1"
+	redir @https https://{host}:{$HTTPS_PORT:443}{uri} 308
+
+	root {$SERVER_ROOT:public/}
+	encode zstd br gzip
+
+	{$MERCURE_DIRECTIVES}
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	php_server {
+		{$HOT_RELOAD_DIRECTIVES}
+
+		{$CADDY_PHP_SERVER_EXTRA_DIRECTIVES}
+	}
+}
+
+{$SERVER_NAME:localhost}:{$HTTPS_PORT:443} {
+	root {$SERVER_ROOT:public/}
+	encode zstd br gzip
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	php_server {
+		{$CADDY_PHP_SERVER_EXTRA_DIRECTIVES}
+	}
+}
+
+# As an alternative to editing the above site block, you can add your own site
+# block files in the Caddyfile.d directory, and they will be included as long
+# as they use the .caddyfile extension.
+
+#import Caddyfile.d/*.caddyfile

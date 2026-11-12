@@ -101,10 +101,11 @@ final readonly class TraceStore
         return $this->readLines($this->narrationPath($rootId), $offset) ?? ['records' => [], 'offset' => $offset];
     }
 
-    private const MAX_AGE_TO_PROCESS_SECONDS = 300;
+    private const MAX_AGE_TO_PROCESS_SECONDS = 30;
 
     /**
-     * @return list<string> IDs of the recent requests that started a trace and have not been processed yet, newest first,
+     * @return list<string> IDs of the requests that started a trace in the last 30 seconds and have not been processed
+     *                      yet, newest first,
      *                      so that the request someone just made does not wait behind older ones
      */
     public function unprocessedRoots(): array
@@ -117,7 +118,7 @@ final readonly class TraceStore
             }
             $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
             fclose($handle);
-            if (\array_key_exists('parentSpanId', $request) && null === $request['parentSpanId']) {
+            if (\array_key_exists('parentSpanId', $request) && null === $request['parentSpanId'] && $request['startedAt'] >= microtime(true) - self::MAX_AGE_TO_PROCESS_SECONDS) {
                 $roots[$id] = $request['startedAt'];
             }
         }

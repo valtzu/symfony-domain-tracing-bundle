@@ -25,7 +25,7 @@ when they are somewhere else.
 
 ```shell
 docker compose build
-docker compose run --rm --no-deps php composer install
+docker compose run --rm --no-deps shop composer install
 docker compose up -d
 ```
 

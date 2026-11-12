@@ -3,8 +3,9 @@
 namespace App\Tracing;
 
 /**
- * Turns the records of a trace into spans, as they arrive: one span per request, and one span per call of an
- * application method inside it. A closure belongs to the span of the method that runs it. A request from another
+ * Turns the records of a trace into spans, as they arrive: one span per call of an application method. The first method
+ * of a request, the action of its entrypoint, shares the span of the request: the span has the name of the action and
+ * the duration of the whole request. A closure belongs to the span of the method that runs it. A request from another
  * service becomes a child of the method span that was running when the request started, which is the one that called
  * the service.
  *
@@ -136,7 +137,21 @@ final class SpanBuilder
             break;
         }
 
-        $parentId = $stack ? end($stack) : $this->requestSpans[$request];
+        $requestSpanId = $this->requestSpans[$request];
+        if (!$stack && null === $this->spans[$requestSpanId]['function']) {
+            $this->spans[$requestSpanId] = [
+                'function' => $record['function'],
+                'name' => self::humanize($record['function']),
+                'file' => $record['file'],
+                'line' => $record['line'],
+                'depth' => $record['depth'],
+            ] + $this->spans[$requestSpanId];
+            $stack[] = $requestSpanId;
+
+            return [...$changes, ['open', $this->spans[$requestSpanId]]];
+        }
+
+        $parentId = $stack ? end($stack) : $requestSpanId;
         $span = [
             'id' => substr(hash('sha256', $parentId.'#'.++$this->sequence), 0, 16),
             'traceId' => $this->spans[$parentId]['traceId'],
@@ -190,7 +205,8 @@ final class SpanBuilder
             $changes[] = $this->close($spanId, $at);
         }
         if (isset($this->requestSpans[$request])) {
-            $changes[] = $this->close($this->requestSpans[$request], $at);
+            $this->spans[$this->requestSpans[$request]]['end'] = $at;
+            $changes[] = ['close', $this->spans[$this->requestSpans[$request]]];
         }
 
         return $changes;
@@ -198,7 +214,9 @@ final class SpanBuilder
 
     private function close(string $spanId, float $at): array
     {
-        $this->spans[$spanId]['end'] = $at;
+        if ('server' !== $this->spans[$spanId]['kind']) {
+            $this->spans[$spanId]['end'] = $at;
+        }
 
         return ['close', $this->spans[$spanId]];
     }

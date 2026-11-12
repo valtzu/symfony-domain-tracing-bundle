@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 final class SpanBuilderTest extends TestCase
 {
-    public function testBuildsACallTreeAcrossServices()
+    public function testBuildsACallTreeAcrossServicesWithTheEntrypointInTheRequestSpan()
     {
         $builder = new SpanBuilder();
         $records = [
@@ -37,12 +37,10 @@ final class SpanBuilderTest extends TestCase
         ], array_values($builder->spans()));
 
         $this->assertSame([
-            ['POST /', null, 1.0, 2.0],
-            ['Checkout: place order', 'POST /', 1.1, 1.95],
+            ['Checkout: place order', null, 1.0, 2.0],
             ['Pricing: apply discounts', 'Checkout: place order', 1.2, 1.4],
             ['Payment gateway: charge', 'Checkout: place order', 1.5, 1.9],
-            ['POST /charges', 'Payment gateway: charge', 1.6, 1.8],
-            ['Charge controller: invoke', 'POST /charges', 1.7, 1.8],
+            ['Charge controller: invoke', 'Payment gateway: charge', 1.6, 1.8],
         ], $tree);
     }
 

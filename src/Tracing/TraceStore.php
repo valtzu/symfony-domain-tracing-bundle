@@ -24,6 +24,11 @@ final readonly class TraceStore
         return 1 === preg_match('/^[0-9a-f-]{36}$/', $id);
     }
 
+    public function has(string $id): bool
+    {
+        return self::isValidId($id) && is_file($this->path($id));
+    }
+
     public function start(string $id, array $request): void
     {
         if (!is_dir($this->directory)) {

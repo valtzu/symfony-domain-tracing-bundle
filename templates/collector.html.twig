@@ -1,0 +1,30 @@
+{% extends '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% block toolbar %}
+    {% if collector.requestId %}
+        {% set icon %}
+            <span class="sf-toolbar-label">Trace</span>
+        {% endset %}
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', {link: profiler_url}) }}
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+    <span class="label{{ collector.requestId ? '' : ' disabled' }}">
+        <strong>Trace</strong>
+    </span>
+{% endblock %}
+
+{% block panel %}
+    {% if collector.requestId %}
+        <link rel="stylesheet" href="{{ path('ai_stacktrace_asset', {file: 'trace.css'}) }}">
+        <div id="ai-stacktrace"></div>
+        <script type="module">
+            import { followTrace } from {{ path('ai_stacktrace_asset', {file: 'trace.js'})|json_encode|raw }};
+            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('ai-stacktrace'));
+        </script>
+    {% else %}
+        <h2>Trace</h2>
+        <div class="empty"><p>This request was not recorded.</p></div>
+    {% endif %}
+{% endblock %}

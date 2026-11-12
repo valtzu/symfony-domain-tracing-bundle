@@ -35,11 +35,13 @@ Then open the live traces and place an order in the demo shop.
 |---|---|
 | Demo shop | http://localhost:8100 |
 | Live traces | http://localhost:8100/_tracing/ |
+| Trace of one request | the "Trace" panel of the Symfony profiler |
 
 ## How it is put together
 
 - The root directory is a Symfony bundle, `AiStacktraceBundle`. An application installs it in dev and imports its
-  routes, which serve the live view and its event stream under `/_tracing/`.
+  routes, which serve the live view and its event stream under `/_tracing/`. It also adds a "Trace" panel to the
+  profiler.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
   no tracing code. It requires the bundle from the parent directory.
 - The `tracing` container runs `bin/console ai-stacktrace:run` with the image of the demo:

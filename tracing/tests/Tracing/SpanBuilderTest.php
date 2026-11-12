@@ -44,6 +44,28 @@ final class SpanBuilderTest extends TestCase
         ], $tree);
     }
 
+    public function testGivesEachSpanTheLinesOfItsMethodThatRan()
+    {
+        $builder = new SpanBuilder();
+        $records = [
+            ['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'POST', 'uri' => '/'],
+            ['request' => 'shop', 'type' => 'function', 'function' => 'App\Shipping->apply', 'file' => 'src/Shipping.php', 'line' => 13, 'endLine' => 22, 'code' => '', 'at' => 1.1],
+            ['request' => 'shop', 'type' => 'function', 'function' => 'App\Fraud->check', 'file' => 'src/Fraud.php', 'line' => 19, 'endLine' => 24, 'code' => '', 'at' => 1.1],
+            self::step('shop', 1.1, 'App\Shipping->apply', 7),
+            ['request' => 'shop', 'type' => 'exit', 'depth' => 7, 'at' => 1.2],
+            self::step('shop', 1.3, 'App\Fraud->check', 7),
+            ['request' => 'shop', 'type' => 'exit', 'depth' => 7, 'at' => 1.4],
+            ['request' => 'shop', 'type' => 'lines', 'file' => 'src/Shipping.php', 'lines' => [8, 15, 17, 18, 21, 30], 'at' => 1.5],
+        ];
+        foreach ($records as $record) {
+            $builder->add($record);
+        }
+
+        $lines = array_column(array_values($builder->spans()), 'executedLines', 'function');
+
+        $this->assertSame(['App\Shipping->apply' => [15, 17, 18, 21]], $lines);
+    }
+
     private static function step(string $request, float $at, string $function, int $depth): array
     {
         return ['request' => $request, 'type' => 'step', 'at' => $at, 'function' => $function, 'depth' => $depth, 'file' => 'src/X.php', 'line' => 1, 'code' => ''];

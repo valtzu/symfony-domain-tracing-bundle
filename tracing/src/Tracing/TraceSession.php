@@ -9,8 +9,8 @@ use App\Ai\SecretRedactor;
  * Records every executed line of the application code of one request, through a DBGp connection from PHP Debugger.
  *
  * The session reads the code through the connection too, so one recorder can serve services whose code it does not
- * have. It does so when the process first loads a class, because the autoloader of the application is ready then and
- * no application code has run yet. Then it sets a call breakpoint on each method of the application: inside a method it steps over line by line. When
+ * have. It does so right away when the autoloader of the application is ready, as in a FrankenPHP worker, and
+ * otherwise when the process first loads a class, before any application code runs. Then it sets a call breakpoint on each method of the application: inside a method it steps over line by line. When
  * a step lands outside the application code, the session steps out if application code called it, such as an
  * autoloader, and otherwise resumes until the next call breakpoint. A breakpoint on every line would make the engine
  * check the whole list on each statement, which costs about 0.5 s per request. Stepping over does not enter closures,
@@ -138,8 +138,7 @@ final class TraceSession
         $this->requestStartedAt = $this->clock->now($this->request['traceId']);
         $this->store->start($this->request['id'], $this->request + ['at' => $this->requestStartedAt]);
 
-        $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m loadClass', self::AUTOLOADER));
-        $this->resume('run');
+        $this->evaluate('codeIndex', $this->codeIndexCall(false));
     }
 
     private function onAutoloaderBreak(\SimpleXMLElement $message): void
@@ -157,6 +156,13 @@ final class TraceSession
 
     private function onCodeIndex(array $result): void
     {
+        if (!$result && null === $this->autoloaderBreakpoint) {
+            $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m loadClass', self::AUTOLOADER));
+            $this->resume('run');
+
+            return;
+        }
+
         if (!isset($result['files'])) {
             $this->codeIndexCacheKey = $this->request['service'].'#'.$result['fingerprint'];
             if (!isset(self::$codeIndexes[$this->codeIndexCacheKey])) {

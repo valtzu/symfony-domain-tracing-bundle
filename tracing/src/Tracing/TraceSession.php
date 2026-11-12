@@ -69,7 +69,6 @@ final class TraceSession
     private array $pendingArguments = [];
 
     private ?\SimpleXMLElement $returnValue = null;
-    private float $requestStartedAt = 0.0;
 
     public bool $finished = false;
 
@@ -135,8 +134,7 @@ final class TraceSession
         $traceparent = $this->request['traceparent'];
         unset($this->request['traceparent']);
         $this->request += TraceContext::fromHeaders($traceparent, $this->request['id']);
-        $this->requestStartedAt = $this->clock->now($this->request['traceId']);
-        $this->store->start($this->request['id'], $this->request + ['at' => $this->requestStartedAt]);
+        $this->store->start($this->request['id'], $this->request + ['at' => $this->clock->now($this->request['traceId'])]);
 
         $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m loadClass', self::AUTOLOADER));
         $this->resume('run');
@@ -305,7 +303,7 @@ final class TraceSession
         }
 
         $this->lastStepDepth = $this->depth;
-        $this->store->addStep($this->request['id'], $this->functions[$function], $line, $this->depth, (int) round(($at - $this->requestStartedAt) * 1e6));
+        $this->store->addStep($this->request['id'], $this->functions[$function], $line, $this->depth, $at);
     }
 
     /**

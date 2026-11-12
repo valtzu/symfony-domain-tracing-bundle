@@ -60,6 +60,17 @@ the trace grow.
 
 ## Limits
 
-- Development only: the debugger slows requests down, and the recorded times are approximate.
+- Development only: recording makes requests about 25 times slower. Loading the extension alone costs little.
+  Median of 50 requests in the dev environment:
+
+  | | `GET /` (shop) | `POST /` (shop and payments) |
+  |---|---|---|
+  | Extension not loaded | 3.9 ms | 7.9 ms |
+  | Loaded, `php_debugger.mode=off` | 3.9 ms | 8.0 ms |
+  | Loaded, no client listening | 5.0 ms | 10.0 ms |
+  | Recorded | 90 ms | 220 ms |
+
+- The times in a trace are not the real times. The time stopped in the debugger is subtracted, but recorded durations
+  are still about 20 times too long (80 ms for `GET /`, 193 ms for `POST /`). The order of the operations is right.
 - Only Symfony HttpClient carries the trace to other services.
 - A return value is known only when the caller uses it; PHP discards an unused one.

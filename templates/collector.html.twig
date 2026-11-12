@@ -3,6 +3,7 @@
 {% block toolbar %}
     {% if collector.requestId %}
         {% set icon %}
+            {{ source('@AiStacktrace/icon.svg') }}
             <span class="sf-toolbar-label">Domain traces</span>
         {% endset %}
         {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', {link: profiler_url}) }}
@@ -11,6 +12,7 @@
 
 {% block menu %}
     <span class="label{{ collector.requestId ? '' : ' disabled' }}">
+        <span class="icon">{{ source('@AiStacktrace/icon.svg') }}</span>
         <strong>Domain traces</strong>
     </span>
 {% endblock %}

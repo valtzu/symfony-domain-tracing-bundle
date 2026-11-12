@@ -6,11 +6,10 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Follows each new trace while it is recorded: builds its spans, names the operations, describes what happened in
- * them, and exports the trace to the OpenTelemetry collector when it ends. The results are also written next to the
- * trace, so that a page can show them while they come.
+ * Follows each new trace while it is recorded: builds its spans, names the operations and describes what happened in
+ * them. The results are written next to the trace, so that a page can show them while they come.
  */
-#[AsCommand('app:process-traces', 'Name, describe and export the recorded traces')]
+#[AsCommand('app:process-traces', 'Name and describe the recorded traces')]
 final readonly class ProcessTracesCommand
 {
     private const MAX_STEPS_PER_PART = 80;
@@ -23,7 +22,6 @@ final readonly class ProcessTracesCommand
         private BlobStore $blobs,
         private OperationNamer $namer,
         private TraceNarrator $narrator,
-        private OtlpExporter $exporter,
     ) {
     }
 
@@ -103,8 +101,7 @@ final readonly class ProcessTracesCommand
             usleep(100_000);
         }
 
-        $names = $this->nameOperations($rootId, $builder, $names);
-        $this->exporter->export(array_values(self::withNames($builder->spans(), $names)), $events);
+        $this->nameOperations($rootId, $builder, $names);
         $this->store->addNarration($rootId, ['type' => 'end', 'traceId' => $follower->traceId()]);
     }
 

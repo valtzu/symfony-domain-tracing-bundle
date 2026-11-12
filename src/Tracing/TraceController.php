@@ -3,7 +3,6 @@
 namespace App\Tracing;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,13 +19,12 @@ final class TraceController extends AbstractController
         TraceStore $store,
         BlobStore $blobs,
         OperationNamer $namer,
-        #[Autowire('%env(JAEGER_UI_URL)%')] string $jaegerUiUrl,
     ): Response {
         if (!TraceStore::isValidId($id)) {
             throw $this->createNotFoundException();
         }
 
-        return new StreamedResponse(function () use ($id, $store, $blobs, $namer, $jaegerUiUrl) {
+        return new StreamedResponse(function () use ($id, $store, $blobs, $namer) {
             $send = static function (string $event, mixed $data): void {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
@@ -61,7 +59,7 @@ final class TraceController extends AbstractController
                         'name' => [$names[$record['function']] = $record['name'], $send('name', $record)],
                         'event' => $send('event', $record),
                         'failure' => $send('failure', $record['message']),
-                        'end' => $send('done', ['traceId' => $record['traceId'], 'jaegerUrl' => null === $record['traceId'] ? null : rtrim($jaegerUiUrl, '/').'/trace/'.$record['traceId']]),
+                        'end' => $send('done', ['traceId' => $record['traceId']]),
                         default => null,
                     };
                     if ('end' === $record['type']) {
@@ -72,7 +70,7 @@ final class TraceController extends AbstractController
                 usleep(100_000);
             }
 
-            $send('done', ['traceId' => $follower->traceId(), 'jaegerUrl' => null]);
+            $send('done', ['traceId' => $follower->traceId()]);
         }, headers: [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

@@ -6,10 +6,10 @@ Business-level traces of PHP requests, without instrumenting the code.
 
 [Xdebug](https://xdebug.org/) traces the calls of the application methods of each request, with their arguments,
 return values and times, and records which lines of them ran. A recorder that takes part in each request as a
-debugging client (DBGp) follows the request across services. A worker turns the recording into OpenTelemetry spans, gives each method a business name ("Apply
+debugging client (DBGp) follows the request across services. A worker turns the recording into spans, gives each method a business name ("Apply
 discounts", "Charge card") and describes what happened in it ("Card declined: insufficient funds") with
 [Symfony AI](https://symfony.com/doc/current/ai/index.html) and Claude Code. The result streams into a waterfall
-next to the page while the request runs, and ends up in Jaeger.
+while the request runs.
 
 ## Why
 
@@ -30,13 +30,12 @@ docker compose run --rm --no-deps recorder composer install
 docker compose up -d
 ```
 
-Then place an order in the demo shop and watch the panel under the page.
+Then open the live traces and place an order in the demo shop.
 
 | What | URL |
 |---|---|
 | Demo shop | http://localhost:8100 |
 | Live traces | http://localhost:8200 |
-| Jaeger | http://localhost:16686 |
 
 ## How it is put together
 
@@ -49,9 +48,9 @@ Then place an order in the demo shop and watch the panel under the page.
     stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
     directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
   - `tracing-worker` builds the spans, names the operations (once per method and code version), describes the
-    request, removes secrets before anything goes to the AI, and exports to Jaeger with OTLP. It reads the source
+    request, and removes secrets before anything goes to the AI. It reads the source
     from the git repositories in `TRACE_GIT_REPOSITORIES`, including uncommitted files.
-  - `tracing` serves the live view and the event stream for the panel.
+  - `tracing` serves the live view and its event stream.
 
 A service needs the Xdebug settings of `demo/frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
 trace and the code coverage to the application and writes the lines that ran next to the trace, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at

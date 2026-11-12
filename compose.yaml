@@ -8,7 +8,6 @@ services:
       HTTP_PORT: "8080"
       APP_ENV: dev
       OTEL_SERVICE_NAME: shop
-      TRACING_UI_URL: http://localhost:${TRACING_PORT:-8200}
       PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
       XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-recorder}
       MERCURE_DIRECTIVES: |
@@ -74,7 +73,6 @@ services:
   tracing:
     build: .
     environment:
-      CADDY_SERVER_EXTRA_DIRECTIVES: header Access-Control-Allow-Origin *
       TRACE_GIT_REPOSITORIES: /repositories/shop
       GIT_OPTIONAL_LOCKS: "0"
       GIT_CONFIG_COUNT: "1"
@@ -85,11 +83,6 @@ services:
     volumes:
       - ./:/app
       - ./:/repositories/shop:ro
-
-  jaeger:
-    image: jaegertracing/jaeger:2.5.0
-    ports:
-      - "127.0.0.1:${JAEGER_PORT:-16686}:16686"
 
 volumes:
   caddy_data:

@@ -2825,6 +2825,49 @@
                     "property_metadata_existence_check": false,
                     "auto_mapping": []
                 }
+            },
+            "web_profiler": {
+                "$ref": "#/$defs/types/object_null",
+                "properties": {
+                    "toolbar": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/types/object_null",
+                                "properties": {
+                                    "enabled": {
+                                        "$ref": "#/$defs/types/boolean",
+                                        "default": false
+                                    },
+                                    "ajax_replace": {
+                                        "$ref": "#/$defs/types/boolean",
+                                        "default": false,
+                                        "description": "Replace toolbar on AJAX requests"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": [
+                                    "boolean"
+                                ]
+                            }
+                        ],
+                        "default": {
+                            "enabled": false,
+                            "ajax_replace": false
+                        },
+                        "description": "Profiler toolbar configuration"
+                    },
+                    "intercept_redirects": {
+                        "$ref": "#/$defs/types/boolean",
+                        "default": false
+                    },
+                    "excluded_ajax_paths": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "^/((index|app(_[\\w]+)?)\\.php/)?_wdt"
+                    }
+                },
+                "additionalProperties": false
             }
         }
     },
@@ -2859,6 +2902,90 @@
         },
         "validation": {
             "$ref": "#/$defs/nodes/validation"
+        },
+        "when@dev": {
+            "$ref": "#/$defs/types/object_null",
+            "properties": {
+                "cache": {
+                    "$ref": "#/$defs/nodes/cache"
+                },
+                "framework": {
+                    "$ref": "#/$defs/nodes/framework"
+                },
+                "http_client": {
+                    "$ref": "#/$defs/nodes/http_client"
+                },
+                "imports": true,
+                "parameters": true,
+                "property_access": {
+                    "$ref": "#/$defs/nodes/property_access"
+                },
+                "property_info": {
+                    "$ref": "#/$defs/nodes/property_info"
+                },
+                "router": {
+                    "$ref": "#/$defs/nodes/router"
+                },
+                "serializer": {
+                    "$ref": "#/$defs/nodes/serializer"
+                },
+                "services": true,
+                "twig": {
+                    "$ref": "#/$defs/nodes/twig"
+                },
+                "type_info": {
+                    "$ref": "#/$defs/nodes/type_info"
+                },
+                "validation": {
+                    "$ref": "#/$defs/nodes/validation"
+                },
+                "web_profiler": {
+                    "$ref": "#/$defs/nodes/web_profiler"
+                }
+            },
+            "additionalProperties": false
+        },
+        "when@test": {
+            "$ref": "#/$defs/types/object_null",
+            "properties": {
+                "cache": {
+                    "$ref": "#/$defs/nodes/cache"
+                },
+                "framework": {
+                    "$ref": "#/$defs/nodes/framework"
+                },
+                "http_client": {
+                    "$ref": "#/$defs/nodes/http_client"
+                },
+                "imports": true,
+                "parameters": true,
+                "property_access": {
+                    "$ref": "#/$defs/nodes/property_access"
+                },
+                "property_info": {
+                    "$ref": "#/$defs/nodes/property_info"
+                },
+                "router": {
+                    "$ref": "#/$defs/nodes/router"
+                },
+                "serializer": {
+                    "$ref": "#/$defs/nodes/serializer"
+                },
+                "services": true,
+                "twig": {
+                    "$ref": "#/$defs/nodes/twig"
+                },
+                "type_info": {
+                    "$ref": "#/$defs/nodes/type_info"
+                },
+                "validation": {
+                    "$ref": "#/$defs/nodes/validation"
+                },
+                "web_profiler": {
+                    "$ref": "#/$defs/nodes/web_profiler"
+                }
+            },
+            "additionalProperties": false
         }
     },
     "patternProperties": {

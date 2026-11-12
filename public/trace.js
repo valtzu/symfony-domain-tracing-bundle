@@ -203,7 +203,7 @@ function spinner(label = '') {
 
 export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
-    panel.innerHTML = '<h2>What happened</h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div><p class="trace-links"></p>';
+    panel.innerHTML = '<h2>What happened</h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     panel.querySelector('.trace-status').prepend(spinner());
     const status = panel.querySelector('.trace-status-text');
     const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'));
@@ -242,12 +242,6 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
         waterfall.describingEnded();
         panel.querySelector('.trace-status .trace-spinner')?.remove();
         status.textContent = status.textContent.replace(/ Describing…$/, '');
-        if (done.jaegerUrl) {
-            const link = panel.querySelector('.trace-links').appendChild(document.createElement('a'));
-            link.href = done.jaegerUrl;
-            link.target = '_blank';
-            link.textContent = 'Open in Jaeger';
-        }
         onDone();
     });
     source.onerror = () => {

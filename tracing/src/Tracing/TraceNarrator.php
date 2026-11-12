@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Describes what happened inside the operations of a trace, in business terms, as events on their spans. It works on
- * the trace part by part while it is recorded, and each event refers to the line it describes.
+ * the trace part by part while it is recorded, and each event refers to the call it describes.
  */
 final readonly class TraceNarrator
 {
@@ -21,28 +21,37 @@ final readonly class TraceNarrator
     }
 
     /**
-     * @param list<array>          $steps step records, each with the "span" it belongs to
-     * @param array<string, array> $spans
-     * @param list<string>         $eventsSoFar
+     * @param list<array>           $steps       calls, each with the "span" it opened
+     * @param array<string, array>  $spans
+     * @param list<string>          $eventsSoFar
+     * @param array<string, string> $code        source of the methods that the model has not seen yet, by function
      *
      * @return iterable<array{span: string, at: float, text: string, error: bool}>
      */
-    public function narrate(array $steps, array $spans, ?string $rootSpanId, array $eventsSoFar, bool $traceEnded): iterable
+    public function narrate(array $steps, array $spans, ?string $rootSpanId, array $eventsSoFar, bool $traceEnded, array $code = []): iterable
     {
-        $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew executed lines:\n";
-        $operation = null;
+        $json = static fn (mixed $value) => json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+
+        $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew calls:\n";
         foreach ($steps as $index => $step) {
             $span = $spans[$step['span']];
-            if ($span['id'] !== $operation) {
-                $operation = $span['id'];
-                $prompt .= \sprintf("[%s] in operation \"%s\" (%s)%s%s:\n", $span['service'], $span['name'], $span['function'] ?? $span['uri'],
-                    isset($span['arguments']) ? ', called with '.json_encode($span['arguments'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : '',
-                    \array_key_exists('returnValue', $span) ? ', returned '.json_encode($span['returnValue'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE) : '',
-                );
-            }
-            $prompt .= \sprintf("  %d: %s\n", $index, $step['code']);
+            $prompt .= \sprintf("%d: [%s] %s\"%s\" (%s)%s%s\n",
+                $index,
+                $span['service'],
+                str_repeat('  ', max(0, $step['depth'] - $steps[0]['depth'])),
+                $span['name'],
+                $span['function'],
+                isset($span['arguments']) ? ' called with '.$json($span['arguments']) : '',
+                \array_key_exists('returnValue', $span) ? ' returned '.$json($span['returnValue']) : '',
+            );
         }
-        $prompt .= "\n".($traceEnded ? 'The request has finished.' : 'The request is still running. More lines will follow.');
+        if ($code) {
+            $prompt .= "\nCode of these operations:\n";
+            foreach ($code as $function => $source) {
+                $prompt .= \sprintf("\n%s():\n%s\n", $function, $source);
+            }
+        }
+        $prompt .= "\n".($traceEnded ? 'The request has finished.' : 'The request is still running. More calls will follow.');
 
         $buffer = '';
         foreach ($this->agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {

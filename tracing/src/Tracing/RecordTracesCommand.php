@@ -6,28 +6,33 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand('app:record-traces', 'Listen for PHP Debugger connections and record the executed lines of the application code of each request')]
+#[AsCommand('app:record-traces', 'Listen for Xdebug connections and record the calls of the application methods of each request')]
 final readonly class RecordTracesCommand
 {
+    private const POLL_SECONDS = 0.05;
+    private const SECONDS_TO_WAIT_FOR_THE_TRACE_END = 5;
+
     public function __construct(
         private TraceStore $store,
-        private DbgpValue $values,
+        private XdebugValue $values,
     ) {
     }
 
-    public function __invoke(SymfonyStyle $io, #[Option] string $listen = 'tcp://0.0.0.0:9003', #[Option('Pause after each recorded line, to imitate a step-by-step debugging session')] int $stepDelay = 0): int
+    public function __invoke(SymfonyStyle $io, #[Option] string $listen = 'tcp://0.0.0.0:9003'): int
     {
         $server = stream_socket_server($listen, $errorCode, $errorMessage) ?: throw new \RuntimeException($errorMessage);
         $io->writeln(\sprintf('Listening on %s', $listen));
 
         /** @var array<int, array{DbgpConnection, TraceSession}> $sessions */
         $sessions = [];
-        $clock = new TraceClock();
+
+        /** @var array<string, array{XdebugTraceReader, float}> trace readers of the requests whose connection ended, with when it ended */
+        $readers = [];
 
         while (true) {
             $read = [$server, ...array_map(static fn (array $session) => $session[0]->socket, $sessions)];
             $write = $except = null;
-            if (false === stream_select($read, $write, $except, null)) {
+            if (false === stream_select($read, $write, $except, 0, (int) (self::POLL_SECONDS * 1e6))) {
                 continue;
             }
 
@@ -35,7 +40,7 @@ final readonly class RecordTracesCommand
                 if ($socket === $server) {
                     if ($client = stream_socket_accept($server, 0)) {
                         $connection = new DbgpConnection($client);
-                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->store, $clock, $this->values, $stepDelay)];
+                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->store, $this->values)];
                     }
                     continue;
                 }
@@ -48,9 +53,22 @@ final readonly class RecordTracesCommand
                 $connection->flush();
 
                 if (null === $messages || $session->finished) {
-                    $session->abort();
                     $connection->close();
                     unset($sessions[(int) $socket]);
+                    if (null !== $session->requestId()) {
+                        $readers[$session->requestId()] = [$session->traceReader, microtime(true)];
+                    }
+                }
+            }
+
+            foreach ($sessions as [, $session]) {
+                $session->traceReader?->read();
+            }
+            foreach ($readers as $requestId => [$reader, $connectionEndedAt]) {
+                $ended = $reader?->read() ?? false;
+                if ($ended || microtime(true) - $connectionEndedAt > self::SECONDS_TO_WAIT_FOR_THE_TRACE_END) {
+                    $this->store->end($requestId, $reader?->endedAt() ?? microtime(true));
+                    unset($readers[$requestId]);
                 }
             }
         }

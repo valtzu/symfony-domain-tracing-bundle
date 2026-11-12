@@ -4,9 +4,9 @@ Business-level traces of PHP requests, without instrumenting the code.
 
 ## What
 
-A recorder attaches to each request through [PHP Debugger](https://php-debugger.dev/) (DBGp), records every line of
-application code that runs, with the arguments and return values of each method, and follows the request across
-services. A worker turns the recording into OpenTelemetry spans, gives each method a business name ("Apply
+[Xdebug](https://xdebug.org/) traces the calls of the application methods of each request, with their arguments,
+return values and times, and a recorder that takes part in each request as a debugging client (DBGp) follows the
+request across services. A worker turns the recording into OpenTelemetry spans, gives each method a business name ("Apply
 discounts", "Charge card") and describes what happened in it ("Card declined: insufficient funds") with
 [Symfony AI](https://symfony.com/doc/current/ai/index.html) and Claude Code. The result streams into a waterfall
 next to the page while the request runs, and ends up in Jaeger.
@@ -46,31 +46,32 @@ Then place an order in the demo shop and watch the panel under the page.
   no tracing code.
 - `tracing/`: the tracing app, with its own image.
   - `recorder` is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
-    it, sets the `X-Request-Id` and adds the `traceparent` header to outgoing Symfony HttpClient requests. A trace
-    refers to code by git blob ID and line.
+    it, sets the `X-Request-Id`, and adds the `traceparent` header to outgoing Symfony HttpClient requests. It only
+    stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
+    directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
   - `tracing-worker` builds the spans, names the operations (once per method and code version), describes the
     request, removes secrets before anything goes to the AI, and exports to Jaeger with OTLP. It reads the source
     from the git repositories in `TRACE_GIT_REPOSITORIES`, including uncommitted files.
   - `tracing` serves the live view and the event stream for the panel.
 
-A service only needs the PHP Debugger extension pointed at the recorder and an `OTEL_SERVICE_NAME`.
-
-Set `RECORDER_STEP_DELAY=400` to slow every recorded line down, as when stepping through with a debugger, and watch
-the trace grow.
+A service needs the Xdebug settings of `frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
+trace to the application namespaces, `XDEBUG_CONFIG=client_host=recorder`, the shared trace directory mounted at
+`/traces`, and an `OTEL_SERVICE_NAME`.
 
 ## Limits
 
-- Development only: recording makes requests about 25 times slower. Loading the extension alone costs little.
-  Median of 50 requests in the dev environment:
+- Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment:
 
   | | `GET /` (shop) | `POST /` (shop and payments) |
   |---|---|---|
-  | Extension not loaded | 3.9 ms | 7.9 ms |
-  | Loaded, `php_debugger.mode=off` | 3.9 ms | 8.0 ms |
-  | Loaded, no client listening | 5.0 ms | 10.0 ms |
-  | Recorded | 90 ms | 220 ms |
+  | No extension | 3.9 ms | 7.9 ms |
+  | Recorded | 16 ms | 32–37 ms |
 
-- The times in a trace are not the real times. The time stopped in the debugger is subtracted, but recorded durations
-  are still about 20 times too long (80 ms for `GET /`, 193 ms for `POST /`). The order of the operations is right.
+  An earlier version recorded every line with [PHP Debugger](https://php-debugger.dev/) and was about 25 times
+  slower (90 ms and 220 ms): a connected debugger disables OPcache for the request, and every breakpoint is checked
+  on each function call.
+- Xdebug records the calls of application methods, not each line, so a trace does not show which branch ran inside
+  a method. The arguments and return values usually tell.
+- The times in a trace include the overhead of Xdebug.
 - Only Symfony HttpClient carries the trace to other services.
 - A return value is known only when the caller uses it; PHP discards an unused one.

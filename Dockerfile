@@ -19,13 +19,13 @@ FROM frankenphp_base AS frankenphp_dev
 
 ENV APP_ENV=dev
 
-RUN arch="$(uname -m | sed 's/aarch64/arm64/')" \
-    && php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')" \
-    && curl -fsSL -o "$(php-config --extension-dir)/php_debugger.so" \
-        "https://github.com/php-debugger/php-debugger/releases/latest/download/php-debugger-php${php_version}-ts-linux-${arch}.so" \
-    && echo 'zend_extension=php_debugger.so' > /usr/local/etc/php/conf.d/php-debugger.ini
+RUN install-php-extensions xdebug \
+    && rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'zend_extension=xdebug.so' > /usr/local/etc/php/conf.d/xdebug.ini \
+    && mkdir /traces
 
-COPY frankenphp/conf.d/php-debugger.dev.ini /usr/local/etc/php/conf.d/zz-php-debugger.ini
+COPY frankenphp/conf.d/xdebug.dev.ini /usr/local/etc/php/conf.d/zz-xdebug.ini
+COPY frankenphp/xdebug-prepend.php /usr/local/etc/php/xdebug-prepend.php
 
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch"]
 

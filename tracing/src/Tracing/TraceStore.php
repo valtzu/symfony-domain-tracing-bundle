@@ -6,9 +6,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs: a "request"
- * record, one step per executed line and an "end" record. A step is the array [function, line, call depth,
- * microseconds since the request started], because it is the most frequent record. Readers can follow the file while it is written.
- * A trace index file lists the spans of each trace, in the order they started.
+ * record, a step for each call of an application method with its arguments and its exit, and an "end" record. A step
+ * is the array [function, line, call depth, microseconds since the request started], because it is the most frequent
+ * record. Readers can follow the file while it is written. A trace index file lists the spans of each trace, in the
+ * order they started.
  */
 final readonly class TraceStore
 {
@@ -92,15 +93,17 @@ final readonly class TraceStore
         return $this->readLines($this->narrationPath($rootId), $offset) ?? ['records' => [], 'offset' => $offset];
     }
 
+    private const MAX_AGE_TO_PROCESS_SECONDS = 300;
+
     /**
-     * @return list<string> IDs of the requests that started a trace and have not been processed yet, oldest first
+     * @return list<string> IDs of the recent requests that started a trace and have not been processed yet, oldest first
      */
     public function unprocessedRoots(): array
     {
         $roots = [];
         foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
             $id = basename($path, '.jsonl');
-            if (!self::isValidId($id) || is_file($this->narrationPath($id))) {
+            if (!self::isValidId($id) || is_file($this->narrationPath($id)) || filemtime($path) < time() - self::MAX_AGE_TO_PROCESS_SECONDS) {
                 continue;
             }
             $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];

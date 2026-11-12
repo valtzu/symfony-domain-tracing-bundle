@@ -10,7 +10,7 @@ services:
       OTEL_SERVICE_NAME: shop
       TRACING_UI_URL: http://localhost:${TRACING_PORT:-8200}
       PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
-      PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
+      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-recorder}
       MERCURE_DIRECTIVES: |
         mercure {
             anonymous
@@ -30,6 +30,7 @@ services:
       - "127.0.0.1:${PHP_PORT:-8100}:8080"
     volumes:
       - ./:/app
+      - ./tracing/var/xdebug-traces:/traces
       - caddy_data:/data
       - caddy_config:/config
 
@@ -41,17 +42,19 @@ services:
       HTTP_PORT: "8080"
       APP_ENV: dev
       OTEL_SERVICE_NAME: payments
-      PHP_DEBUGGER_CLIENT_HOST: ${PHP_DEBUGGER_CLIENT_HOST:-recorder}
+      XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-recorder}
     volumes:
       - ./:/app
+      - ./tracing/var/xdebug-traces:/traces
 
   # The tracing app: a separate application with its own image, in tracing/
 
   recorder:
     build: ./tracing
-    command: ["php", "bin/console", "app:record-traces", "--step-delay=${RECORDER_STEP_DELAY:-0}"]
+    command: ["php", "bin/console", "app:record-traces"]
     volumes:
       - ./tracing:/app
+      - ./tracing/var/xdebug-traces:/traces
 
   tracing-worker:
     build: ./tracing

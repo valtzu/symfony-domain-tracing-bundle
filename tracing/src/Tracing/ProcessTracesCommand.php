@@ -15,7 +15,8 @@ final readonly class ProcessTracesCommand
 {
     private const MAX_STEPS_PER_PART = 80;
     private const IDLE_SECONDS_BEFORE_DESCRIBING = 1.0;
-    private const TIMEOUT_SECONDS = 600;
+    private const TIMEOUT_SECONDS = 30;
+    private const SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD = 10;
 
     public function __construct(
         private TraceStore $store,
@@ -51,13 +52,16 @@ final readonly class ProcessTracesCommand
         $follower = new TraceFollower($this->store, $this->blobs, $rootId);
         $builder = new SpanBuilder();
         $names = [];
+        $described = [];
         $events = [];
         $pending = [];
-        $lastActivity = microtime(true);
+        $lastActivity = $startedAt = microtime(true);
+        $seenRecords = false;
 
         while (true) {
             foreach ($follower->poll() as $record) {
                 $lastActivity = microtime(true);
+                $seenRecords = true;
                 $builder->add($record);
                 if ('step' === $record['type'] && null !== $span = $builder->currentSpanOf($record['request'])) {
                     $pending[] = ['span' => $span] + $record;
@@ -70,7 +74,13 @@ final readonly class ProcessTracesCommand
                 $names = $this->nameOperations($rootId, $builder, $names);
                 $spans = self::withNames($builder->spans(), $names);
                 $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), $events);
-                foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended) as $event) {
+                $code = [];
+                foreach ($pending as $step) {
+                    if (!isset($described[$step['function']]) && null !== $function = $builder->function($step['function'])) {
+                        $code[$step['function']] = $described[$step['function']] = $function['code'];
+                    }
+                }
+                foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended, $code) as $event) {
                     $events[] = $event;
                     $this->store->addNarration($rootId, ['type' => 'event'] + $event);
                 }
@@ -80,6 +90,9 @@ final readonly class ProcessTracesCommand
 
             if ($ended || $idle > self::TIMEOUT_SECONDS) {
                 break;
+            }
+            if (!$seenRecords && microtime(true) - $startedAt > self::SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD) {
+                throw new \RuntimeException('The trace has no records.');
             }
             usleep(100_000);
         }

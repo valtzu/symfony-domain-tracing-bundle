@@ -143,20 +143,20 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
 
     on('request', request => {
         status.textContent = `${request.method} ${request.uri}: recording…`;
-        console.groupCollapsed(`${request.method} ${request.uri}: lines executed`);
+        console.groupCollapsed(`${request.method} ${request.uri}: calls of application methods`);
         onRequest(request);
     });
     on('span', span => waterfall.span(span));
     on('step', step => {
         steps++;
-        status.textContent = status.textContent.replace(/:.*/, `: ${steps} lines recorded…`);
+        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls recorded…`);
         console.log(`%c[${step.service}] ${step.file}:${step.line}%c ${step.code}`, 'color: gray', '', step.function);
         waterfall.step(step);
         onStep(step);
     });
     on('end', () => {
         console.groupEnd();
-        status.textContent = status.textContent.replace(/:.*/, `: ${steps} lines. Describing…`);
+        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls. Describing…`);
     });
     on('name', record => waterfall.name(record.function, record.name));
     on('event', event => waterfall.event(event));

@@ -38,8 +38,6 @@ Then place an order in the demo shop and watch the panel under the page.
 | Live traces | http://localhost:8200 |
 | Jaeger | http://localhost:16686 |
 
-`orders.http` has one request per checkout scenario: paid, held for review, and the different rejections.
-
 ## How it is put together
 
 - `src/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,

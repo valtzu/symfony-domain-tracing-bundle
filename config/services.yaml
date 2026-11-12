@@ -24,6 +24,8 @@ services:
 
     app.platform.claude_code:
         class: Symfony\AI\Platform\Platform
+        # public so that tests can replace it with a mock platform
+        public: true
         factory: [Symfony\AI\Platform\Bridge\ClaudeCode\Factory, createPlatform]
         arguments:
             $workingDirectory: '%kernel.project_dir%/var'

@@ -9,6 +9,11 @@ services:
             - '../src/AiStacktraceBundle.php'
             - '../src/Tracing/Resources/'
 
+    Valtzu\AiStacktrace\Tracing\TraceDataCollector:
+        autoconfigure: false
+        # right after the "request" collector, which has priority 335
+        tags: [{ name: data_collector, id: domain_traces, template: '@AiStacktrace/collector.html.twig', priority: 334 }]
+
     ai_stacktrace.platform:
         class: Symfony\AI\Platform\Platform
         # public so that tests can replace it with a mock platform

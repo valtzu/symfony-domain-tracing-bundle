@@ -22,9 +22,9 @@ final class TraceDataCollector extends AbstractDataCollector
         $this->data = ['id' => $this->store->has($id) ? $id : null];
     }
 
-    public static function getTemplate(): string
+    public function getName(): string
     {
-        return '@AiStacktrace/collector.html.twig';
+        return 'domain_traces';
     }
 
     public function getRequestId(): ?string

@@ -3,7 +3,7 @@
 {% block toolbar %}
     {% if collector.requestId %}
         {% set icon %}
-            <span class="sf-toolbar-label">Trace</span>
+            <span class="sf-toolbar-label">Domain traces</span>
         {% endset %}
         {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', {link: profiler_url}) }}
     {% endif %}
@@ -11,7 +11,7 @@
 
 {% block menu %}
     <span class="label{{ collector.requestId ? '' : ' disabled' }}">
-        <strong>Trace</strong>
+        <strong>Domain traces</strong>
     </span>
 {% endblock %}
 
@@ -24,7 +24,7 @@
             followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('ai-stacktrace'));
         </script>
     {% else %}
-        <h2>Trace</h2>
+        <h2>Domain traces</h2>
         <div class="empty"><p>This request was not recorded.</p></div>
     {% endif %}
 {% endblock %}

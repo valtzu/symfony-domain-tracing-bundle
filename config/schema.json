@@ -8638,7 +8638,7 @@
                         "$ref": "#/$defs/types/variable"
                     },
                     "validation": {
-                        "$ref": "#/$defs/types/variable"
+                        "$ref": "#/$defs/nodes/validation"
                     },
                     "serializer": {
                         "$ref": "#/$defs/nodes/serializer"
@@ -9573,6 +9573,192 @@
                     "time_based_uuid_version": 7,
                     "uuid47_secret": null
                 }
+            },
+            "validation": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/types/object_null",
+                        "properties": {
+                            "enabled": {
+                                "$ref": "#/$defs/types/boolean",
+                                "default": true
+                            },
+                            "enable_attributes": {
+                                "$ref": "#/$defs/types/boolean",
+                                "default": true
+                            },
+                            "static_method": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/$defs/types/array_null",
+                                        "items": {
+                                            "$ref": "#/$defs/types/scalar"
+                                        }
+                                    },
+                                    {
+                                        "type": [
+                                            "string"
+                                        ]
+                                    }
+                                ],
+                                "default": [
+                                    "loadValidatorMetadata"
+                                ]
+                            },
+                            "translation_domain": {
+                                "$ref": "#/$defs/types/scalar",
+                                "default": "validators"
+                            },
+                            "email_validation_mode": {
+                                "anyOf": [
+                                    {
+                                        "enum": [
+                                            "html5",
+                                            "html5-allow-no-tld",
+                                            "strict"
+                                        ]
+                                    },
+                                    {
+                                        "$ref": "#/$defs/types/param"
+                                    }
+                                ],
+                                "default": "html5"
+                            },
+                            "mapping": {
+                                "$ref": "#/$defs/types/object_null",
+                                "properties": {
+                                    "paths": {
+                                        "$ref": "#/$defs/types/array_null",
+                                        "items": {
+                                            "$ref": "#/$defs/types/scalar"
+                                        }
+                                    }
+                                },
+                                "patternProperties": {
+                                    "^path$": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/$defs/types/scalar"
+                                            },
+                                            {
+                                                "$ref": "#/$defs/types/array_null",
+                                                "items": {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "default": {
+                                    "paths": []
+                                }
+                            },
+                            "not_compromised_password": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/$defs/types/object_null",
+                                        "properties": {
+                                            "enabled": {
+                                                "$ref": "#/$defs/types/boolean_null",
+                                                "default": null,
+                                                "description": "When disabled, compromised passwords will be accepted as valid. Defaults to false when \"framework.test\" is enabled, to true otherwise."
+                                            },
+                                            "endpoint": {
+                                                "$ref": "#/$defs/types/scalar",
+                                                "default": null,
+                                                "description": "API endpoint for the NotCompromisedPassword Validator."
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "type": [
+                                            "boolean"
+                                        ]
+                                    }
+                                ],
+                                "default": {
+                                    "enabled": null,
+                                    "endpoint": null
+                                }
+                            },
+                            "disable_translation": {
+                                "$ref": "#/$defs/types/boolean",
+                                "default": false
+                            },
+                            "property_metadata_existence_check": {
+                                "$ref": "#/$defs/types/boolean",
+                                "default": false,
+                                "description": "When enabled, validateProperty() and validatePropertyValue() throw an exception if no metadata is found for the given property."
+                            },
+                            "auto_mapping": {
+                                "$ref": "#/$defs/types/object_null",
+                                "additionalProperties": {
+                                    "$ref": "#/$defs/types/object_null",
+                                    "properties": {
+                                        "services": {
+                                            "$ref": "#/$defs/types/array_null",
+                                            "items": {
+                                                "$ref": "#/$defs/types/scalar"
+                                            }
+                                        }
+                                    },
+                                    "patternProperties": {
+                                        "^service$": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/$defs/types/scalar"
+                                                },
+                                                {
+                                                    "$ref": "#/$defs/types/array_null",
+                                                    "items": {
+                                                        "$ref": "#/$defs/types/scalar"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "description": "A collection of namespaces for which auto-mapping will be enabled by default, or null to opt-in with the EnableAutoMapping constraint.",
+                                "examples": [
+                                    {
+                                        "App\\Entity\\": [],
+                                        "App\\WithSpecificLoaders\\": [
+                                            "validator.property_info_loader"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": [
+                            "boolean"
+                        ]
+                    }
+                ],
+                "default": {
+                    "enabled": true,
+                    "enable_attributes": true,
+                    "static_method": [
+                        "loadValidatorMetadata"
+                    ],
+                    "translation_domain": "validators",
+                    "email_validation_mode": "html5",
+                    "mapping": {
+                        "paths": []
+                    },
+                    "not_compromised_password": {
+                        "enabled": null,
+                        "endpoint": null
+                    },
+                    "disable_translation": false,
+                    "property_metadata_existence_check": false,
+                    "auto_mapping": []
+                }
             }
         }
     },
@@ -9607,6 +9793,9 @@
         },
         "uid": {
             "$ref": "#/$defs/nodes/uid"
+        },
+        "validation": {
+            "$ref": "#/$defs/nodes/validation"
         }
     },
     "patternProperties": {
@@ -9642,6 +9831,9 @@
                 },
                 "uid": {
                     "$ref": "#/$defs/nodes/uid"
+                },
+                "validation": {
+                    "$ref": "#/$defs/nodes/validation"
                 }
             }
         }

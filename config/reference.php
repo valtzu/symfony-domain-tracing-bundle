@@ -187,6 +187,25 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         include_built_in_encoders?: bool|Param, // Whether to include the built-in encoders // Default: true
  *     }>,
  * }
+ * @psalm-type ValidationConfig = bool|array{
+ *     enabled?: bool|Param, // Default: true
+ *     enable_attributes?: bool|Param, // Default: true
+ *     static_method?: Param|string|list<scalar|Param|null>,
+ *     translation_domain?: scalar|Param|null, // Default: "validators"
+ *     email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|Param, // Default: "html5"
+ *     mapping?: array{
+ *         paths?: list<scalar|Param|null>,
+ *     },
+ *     not_compromised_password?: bool|array{
+ *         enabled?: bool|Param|null, // When disabled, compromised passwords will be accepted as valid. Defaults to false when "framework.test" is enabled, to true otherwise. // Default: null
+ *         endpoint?: scalar|Param|null, // API endpoint for the NotCompromisedPassword Validator. // Default: null
+ *     },
+ *     disable_translation?: bool|Param, // Default: false
+ *     property_metadata_existence_check?: bool|Param, // When enabled, validateProperty() and validatePropertyValue() throw an exception if no metadata is found for the given property. // Default: false
+ *     auto_mapping?: array<string, array{ // Default: []
+ *         services?: list<scalar|Param|null>,
+ *     }>,
+ * }
  * @psalm-type TypeInfoConfig = bool|array{
  *     enabled?: bool|Param, // Default: true
  *     aliases?: array<string, scalar|Param|null>,
@@ -290,7 +309,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     assets?: mixed,
  *     asset_mapper?: mixed,
  *     translator?: mixed,
- *     validation?: mixed,
+ *     validation?: ValidationConfig,
  *     serializer?: SerializerConfig,
  *     property_access?: PropertyAccessConfig,
  *     type_info?: TypeInfoConfig,
@@ -1341,6 +1360,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     router?: RouterConfig,
  *     cache?: CacheConfig,
  *     serializer?: SerializerConfig,
+ *     validation?: ValidationConfig,
  *     type_info?: TypeInfoConfig,
  *     property_access?: PropertyAccessConfig,
  *     property_info?: PropertyInfoConfig,
@@ -1355,6 +1375,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         serializer?: SerializerConfig,
+ *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,
@@ -1370,6 +1391,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         serializer?: SerializerConfig,
+ *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,
@@ -1385,6 +1407,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         router?: RouterConfig,
  *         cache?: CacheConfig,
  *         serializer?: SerializerConfig,
+ *         validation?: ValidationConfig,
  *         type_info?: TypeInfoConfig,
  *         property_access?: PropertyAccessConfig,
  *         property_info?: PropertyInfoConfig,

@@ -8,12 +8,15 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "symfony/ai-bundle": "^1.0@beta",
+        "symfony/clock": "8.2.*",
         "symfony/console": "8.2.*",
         "symfony/dotenv": "8.2.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "8.2.*",
         "symfony/runtime": "8.2.*",
+        "symfony/serializer": "8.2.*",
         "symfony/twig-bundle": "8.2.*",
+        "symfony/validator": "8.2.*",
         "symfony/yaml": "8.2.*"
     },
     "require-dev": {

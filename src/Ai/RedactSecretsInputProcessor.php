@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Ai;
+namespace Valtzu\DomainTracingBundle\Ai;
 
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Input;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;

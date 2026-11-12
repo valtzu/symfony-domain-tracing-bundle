@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Reads the decoded records of a trace while they are written: those of the request that started it and those of the requests

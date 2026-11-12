@@ -1,12 +1,12 @@
 <?php
 
-namespace Valtzu\AiStacktrace;
+namespace Valtzu\DomainTracingBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
-final class AiStacktraceBundle extends AbstractBundle
+final class DomainTracingBundle extends AbstractBundle
 {
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {

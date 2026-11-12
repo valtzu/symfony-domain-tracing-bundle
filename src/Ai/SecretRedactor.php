@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Ai;
+namespace Valtzu\DomainTracingBundle\Ai;
 
 /**
  * Replaces secrets in text before it leaves the application: the values of secret environment variables, credentials

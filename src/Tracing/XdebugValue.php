@@ -1,8 +1,8 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
-use Valtzu\AiStacktrace\Ai\SecretRedactor;
+use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
 
 /**
  * Parses a value as Xdebug writes it in a trace file, such as 'carol', [0 => 1], class App\Customer { public string

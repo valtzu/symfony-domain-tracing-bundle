@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Symfony\Component\Console\Style\SymfonyStyle;
 

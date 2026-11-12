@@ -1,9 +1,9 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tests\Ai;
+namespace Valtzu\DomainTracingBundle\Tests\Ai;
 
-use Valtzu\AiStacktrace\Ai\RedactSecretsInputProcessor;
-use Valtzu\AiStacktrace\Ai\SecretRedactor;
+use Valtzu\DomainTracingBundle\Ai\RedactSecretsInputProcessor;
+use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
@@ -42,7 +42,7 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
     {
         $_SERVER['TEST_API_KEY'] = 'live-key-1234567890';
         $sent = null;
-        self::getContainer()->set('ai_stacktrace.platform', MockPlatformFactory::createPlatform(static function ($model, $payload) use (&$sent) {
+        self::getContainer()->set('domain_tracing.platform', MockPlatformFactory::createPlatform(static function ($model, $payload) use (&$sent) {
             $sent = json_encode($payload);
 
             return 'ok';

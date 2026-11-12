@@ -1,8 +1,8 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tests\Tracing;
+namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
-use Valtzu\AiStacktrace\Tracing\TraceContext;
+use Valtzu\DomainTracingBundle\Tracing\TraceContext;
 use PHPUnit\Framework\TestCase;
 
 final class TraceContextTest extends TestCase

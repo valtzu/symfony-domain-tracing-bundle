@@ -1,0 +1,3 @@
+when@dev:
+    domain_tracing:
+        resource: '@DomainTracingBundle/config/routes.yaml'

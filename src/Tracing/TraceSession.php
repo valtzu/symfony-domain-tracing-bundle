@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Handles the DBGp connection that Xdebug opens for one request. Xdebug records the calls of the application methods

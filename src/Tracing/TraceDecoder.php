@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Expands the compact records of a trace, which refer to code by file and function tables, into records with the

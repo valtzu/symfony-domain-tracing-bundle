@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -14,7 +14,7 @@ final class TraceController extends AbstractController
 {
     private const TIMEOUT_SECONDS = 600;
 
-    #[Route('/_tracing/{id}/events', name: 'ai_stacktrace_events', methods: ['GET'])]
+    #[Route('/_tracing/{id}/events', name: 'domain_tracing_events', methods: ['GET'])]
     public function events(
         string $id,
         Request $request,
@@ -89,13 +89,13 @@ final class TraceController extends AbstractController
         ]);
     }
 
-    #[Route('/_tracing/', name: 'ai_stacktrace_live', methods: ['GET'])]
+    #[Route('/_tracing/', name: 'domain_tracing_live', methods: ['GET'])]
     public function live(): Response
     {
-        return $this->render('@AiStacktrace/live.html.twig', ['now' => microtime(true)]);
+        return $this->render('@DomainTracing/live.html.twig', ['now' => microtime(true)]);
     }
 
-    #[Route('/_tracing/{file}', name: 'ai_stacktrace_asset', requirements: ['file' => 'trace\.(js|css)'], methods: ['GET'])]
+    #[Route('/_tracing/{file}', name: 'domain_tracing_asset', requirements: ['file' => 'trace\.(js|css)'], methods: ['GET'])]
     public function asset(string $file): BinaryFileResponse
     {
         $response = new BinaryFileResponse(\dirname(__DIR__, 2).'/public/'.$file);
@@ -104,7 +104,7 @@ final class TraceController extends AbstractController
         return $response;
     }
 
-    #[Route('/_tracing/newest', name: 'ai_stacktrace_newest', methods: ['GET'])]
+    #[Route('/_tracing/newest', name: 'domain_tracing_newest', methods: ['GET'])]
     public function newest(Request $request, TraceStore $store): JsonResponse
     {
         return new JsonResponse(['id' => $store->newestStartedAfter($request->query->get('after', 0.0) + 0.0)]);

@@ -1,13 +1,13 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tests;
+namespace Valtzu\DomainTracingBundle\Tests;
 
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel;
-use Valtzu\AiStacktrace\AiStacktraceBundle;
+use Valtzu\DomainTracingBundle\DomainTracingBundle;
 
 final class TestKernel extends Kernel
 {
@@ -17,7 +17,7 @@ final class TestKernel extends Kernel
     {
         yield new FrameworkBundle();
         yield new AiBundle();
-        yield new AiStacktraceBundle();
+        yield new DomainTracingBundle();
     }
 
     public function getProjectDir(): string

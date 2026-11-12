@@ -1,12 +1,12 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tests\Tracing;
+namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Valtzu\AiStacktrace\Tracing\TraceDataCollector;
-use Valtzu\AiStacktrace\Tracing\TraceStore;
+use Valtzu\DomainTracingBundle\Tracing\TraceDataCollector;
+use Valtzu\DomainTracingBundle\Tracing\TraceStore;
 
 final class TraceDataCollectorTest extends TestCase
 {
@@ -16,7 +16,7 @@ final class TraceDataCollectorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->store = new TraceStore(sys_get_temp_dir().'/ai-stacktrace-'.bin2hex(random_bytes(4)));
+        $this->store = new TraceStore(sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4)));
         $this->store->start(self::RECORDED, ['traceId' => '8985fb33258f422981f678dc02d1ee28']);
     }
 

@@ -1,4 +1,4 @@
-# symfony-ai-stacktrace
+# symfony-domain-tracing-bundle
 
 Business-level traces of PHP requests, without instrumenting the code.
 
@@ -37,12 +37,12 @@ Then open the live traces and place an order in the demo shop.
 
 ## How it is put together
 
-- The root directory is a Symfony bundle, `AiStacktraceBundle`. An application installs it in dev and imports its
+- The root directory is a Symfony bundle, `DomainTracingBundle`. An application installs it in dev and imports its
   routes, which serve the live view and its event stream under `/_tracing/`. It also adds a "Domain traces" panel to the
   profiler.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
   no tracing code. It requires the bundle from the parent directory.
-- The `tracing` container runs `bin/console ai-stacktrace:run` with the image of the demo:
+- The `tracing` container runs `bin/console domain-tracing:run` with the image of the demo:
   - The recorder is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
     it, sets the `X-Request-Id`, and adds the `traceparent` header to outgoing Symfony HttpClient requests. It only
     stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared

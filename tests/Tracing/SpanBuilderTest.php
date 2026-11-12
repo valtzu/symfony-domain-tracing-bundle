@@ -1,8 +1,8 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tests\Tracing;
+namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
-use Valtzu\AiStacktrace\Tracing\SpanBuilder;
+use Valtzu\DomainTracingBundle\Tracing\SpanBuilder;
 use PHPUnit\Framework\TestCase;
 
 final class SpanBuilderTest extends TestCase

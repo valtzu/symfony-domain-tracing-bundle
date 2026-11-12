@@ -1,7 +1,7 @@
 ai:
     agent:
         operation_namer:
-            platform: 'ai_stacktrace.platform'
+            platform: 'domain_tracing.platform'
             model:
                 name: 'opus'
                 options:
@@ -15,7 +15,7 @@ ai:
 
                 Secrets in the code are replaced with "[redacted]". Do not guess what they were.
         trace_narrator:
-            platform: 'ai_stacktrace.platform'
+            platform: 'domain_tracing.platform'
             model:
                 name: 'opus'
                 options:

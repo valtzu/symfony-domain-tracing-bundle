@@ -1,12 +1,12 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand('ai-stacktrace:record', 'Listen for Xdebug connections and record the calls of the application methods of each request')]
+#[AsCommand('domain-tracing:record', 'Listen for Xdebug connections and record the calls of the application methods of each request')]
 final readonly class RecordTracesCommand
 {
     public function __construct(

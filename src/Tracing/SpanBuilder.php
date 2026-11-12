@@ -1,6 +1,6 @@
 <?php
 
-namespace Valtzu\AiStacktrace\Tracing;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Turns the records of a trace into spans, as they arrive: one span per call of an application method. The first method

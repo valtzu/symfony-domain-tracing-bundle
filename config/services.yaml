@@ -3,18 +3,18 @@ services:
         autowire: true
         autoconfigure: true
 
-    Valtzu\AiStacktrace\:
+    Valtzu\DomainTracingBundle\:
         resource: '../src/'
         exclude:
-            - '../src/AiStacktraceBundle.php'
+            - '../src/DomainTracingBundle.php'
             - '../src/Tracing/Resources/'
 
-    Valtzu\AiStacktrace\Tracing\TraceDataCollector:
+    Valtzu\DomainTracingBundle\Tracing\TraceDataCollector:
         autoconfigure: false
         # right after the "request" collector, which has priority 335
-        tags: [{ name: data_collector, id: domain_traces, template: '@AiStacktrace/collector.html.twig', priority: 334 }]
+        tags: [{ name: data_collector, id: domain_traces, template: '@DomainTracing/collector.html.twig', priority: 334 }]
 
-    ai_stacktrace.platform:
+    domain_tracing.platform:
         class: Symfony\AI\Platform\Platform
         # public so that tests can replace it with a mock platform
         public: true

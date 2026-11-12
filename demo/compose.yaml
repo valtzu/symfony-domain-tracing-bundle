@@ -1,4 +1,4 @@
-name: symfony-ai-stacktrace
+name: symfony-domain-tracing-bundle
 
 services:
   shop:
@@ -10,7 +10,7 @@ services:
       HTTP_PORT: "8080"
       APP_ENV: dev
       OTEL_SERVICE_NAME: shop
-      PHP_IDE_CONFIG: serverName=symfony-ai-stacktrace
+      PHP_IDE_CONFIG: serverName=symfony-domain-tracing-bundle
       XDEBUG_CONFIG: client_host=${XDEBUG_CLIENT_HOST:-tracing}
       MERCURE_DIRECTIVES: |
         mercure {
@@ -55,7 +55,7 @@ services:
     build:
       context: .
       target: frankenphp_dev
-    command: ["php", "bin/console", "ai-stacktrace:run"]
+    command: ["php", "bin/console", "domain-tracing:run"]
     environment:
       APP_ENV: dev
       XDEBUG_MODE: "off"

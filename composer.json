@@ -1,5 +1,5 @@
 {
-    "name": "valtzu/symfony-ai-stacktrace",
+    "name": "valtzu/symfony-domain-tracing-bundle",
     "description": "Business-level traces of PHP requests, recorded with Xdebug and described with Symfony AI",
     "type": "symfony-bundle",
     "license": "proprietary",
@@ -27,12 +27,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Valtzu\\AiStacktrace\\": "src/"
+            "Valtzu\\DomainTracingBundle\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Valtzu\\AiStacktrace\\Tests\\": "tests/"
+            "Valtzu\\DomainTracingBundle\\Tests\\": "tests/"
         }
     }
 }

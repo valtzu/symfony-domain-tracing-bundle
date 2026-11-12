@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c12ee18ca3a3c9738c0f8174e68a01e7",
+    "content-hash": "69fe42c5b33dd202b4acb54bfeb233d0",
     "packages": [
         {
             "name": "psr/cache",
@@ -7089,12 +7089,12 @@
             "published-time": "2026-11-04T12:37:07+00:00"
         },
         {
-            "name": "valtzu/symfony-ai-stacktrace",
+            "name": "valtzu/symfony-domain-tracing-bundle",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "..",
-                "reference": "733f38d92bf84a78ac647292af61e4e256f62fe4"
+                "reference": "8baa00140942da00d55f7572818e7fdf7394e216"
             },
             "require": {
                 "php": ">=8.4",
@@ -7113,12 +7113,12 @@
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
-                    "Valtzu\\AiStacktrace\\": "src/"
+                    "Valtzu\\DomainTracingBundle\\": "src/"
                 }
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Valtzu\\AiStacktrace\\Tests\\": "tests/"
+                    "Valtzu\\DomainTracingBundle\\Tests\\": "tests/"
                 }
             },
             "license": [
@@ -7200,7 +7200,7 @@
     "aliases": [],
     "minimum-stability": "beta",
     "stability-flags": {
-        "valtzu/symfony-ai-stacktrace": 20
+        "valtzu/symfony-domain-tracing-bundle": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

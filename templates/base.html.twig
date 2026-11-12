@@ -11,6 +11,27 @@
         {% block javascripts %}
         {% endblock %}
 
+        {% set trace_id = app.request.headers.get('x-request-id') %}
+        {% if trace_id %}
+        <script type="module">
+            const traceId = {{ trace_id|json_encode|raw }};
+            for (let attempt = 0; attempt < 20; attempt++) {
+                const response = await fetch(`/_trace/${traceId}`);
+                if (response.ok) {
+                    const trace = await response.json();
+                    const minDepth = Math.min(...trace.steps.map(step => step.depth));
+                    console.groupCollapsed(`${trace.method} ${trace.uri}: ${trace.steps.length} lines executed in src/ (${trace.durationMs} ms)`);
+                    for (const step of trace.steps) {
+                        console.log(`%c${step.file}:${step.line}%c ${'  '.repeat(step.depth - minDepth)}${step.code}`, 'color: gray', '', step.function);
+                    }
+                    console.groupEnd();
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+        </script>
+        {% endif %}
+
         {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
         {% if frankenphp_hot_reload %}
         <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">

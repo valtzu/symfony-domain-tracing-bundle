@@ -1,15 +1,44 @@
 .trace-panel {
     --trace-bg: #ffffff; --trace-text: #1d1d1b; --trace-muted: #6b6b66; --trace-line: #e2e2dd; --trace-bad: #b3261e;
+    --trace-track: #f1f1ee; --trace-service-0: #2f6f8f; --trace-service-1: #8a5a00; --trace-service-2: #5b4a9e; --trace-service-3: #2f7d4a;
     background: var(--trace-bg); color: var(--trace-text); border: 1px solid var(--trace-line); border-radius: 8px;
     padding: 16px; font: 15px/1.5 system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-    .trace-panel { --trace-bg: #20201e; --trace-text: #ecece8; --trace-muted: #9a9a94; --trace-line: #34342f; --trace-bad: #f08a80; }
+    .trace-panel {
+        --trace-bg: #20201e; --trace-text: #ecece8; --trace-muted: #9a9a94; --trace-line: #34342f; --trace-bad: #f08a80;
+        --trace-track: #2a2a27; --trace-service-0: #6fb3d6; --trace-service-1: #e0a64a; --trace-service-2: #a99be6; --trace-service-3: #7cc49a;
+    }
 }
 .trace-panel h2 { margin: 0 0 4px; font-size: 16px; }
 .trace-panel p { margin: 8px 0 0; }
 .trace-panel .trace-status { margin: 0; color: var(--trace-muted); font-size: 13px; }
 .trace-panel .trace-error { color: var(--trace-bad); }
+.trace-panel .trace-links a { color: inherit; font-size: 13px; }
 .trace-panel-docked { max-width: 960px; margin: 0 auto 24px; width: calc(100% - 32px); box-sizing: border-box; }
-.trace-panel .trace-diagram { margin-top: 12px; overflow-x: auto; }
-.trace-panel .trace-diagram svg { max-width: 100%; height: auto; }
+
+.waterfall { margin-top: 12px; font-size: 13px; overflow-x: auto; }
+.waterfall-axis, .waterfall-row { display: grid; grid-template-columns: minmax(180px, 34%) 1fr; gap: 8px; align-items: center; min-width: 560px; }
+.waterfall-axis { color: var(--trace-muted); font-size: 11px; height: 18px; border-bottom: 1px solid var(--trace-line); }
+.waterfall-ticks { position: relative; height: 100%; }
+.waterfall-ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.waterfall-ticks span:first-child { transform: none; }
+.waterfall-ticks span:last-child { transform: translateX(-100%); }
+.waterfall-row { min-height: 24px; border-bottom: 1px solid var(--trace-line); }
+.waterfall-label { display: flex; gap: 6px; align-items: baseline; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.waterfall-service { color: var(--trace-muted); font-size: 11px; }
+.waterfall-name { overflow: hidden; text-overflow: ellipsis; }
+.waterfall-track { position: relative; height: 24px; background: var(--trace-track); }
+.waterfall-bar { position: absolute; top: 6px; height: 12px; border-radius: 2px; background: var(--trace-color); }
+.waterfall-duration { position: absolute; top: 4px; color: var(--trace-muted); font-size: 11px; white-space: nowrap; }
+.waterfall-marker { position: absolute; top: 3px; width: 2px; height: 18px; background: var(--trace-text); opacity: .6; }
+.waterfall-marker.error { background: var(--trace-bad); opacity: 1; }
+.waterfall-row.failed .waterfall-name { color: var(--trace-bad); }
+.waterfall-row.running .waterfall-bar { opacity: .6; }
+.waterfall-events { margin: 0; padding: 2px 0 6px; list-style: none; color: var(--trace-muted); font-size: 12px; min-width: 560px; border-bottom: 1px solid var(--trace-line); }
+.waterfall-events li::before { content: "• "; }
+.waterfall-events li.error { color: var(--trace-bad); }
+.service-0 { --trace-color: var(--trace-service-0); }
+.service-1 { --trace-color: var(--trace-service-1); }
+.service-2 { --trace-color: var(--trace-service-2); }
+.service-3 { --trace-color: var(--trace-service-3); }

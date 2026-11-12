@@ -50,9 +50,57 @@ final readonly class TraceStore
         $this->append($id, ['type' => 'step'] + $step);
     }
 
-    public function end(string $id, int $durationMs): void
+    /**
+     * The frames at the given call depth and deeper returned.
+     */
+    public function addExit(string $id, int $depth, float $at): void
     {
-        $this->append($id, ['type' => 'end', 'durationMs' => $durationMs]);
+        $this->append($id, ['type' => 'exit', 'depth' => $depth, 'at' => $at]);
+    }
+
+    public function describeFunction(string $id, array $function): void
+    {
+        $this->append($id, ['type' => 'function'] + $function);
+    }
+
+    public function end(string $id, float $at): void
+    {
+        $this->append($id, ['type' => 'end', 'at' => $at]);
+    }
+
+    public function addNarration(string $rootId, array $record): void
+    {
+        file_put_contents($this->narrationPath($rootId), json_encode($record, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
+    }
+
+    /**
+     * @return array{records: list<array>, offset: int}
+     */
+    public function readNarration(string $rootId, int $offset = 0): array
+    {
+        return $this->readLines($this->narrationPath($rootId), $offset) ?? ['records' => [], 'offset' => $offset];
+    }
+
+    /**
+     * @return list<string> IDs of the requests that started a trace and have not been processed yet, oldest first
+     */
+    public function unprocessedRoots(): array
+    {
+        $roots = [];
+        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
+            $id = basename($path, '.jsonl');
+            if (!self::isValidId($id) || is_file($this->narrationPath($id))) {
+                continue;
+            }
+            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
+            fclose($handle);
+            if (\array_key_exists('parentSpanId', $request) && null === $request['parentSpanId']) {
+                $roots[$id] = $request['startedAt'];
+            }
+        }
+        asort($roots);
+
+        return array_keys($roots);
     }
 
     /**
@@ -60,7 +108,12 @@ final readonly class TraceStore
      */
     public function read(string $id, int $offset = 0): ?array
     {
-        if (!self::isValidId($id) || !is_file($path = $this->path($id))) {
+        return self::isValidId($id) ? $this->readLines($this->path($id), $offset) : null;
+    }
+
+    private function readLines(string $path, int $offset): ?array
+    {
+        if (!is_file($path)) {
             return null;
         }
 
@@ -106,6 +159,11 @@ final readonly class TraceStore
     private function path(string $id): string
     {
         return $this->directory.'/'.$id.'.jsonl';
+    }
+
+    private function narrationPath(string $rootId): string
+    {
+        return $this->directory.'/'.$rootId.'.narration';
     }
 
     private function tracePath(string $traceId): string

@@ -2,60 +2,71 @@
 
 namespace App\Tracing;
 
-use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Routing\Attribute\Route;
-
 /**
- * Records every executed line of the source directory.
+ * Records every executed line of the application code of one request, through a DBGp connection from PHP Debugger.
  *
- * A breakpoint on every line makes the engine check the whole list on each statement, which costs about 0.5 s per
- * request. A call breakpoint on each method of the source directory is enough: inside a method the session steps over
- * line by line. When a step lands outside the source directory, the session steps out if traced code called it, such
- * as an autoloader, and otherwise resumes until the next call breakpoint. Stepping over does not enter closures, so
- * each line that declares a closure gets a line breakpoint too.
+ * The session reads the code through the connection too, so one recorder can serve services whose code it does not
+ * have. It does so when the process first loads a class, because the autoloader of the application is ready then and
+ * no application code has run yet. Then it sets a call breakpoint on each method of the application: inside a method it steps over line by line. When
+ * a step lands outside the application code, the session steps out if application code called it, such as an
+ * autoloader, and otherwise resumes until the next call breakpoint. A breakpoint on every line would make the engine
+ * check the whole list on each statement, which costs about 0.5 s per request. Stepping over does not enter closures,
+ * so each line that declares a closure gets a line breakpoint too.
+ *
+ * A return breakpoint on each method tells when the method returns, so that its span ends there even when code outside
+ * the application runs next. The engine reports a return breakpoint with the position of the caller, while the stack
+ * still shows the method that returns.
  *
  * Recording starts when the entrypoint (a controller or a command) runs its first method other than the constructor.
  * The framework code, the constructor and the services built for the action arguments are not part of the flow.
  */
 final class TraceSession
 {
-    private const NAMESPACE = 'App\\';
+    /** @var array<string, array> code index by service and fingerprint, shared by the sessions */
+    private static array $codeIndexes = [];
+
+    private const AUTOLOADER = 'Composer\\Autoload\\ClassLoader';
 
     private ?array $request = null;
+    private ?array $codeIndex = null;
+    private ?string $codeIndexCacheKey = null;
+    private ?string $autoloaderBreakpoint = null;
     private ?int $lastStepDepth = null;
     private int $depth = 0;
-    private float $startedAt;
-
-    /** @var array<class-string, true|null> */
-    private array $entrypoints = [];
     private bool $recording = false;
+    private float $stoppedSince;
+    private ?string $breakPosition = null;
 
-    /** @var array<string, list<string>> */
-    private array $sources = [];
+    /** @var array<string, true> */
+    private array $describedFunctions = [];
 
     public bool $finished = false;
 
     public function __construct(
         private readonly DbgpConnection $connection,
-        private readonly string $sourceDir,
-        private readonly string $excludedDir,
         private readonly TraceStore $store,
+        private readonly TraceClock $clock,
         private readonly int $stepDelayMs = 0,
     ) {
-        $this->startedAt = microtime(true);
+        $this->stoppedSince = microtime(true);
     }
 
     public function handle(\SimpleXMLElement $message): void
     {
         if ('init' === $message->getName()) {
+            $this->connection->send('feature_set', '-n max_data -v 0');
             $this->connection->send('eval', '', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'traceparent' => \$_SERVER['HTTP_TRACEPARENT'] ?? null, 'service' => \$_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: null), 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
 
             return;
         }
 
         match ((string) $message['command']) {
-            'eval' => $this->start($message),
-            'run', 'step_over', 'step_out' => $this->onBreak($message),
+            'eval' => match (true) {
+                null === $this->request => $this->start($this->evalResult($message)),
+                default => $this->onCodeIndex($this->evalResult($message)),
+            },
+            'breakpoint_set' => $this->autoloaderBreakpoint ??= (string) $message['id'],
+            'run', 'step_over', 'step_out' => null === $this->codeIndex ? $this->onAutoloaderBreak($message) : $this->onBreak($message),
             'stack_depth' => $this->depth = (int) $message['depth'],
             'stack_get' => $this->onFrame($message->stack[0]),
             default => null,
@@ -70,32 +81,69 @@ final class TraceSession
         $this->finished = true;
     }
 
-    private function start(\SimpleXMLElement $message): void
+    private function start(array $request): void
     {
-        $this->request = json_decode(base64_decode((string) $message->property), true) ?: null;
+        $this->request = $request;
 
         if (!$this->shouldRecord()) {
-            $this->request = null;
             $this->connection->send('detach');
             $this->finished = true;
+            $this->request = null;
 
             return;
         }
 
         $traceparent = $this->request['traceparent'];
         unset($this->request['traceparent']);
-        $this->store->start($this->request['id'], $this->request + TraceContext::fromHeaders($traceparent, $this->request['id']));
+        $this->request += TraceContext::fromHeaders($traceparent, $this->request['id']);
+        $this->store->start($this->request['id'], $this->request + ['at' => $this->clock->now($this->request['traceId'])]);
 
-        foreach ($this->sourceFiles() as $path) {
-            foreach ($this->methods($path) as [$class, $method]) {
-                $this->entrypoints[$class] ??= $this->isEntrypoint($class) ?: null;
-                $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m %s', $class, $method));
+        $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m loadClass', self::AUTOLOADER));
+        $this->resume('run');
+    }
+
+    private function onAutoloaderBreak(\SimpleXMLElement $message): void
+    {
+        if ('break' !== (string) $message['status']) {
+            $this->onBreak($message);
+
+            return;
+        }
+
+        $this->stoppedSince = microtime(true);
+        $this->connection->send('breakpoint_remove', '-d '.$this->autoloaderBreakpoint);
+        $this->connection->send('eval', '', $this->codeIndexCall(false));
+    }
+
+    private function onCodeIndex(array $result): void
+    {
+        if (!isset($result['files'])) {
+            $this->codeIndexCacheKey = $this->request['service'].'#'.$result['fingerprint'];
+            if (!isset(self::$codeIndexes[$this->codeIndexCacheKey])) {
+                $this->connection->send('eval', '', $this->codeIndexCall(true));
+
+                return;
             }
-            foreach ($this->closureLines($path) as $line) {
+            $result = self::$codeIndexes[$this->codeIndexCacheKey];
+        }
+
+        $this->setBreakpoints(self::$codeIndexes[$this->codeIndexCacheKey] = $result);
+    }
+
+    private function setBreakpoints(array $codeIndex): void
+    {
+        $this->codeIndex = $codeIndex;
+
+        foreach ($codeIndex['files'] as $path => $file) {
+            foreach ($file['methods'] as $method => $lines) {
+                $this->connection->send('breakpoint_set', \sprintf('-t call -a %s -m %s', $file['class'], $method));
+                $this->connection->send('breakpoint_set', \sprintf('-t return -a %s -m %s', $file['class'], $method));
+            }
+            foreach ($file['closureLines'] as $line) {
                 $this->connection->send('breakpoint_set', \sprintf('-t line -f file://%s -n %d', $path, $line));
             }
         }
-        $this->connection->send('run');
+        $this->resume('run');
     }
 
     private function shouldRecord(): bool
@@ -110,6 +158,8 @@ final class TraceSession
 
     private function onBreak(\SimpleXMLElement $message): void
     {
+        $this->stoppedSince = microtime(true);
+
         if ('break' !== (string) $message['status']) {
             $this->end();
             $this->connection->send('detach');
@@ -118,6 +168,8 @@ final class TraceSession
             return;
         }
 
+        $position = $message->children('https://xdebug.org/dbgp/xdebug')->message?->attributes();
+        $this->breakPosition = $position ? $position['filename'].':'.$position['lineno'] : null;
         $this->connection->send('stack_depth');
         $this->connection->send('stack_get', '-d 0');
     }
@@ -126,137 +178,91 @@ final class TraceSession
     {
         $path = substr((string) $frame['filename'], \strlen('file://'));
         $function = (string) $frame['where'];
+        $file = $this->codeIndex['files'][$path] ?? null;
 
-        $this->recording = $this->recording || $this->isTraced($path) && $this->isEntrypointAction($function);
+        if ($this->recording && null !== $file && $this->breakPosition !== $frame['filename'].':'.$frame['lineno']) {
+            $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince));
+            $this->lastStepDepth = $this->depth - 1;
+            $this->resume('step_over');
+
+            return;
+        }
+
+        $this->recording = $this->recording || null !== $file && $file['entrypoint'] && $function !== $file['class'].'->__construct';
 
         if (!$this->recording) {
-            $this->connection->send('run');
+            $this->resume('run');
 
             return;
         }
 
-        if (!$this->isTraced($path)) {
-            $calledFromTracedCode = $this->depth > ($this->lastStepDepth ?? \PHP_INT_MAX);
-            $this->connection->send($calledFromTracedCode ? 'step_out' : 'run');
-
-            return;
-        }
-
-        if (str_starts_with($function, self::NAMESPACE)) {
-            $this->record($path, (int) $frame['lineno'], $function);
-        }
-        $this->connection->send('step_over');
-    }
-
-    private function isEntrypointAction(string $function): bool
-    {
-        $class = strstr($function, '->', true) ?: strstr($function, '::', true);
-
-        return ($this->entrypoints[$class] ?? false) && $function !== $class.'->__construct';
-    }
-
-    private function isEntrypoint(string $class): bool
-    {
-        $reflection = new \ReflectionClass($class);
-        if ($reflection->getAttributes(AsCommand::class) || $reflection->getAttributes(Route::class)) {
-            return true;
-        }
-
-        foreach ($reflection->getMethods() as $method) {
-            if ($method->getAttributes(Route::class)) {
-                return true;
+        if (null === $file) {
+            $calledFromApplicationCode = $this->depth > ($this->lastStepDepth ?? \PHP_INT_MAX);
+            if (!$calledFromApplicationCode && null !== $this->lastStepDepth) {
+                $this->store->addExit($this->request['id'], $this->depth, $this->clock->now($this->request['traceId'], $this->stoppedSince));
+                $this->lastStepDepth = null;
             }
+            $this->resume($calledFromApplicationCode ? 'step_out' : 'run');
+
+            return;
         }
 
-        return false;
+        if (str_starts_with($function, $file['class'].'->') || str_starts_with($function, $file['class'].'::')) {
+            $this->record($path, $file, (int) $frame['lineno'], $function);
+        }
+        $this->resume('step_over');
     }
 
-    private function isTraced(string $path): bool
+    private function resume(string $command): void
     {
-        return str_starts_with($path, $this->sourceDir.'/') && !str_starts_with($path, $this->excludedDir.'/');
-    }
-
-    private function record(string $path, int $line, string $function): void
-    {
-        $this->lastStepDepth = $this->depth;
-        $this->store->addStep($this->request['id'], [
-            'file' => substr($path, \strlen(\dirname($this->sourceDir)) + 1),
-            'line' => $line,
-            'function' => $function,
-            'depth' => $this->depth,
-            'code' => trim($this->sourceLine($path, $line)),
-        ]);
         if ($this->stepDelayMs) {
             usleep($this->stepDelayMs * 1000);
         }
+        $this->clock->addStopped($this->request['traceId'], microtime(true) - $this->stoppedSince);
+        $this->connection->send($command);
+    }
+
+    private function record(string $path, array $file, int $line, string $function): void
+    {
+        $relativePath = substr($path, \strlen($this->codeIndex['root']) + 1);
+        $method = substr($function, \strlen($file['class']) + 2);
+
+        if (!isset($this->describedFunctions[$function]) && isset($file['methods'][$method])) {
+            $this->describedFunctions[$function] = true;
+            [$startLine, $endLine] = $file['methods'][$method];
+            $this->store->describeFunction($this->request['id'], [
+                'function' => $function,
+                'file' => $relativePath,
+                'line' => $startLine,
+                'code' => implode("\n", \array_slice(explode("\n", $file['source']), $startLine - 1, $endLine - $startLine + 1)),
+            ]);
+        }
+
+        $this->lastStepDepth = $this->depth;
+        $this->store->addStep($this->request['id'], [
+            'at' => $this->clock->now($this->request['traceId'], $this->stoppedSince),
+            'file' => $relativePath,
+            'line' => $line,
+            'function' => $function,
+            'depth' => $this->depth,
+            'code' => trim(explode("\n", $file['source'])[$line - 1] ?? ''),
+        ]);
     }
 
     private function end(): void
     {
-        $this->store->end($this->request['id'], (int) round((microtime(true) - $this->startedAt) * 1000));
+        $this->store->end($this->request['id'], $this->clock->now($this->request['traceId']));
     }
 
-    /**
-     * @return iterable<string>
-     */
-    private function sourceFiles(): iterable
+    private function codeIndexCall(bool $full): string
     {
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->sourceDir, \FilesystemIterator::SKIP_DOTS));
-        foreach ($files as $file) {
-            if ('php' === $file->getExtension() && $this->isTraced($file->getPathname())) {
-                yield $file->getPathname();
-            }
-        }
+        $closure = preg_replace('/^.*?return\s+(static function.*);\s*$/s', '$1', file_get_contents(__DIR__.'/Resources/code_index.php'));
+
+        return \sprintf('(%s)(%s, %s)', $closure, var_export($full, true), var_export(__NAMESPACE__.'\\', true));
     }
 
-    /**
-     * @return iterable<array{class-string, string}>
-     */
-    private function methods(string $path): iterable
+    private function evalResult(\SimpleXMLElement $message): array
     {
-        $class = self::NAMESPACE.strtr(substr($path, \strlen($this->sourceDir) + 1, -4), '/', '\\');
-        if (!class_exists($class) && !interface_exists($class) && !trait_exists($class)) {
-            return;
-        }
-
-        foreach ((new \ReflectionClass($class))->getMethods() as $method) {
-            if ($method->getFileName() === $path) {
-                yield [$class, $method->getName()];
-            }
-        }
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function closureLines(string $path): array
-    {
-        $lines = [];
-        $tokens = \PhpToken::tokenize(file_get_contents($path));
-        foreach ($tokens as $i => $token) {
-            if ($token->is(\T_FN) || $token->is(\T_FUNCTION) && '(' === $this->nextSignificantToken($tokens, $i)?->text) {
-                $lines[$token->line] = $token->line;
-            }
-        }
-
-        return array_values($lines);
-    }
-
-    /**
-     * @param list<\PhpToken> $tokens
-     */
-    private function nextSignificantToken(array $tokens, int $index): ?\PhpToken
-    {
-        while (($token = $tokens[++$index] ?? null) && ($token->isIgnorable() || '&' === $token->text)) {
-        }
-
-        return $token;
-    }
-
-    private function sourceLine(string $path, int $line): string
-    {
-        $this->sources[$path] ??= file($path, \FILE_IGNORE_NEW_LINES) ?: [];
-
-        return $this->sources[$path][$line - 1] ?? '';
+        return json_decode(base64_decode((string) $message->property), true) ?: [];
     }
 }

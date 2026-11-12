@@ -58,6 +58,23 @@ services:
     volumes:
       - ./:/app
 
+  tracing-worker:
+    build:
+      context: .
+      target: frankenphp_dev
+    command: ["php", "-d", "php_debugger.mode=off", "bin/console", "app:process-traces"]
+    environment:
+      APP_ENV: dev
+    volumes:
+      - ./:/app
+      - ${CLAUDE_CLI:-~/.local/bin/claude}:/usr/local/bin/claude:ro
+      - ${CLAUDE_CREDENTIALS:-~/.claude/.credentials.json}:/root/.claude/.credentials.json
+
+  jaeger:
+    image: jaegertracing/jaeger:2.5.0
+    ports:
+      - "127.0.0.1:${JAEGER_PORT:-16686}:16686"
+
 volumes:
   caddy_data:
   caddy_config:

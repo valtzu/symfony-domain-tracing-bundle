@@ -3,6 +3,7 @@
 namespace App\Tracing;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,32 +12,66 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class TraceController extends AbstractController
 {
+    private const TIMEOUT_SECONDS = 600;
+
     #[Route('/_trace/{id}/events', methods: ['GET'])]
-    public function events(string $id, TraceStore $store, TraceExplainer $explainer): Response
-    {
+    public function events(
+        string $id,
+        TraceStore $store,
+        OperationNamer $namer,
+        #[Autowire('%env(JAEGER_UI_URL)%')] string $jaegerUiUrl,
+    ): Response {
         if (!TraceStore::isValidId($id)) {
             throw $this->createNotFoundException();
         }
 
-        return new StreamedResponse(function () use ($id, $store, $explainer) {
-            $waitUntil = microtime(true) + 15;
-            while (null === $store->read($id) && microtime(true) < $waitUntil) {
-                usleep(100_000);
-            }
+        return new StreamedResponse(function () use ($id, $store, $namer, $jaegerUiUrl) {
+            $send = static function (string $event, mixed $data): void {
+                echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
+                flush();
+            };
 
-            try {
-                foreach ($explainer->follow($id) as [$event, $data]) {
-                    echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
-                    flush();
-                    if (connection_aborted()) {
+            $follower = new TraceFollower($store, $id);
+            $builder = new SpanBuilder();
+            $names = [];
+            $narrationOffset = 0;
+            $startedAt = microtime(true);
+
+            while (!connection_aborted() && microtime(true) - $startedAt < self::TIMEOUT_SECONDS) {
+                foreach ($follower->poll() as $record) {
+                    $changes = $builder->add($record);
+                    match ($record['type']) {
+                        'request' => $record['request'] === $id ? $send('request', $record) : null,
+                        'step' => $send('step', $record + ['service' => $builder->span($builder->currentSpanOf($record['request']))['service'] ?? null]),
+                        'end' => $record['request'] === $id ? $send('end', $record) : null,
+                        default => null,
+                    };
+                    foreach ($changes as [$change, $span]) {
+                        $function = null === $span['function'] ? null : $builder->function($span['function']);
+                        $span['name'] = $names[$span['function']] ?? (null === $function ? null : $namer->cachedName($span['service'], $span['function'], $function['code'])) ?? $span['name'];
+                        $send('span', ['change' => $change] + $span);
+                    }
+                }
+
+                $narration = $store->readNarration($id, $narrationOffset);
+                $narrationOffset = $narration['offset'];
+                foreach ($narration['records'] as $record) {
+                    match ($record['type']) {
+                        'name' => [$names[$record['function']] = $record['name'], $send('name', $record)],
+                        'event' => $send('event', $record),
+                        'failure' => $send('failure', $record['message']),
+                        'end' => $send('done', ['traceId' => $record['traceId'], 'jaegerUrl' => null === $record['traceId'] ? null : rtrim($jaegerUiUrl, '/').'/trace/'.$record['traceId']]),
+                        default => null,
+                    };
+                    if ('end' === $record['type']) {
                         return;
                     }
                 }
-            } catch (\Throwable $e) {
-                echo "event: failure\ndata: ", json_encode($e->getMessage()), "\n\n";
+
+                usleep(100_000);
             }
 
-            echo "event: done\ndata: null\n\n";
+            $send('done', ['traceId' => $follower->traceId(), 'jaegerUrl' => null]);
         }, headers: [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

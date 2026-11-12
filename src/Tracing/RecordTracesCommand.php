@@ -5,15 +5,12 @@ namespace App\Tracing;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-#[AsCommand('app:record-traces', 'Listen for PHP Debugger connections and record the executed lines of src/ for each request')]
+#[AsCommand('app:record-traces', 'Listen for PHP Debugger connections and record the executed lines of the application code of each request')]
 final readonly class RecordTracesCommand
 {
     public function __construct(
         private TraceStore $store,
-        #[Autowire('%kernel.project_dir%/src')]
-        private string $sourceDir,
     ) {
     }
 
@@ -24,6 +21,7 @@ final readonly class RecordTracesCommand
 
         /** @var array<int, array{DbgpConnection, TraceSession}> $sessions */
         $sessions = [];
+        $clock = new TraceClock();
 
         while (true) {
             $read = [$server, ...array_map(static fn (array $session) => $session[0]->socket, $sessions)];
@@ -36,7 +34,7 @@ final readonly class RecordTracesCommand
                 if ($socket === $server) {
                     if ($client = stream_socket_accept($server, 0)) {
                         $connection = new DbgpConnection($client);
-                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->sourceDir, __DIR__, $this->store, $stepDelay)];
+                        $sessions[(int) $client] = [$connection, new TraceSession($connection, $this->store, $clock, $stepDelay)];
                     }
                     continue;
                 }

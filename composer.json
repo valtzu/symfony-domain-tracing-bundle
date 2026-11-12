@@ -2,7 +2,7 @@
     "name": "valtzu/domain-tracing-bundle",
     "description": "Business-level traces of PHP requests, recorded with Xdebug and described with Symfony AI",
     "type": "symfony-bundle",
-    "license": "proprietary",
+    "license": "MIT",
     "minimum-stability": "beta",
     "prefer-stable": true,
     "require": {

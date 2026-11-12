@@ -42,3 +42,19 @@
 .service-1 { --trace-color: var(--trace-service-1); }
 .service-2 { --trace-color: var(--trace-service-2); }
 .service-3 { --trace-color: var(--trace-service-3); }
+.trace-panel .trace-status { display: flex; align-items: center; gap: 6px; }
+.trace-spinner {
+    display: inline-block; flex: none; width: 10px; height: 10px; margin-left: 6px; vertical-align: -1px;
+    border: 2px solid var(--trace-line); border-top-color: var(--trace-muted); border-radius: 50%;
+    animation: trace-spin .8s linear infinite;
+}
+.trace-status .trace-spinner { margin-left: 0; }
+.waterfall-pending { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--trace-muted); font-size: 12px; }
+.waterfall-pending .trace-spinner { margin-left: 0; }
+.waterfall-row.running .waterfall-bar { animation: trace-pulse 1.2s ease-in-out infinite; }
+@keyframes trace-spin { to { transform: rotate(360deg); } }
+@keyframes trace-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+    .trace-spinner { animation-duration: 3s; }
+    .waterfall-row.running .waterfall-bar { animation: none; }
+}

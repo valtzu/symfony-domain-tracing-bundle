@@ -10,6 +10,8 @@ function createWaterfall(container) {
     const names = new Map();
     const services = [];
     let latest = 0;
+    let describing = true;
+    let recordingEnded = false;
     let frame = null;
 
     const serviceColor = service => {
@@ -71,6 +73,9 @@ function createWaterfall(container) {
             label.innerHTML = '<span class="waterfall-service"></span><span class="waterfall-name"></span>';
             label.querySelector('.waterfall-service').textContent = span.service;
             label.querySelector('.waterfall-name').textContent = names.get(span.function) ?? span.name;
+            if (describing && span.function && !names.has(span.function)) {
+                label.appendChild(spinner('Naming this operation'));
+            }
 
             const track = row.appendChild(document.createElement('div'));
             track.className = 'waterfall-track';
@@ -105,6 +110,12 @@ function createWaterfall(container) {
             }
         }
 
+        if (describing && recordingEnded) {
+            const pending = table.appendChild(document.createElement('p'));
+            pending.className = 'waterfall-pending';
+            pending.append(spinner(), 'Describing what happened…');
+        }
+
         container.replaceChildren(table);
     }
 
@@ -128,13 +139,30 @@ function createWaterfall(container) {
             events.set(event.span, [...(events.get(event.span) ?? []), event]);
             update();
         },
+        recordingEnded() {
+            recordingEnded = true;
+            update();
+        },
+        describingEnded() {
+            describing = false;
+            update();
+        },
     };
+}
+
+function spinner(label = '') {
+    const element = document.createElement('span');
+    element.className = 'trace-spinner';
+    element.setAttribute('role', 'status');
+    element.setAttribute('aria-label', label || 'Loading');
+    return element;
 }
 
 export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
-    panel.innerHTML = '<h2>What happened</h2><p class="trace-status">Waiting for the trace…</p><div class="trace-waterfall"></div><p class="trace-links"></p>';
-    const status = panel.querySelector('.trace-status');
+    panel.innerHTML = '<h2>What happened</h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div><p class="trace-links"></p>';
+    panel.querySelector('.trace-status').prepend(spinner());
+    const status = panel.querySelector('.trace-status-text');
     const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'));
     let steps = 0;
 
@@ -156,6 +184,7 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
     });
     on('end', () => {
         console.groupEnd();
+        waterfall.recordingEnded();
         status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls. Describing…`);
     });
     on('name', record => waterfall.name(record.function, record.name));
@@ -167,6 +196,8 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
     });
     on('done', done => {
         source.close();
+        waterfall.describingEnded();
+        panel.querySelector('.trace-status .trace-spinner')?.remove();
         status.textContent = status.textContent.replace(/ Describing…$/, '');
         if (done.jaegerUrl) {
             const link = panel.querySelector('.trace-links').appendChild(document.createElement('a'));
@@ -176,7 +207,11 @@ export function followTrace(id, panel, { onRequest = () => {}, onStep = () => {}
         }
         onDone();
     });
-    source.onerror = () => source.close();
+    source.onerror = () => {
+        source.close();
+        waterfall.describingEnded();
+        panel.querySelector('.trace-status .trace-spinner')?.remove();
+    };
 
     return source;
 }

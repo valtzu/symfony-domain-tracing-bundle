@@ -91,8 +91,9 @@ Use the words of the shop: customers, products, prices, discounts, stock and pay
 ```
 
 `bin/console domain-tracing:context:generate` writes a first version of this file. It sends the README, the routes and
-the class names of the application to an AI agent. Read the description before you commit it. The `context_file`
-option changes the path of the file:
+the class names of the application to an AI agent, prints the description, and asks before it writes the file. With
+`--write`, it writes the file without asking, and with `--no-interaction` alone, it only prints the description. Read
+the description before you commit it. The `context_file` option changes the path of the file:
 
 ```yaml
 # config/packages/domain_tracing.yaml

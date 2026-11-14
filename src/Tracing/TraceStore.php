@@ -153,6 +153,25 @@ final readonly class TraceStore
         return self::isValidId($id) ? $this->readLines($this->path($id), $offset) : null;
     }
 
+    public function newestStartedAfter(float $timestamp): ?string
+    {
+        $newest = null;
+        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
+            if (filemtime($path) < floor($timestamp)) {
+                continue;
+            }
+
+            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
+            fclose($handle);
+            $startedAt = $request['startedAt'] ?? 0;
+            if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
+                $newest = [basename($path, '.jsonl'), $startedAt];
+            }
+        }
+
+        return $newest[0] ?? null;
+    }
+
     private function readLines(string $path, int $offset): ?array
     {
         if (!is_file($path)) {
@@ -172,25 +191,6 @@ final readonly class TraceStore
         fclose($handle);
 
         return ['records' => $records, 'offset' => $offset];
-    }
-
-    public function newestStartedAfter(float $timestamp): ?string
-    {
-        $newest = null;
-        foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
-            if (filemtime($path) < floor($timestamp)) {
-                continue;
-            }
-
-            $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
-            fclose($handle);
-            $startedAt = $request['startedAt'] ?? 0;
-            if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
-                $newest = [basename($path, '.jsonl'), $startedAt];
-            }
-        }
-
-        return $newest[0] ?? null;
     }
 
     private function append(string $id, array $record): void

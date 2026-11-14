@@ -1,0 +1,1129 @@
+variant = "loose"
+
+[[issues]]
+file = "config/ai.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "config/routes.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "config/services.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Ai/RedactSecretsInputProcessor.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Ai/SecretRedactor.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Ai/SecretRedactor.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/DomainTracingBundle.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\0"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "literal-named-argument"
+message = "Literal argument `0777` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "literal-named-argument"
+message = "Literal argument `3` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/BlobStore.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\0"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "literal-named-argument"
+message = "Literal argument `65536` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "literal-named-argument"
+message = "Literal argument `false` should be passed as a named argument for clarity."
+count = 2
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 1
+
+[[issues]]
+file = "src/Tracing/DbgpConnection.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\n"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 2
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "literal-named-argument"
+message = "Literal argument `60` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Tracing/OperationNamer.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "no-multi-assignments"
+message = "Avoid multiple assignments in a single statement."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Tracing/ProcessTracesCommand.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/RecordTracesCommand.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 2
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "no-assign-in-condition"
+message = "Avoid assignments in conditions."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "no-multi-assignments"
+message = "Avoid multiple assignments in a single statement."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Recorder.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "cyclomatic-complexity"
+message = "Closure has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "halstead"
+message = "Closure has a high halstead volume and effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "kan-defect"
+message = "Closure has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "literal-named-argument"
+message = "Literal argument `'/'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "literal-named-argument"
+message = '''Literal argument `'\\'` should be passed as a named argument for clarity.'''
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "loop-does-not-iterate"
+message = "Loop is unconditionally terminated and will not iterate."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "no-empty-loop"
+message = "Loop body is empty."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Tracing/Resources/code_index.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/RunCommand.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = "Literal argument `' '` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = '''Literal argument `'\\'` should be passed as a named argument for clarity.'''
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = "Literal argument `16` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = "Literal argument `1` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "literal-named-argument"
+message = "Literal argument `2` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "no-assign-in-condition"
+message = "Avoid assignments in conditions."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "too-many-methods"
+message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceContext.php"
+code = "literal-named-argument"
+message = "Literal argument `''` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceContext.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceContext.php"
+code = "literal-named-argument"
+message = "Literal argument `16` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceContext.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "cyclomatic-complexity"
+message = "Closure has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "halstead"
+message = "Closure has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "halstead"
+message = "Method has a high halstead volume and effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "kan-defect"
+message = "Closure has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "literal-named-argument"
+message = "Literal argument `2` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceController.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDataCollector.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDecoder.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFile.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "no-assign-in-condition"
+message = "Avoid assignments in conditions."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceFollower.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\n"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceNarrator.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "literal-named-argument"
+message = "Literal argument `'$1'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "literal-named-argument"
+message = "Literal argument `4` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 4
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "strict-behavior"
+message = "Call to `base64_decode` must enforce strict comparison."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceSession.php"
+code = "too-many-methods"
+message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `''` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `'.jsonl'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `'.requested'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `'r'` should be passed as a named argument for clarity."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `0777` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 3
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "too-many-methods"
+message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugSettingsCommand.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugSetup.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 2
+
+[[issues]]
+file = "src/Tracing/XdebugSetup.php"
+code = "no-assign-in-condition"
+message = "Avoid assignments in conditions."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugSetup.php"
+code = "no-debug-symbols"
+message = "Do not commit debug functions."
+count = 3
+
+[[issues]]
+file = "src/Tracing/XdebugSetup.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 2
+
+[[issues]]
+file = "src/Tracing/XdebugSetup.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "literal-named-argument"
+message = "Literal argument `11` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "literal-named-argument"
+message = "Literal argument `13` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "literal-named-argument"
+message = "Literal argument `26` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "literal-named-argument"
+message = "Literal argument `2` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 6
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugTraceReader.php"
+code = "too-many-properties"
+message = "Class has too many properties."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "literal-named-argument"
+message = 'Literal argument `" \t\n"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "literal-named-argument"
+message = "Literal argument `0` should be passed as a named argument for clarity."
+count = 4
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "literal-named-argument"
+message = "Literal argument `6` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "no-insecure-comparison"
+message = "Insecure comparison of sensitive data."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 2
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/XdebugValue.php"
+code = "too-many-methods"
+message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "tests/Ai/RedactSecretsInputProcessorTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 6
+
+[[issues]]
+file = "tests/Ai/RedactSecretsInputProcessorTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Ai/RedactSecretsInputProcessorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Ai/SecretRedactorTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 3
+
+[[issues]]
+file = "tests/Ai/SecretRedactorTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 2
+
+[[issues]]
+file = "tests/Ai/SecretRedactorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/TestKernel.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/TestKernel.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/OperationNamerTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 7
+
+[[issues]]
+file = "tests/Tracing/OperationNamerTest.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/OperationNamerTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/SpanBuilderTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/SpanBuilderTest.php"
+code = "literal-named-argument"
+message = "Literal argument `32` should be passed as a named argument for clarity."
+count = 3
+
+[[issues]]
+file = "tests/Tracing/SpanBuilderTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceContextTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 4
+
+[[issues]]
+file = "tests/Tracing/TraceContextTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceDataCollectorTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 7
+
+[[issues]]
+file = "tests/Tracing/TraceDataCollectorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 5
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "literal-named-argument"
+message = 'Literal argument `"TRACE START\n1\t0"` should be passed as a named argument for clarity.'
+count = 2
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\t0\n"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "literal-named-argument"
+message = 'Literal argument `"\t0\nTRACE END\n"` should be passed as a named argument for clarity.'
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/TraceFileTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceNarratorTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/TraceNarratorTest.php"
+code = "literal-named-argument"
+message = "Literal argument `false` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceNarratorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceSessionTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/TraceSessionTest.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceSessionTest.php"
+code = "no-eval"
+message = "Unsafe use of `eval` construct."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceSessionTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 5
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/XdebugSetupTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 5
+
+[[issues]]
+file = "tests/Tracing/XdebugSetupTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/XdebugValueTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/XdebugValueTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/XdebugValueTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/bootstrap.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1

@@ -57,6 +57,6 @@ final class SecretRedactor
         $text = strtr($text, $this->knownSecrets);
 
         return preg_replace(array_keys(self::PATTERNS), array_values(self::PATTERNS), $text)
-            ?? throw new \RuntimeException('Secret redaction failed: '.preg_last_error_msg());
+            ?? throw new \RuntimeException(\sprintf('Secret redaction failed: %s', preg_last_error_msg()));
     }
 }

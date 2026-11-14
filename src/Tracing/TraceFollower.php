@@ -65,6 +65,16 @@ final class TraceFollower
         return array_values(array_filter(array_map($this->decoder->decode(...), self::mergeByTime($recordsByRequest))));
     }
 
+    public function hasEnded(): bool
+    {
+        return isset($this->ended[$this->rootId]) && \count($this->ended) === \count($this->offsets);
+    }
+
+    public function traceId(): ?string
+    {
+        return $this->traceId;
+    }
+
     /**
      * Merges the records of the requests in time order, keeping the order of the records of each request, because a
      * table record must come before the records that refer to it.
@@ -87,16 +97,6 @@ final class TraceFollower
         }
 
         return $merged;
-    }
-
-    public function hasEnded(): bool
-    {
-        return isset($this->ended[$this->rootId]) && \count($this->ended) === \count($this->offsets);
-    }
-
-    public function traceId(): ?string
-    {
-        return $this->traceId;
     }
 
     private function discoverRequests(): void

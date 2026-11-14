@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="domain-tracing-bundle">
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+    <arg name="cache" value=".phpcs-cache"/>
+
+    <file>config</file>
+    <file>src</file>
+    <file>tests</file>
+
+    <exclude-pattern>config/reference.php</exclude-pattern>
+
+    <rule ref="vendor/escapestudios/symfony2-coding-standard/Symfony">
+        <exclude name="Symfony.Commenting"/>
+        <exclude name="Symfony.Functions.Arguments"/>
+    </rule>
+</ruleset>

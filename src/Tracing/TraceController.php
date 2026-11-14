@@ -31,7 +31,7 @@ final class TraceController extends AbstractController
             $store->requestDescription($id);
         }
 
-        return new StreamedResponse(function () use ($id, $describe, $store, $blobs, $namer) {
+        $stream = function () use ($id, $describe, $store, $blobs, $namer) {
             $send = static function (string $event, mixed $data): void {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
@@ -82,7 +82,9 @@ final class TraceController extends AbstractController
             }
 
             $send('done', ['traceId' => $follower->traceId()]);
-        }, headers: [
+        };
+
+        return new StreamedResponse($stream, headers: [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',

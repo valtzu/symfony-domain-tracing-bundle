@@ -81,6 +81,17 @@ final class SpanBuilder
         return end($stack) ?: ($this->requestSpans[$request] ?? null);
     }
 
+    /**
+     * "App\Checkout\FraudScreening->needsManualReview" becomes "Fraud screening: needs manual review".
+     */
+    public static function humanize(string $function): string
+    {
+        [$class, $method] = preg_split('/->|::/', $function, 2) + [1 => ''];
+        $words = static fn (string $name) => strtolower(trim(preg_replace('/(?<=[a-z0-9])(?=[A-Z])|_/', ' ', $name)));
+
+        return ucfirst($words(substr(strrchr('\\'.$class, '\\'), 1))).': '.$words($method);
+    }
+
     private function openRequest(array $record): array
     {
         $parentSpanId = $record['parentSpanId'];
@@ -239,16 +250,5 @@ final class SpanBuilder
         }
 
         return ['close', $this->spans[$spanId]];
-    }
-
-    /**
-     * "App\Checkout\FraudScreening->needsManualReview" becomes "Fraud screening: needs manual review".
-     */
-    public static function humanize(string $function): string
-    {
-        [$class, $method] = preg_split('/->|::/', $function, 2) + [1 => ''];
-        $words = static fn (string $name) => strtolower(trim(preg_replace('/(?<=[a-z0-9])(?=[A-Z])|_/', ' ', $name)));
-
-        return ucfirst($words(substr(strrchr('\\'.$class, '\\'), 1))).': '.$words($method);
     }
 }

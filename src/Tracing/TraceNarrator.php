@@ -35,7 +35,8 @@ final readonly class TraceNarrator
         $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew calls:\n";
         foreach ($steps as $index => $step) {
             $span = $spans[$step['span']];
-            $prompt .= \sprintf("%d: [%s] %s\"%s\" (%s)%s%s\n",
+            $prompt .= \sprintf(
+                "%d: [%s] %s\"%s\" (%s)%s%s\n",
                 $index,
                 $span['service'],
                 str_repeat('  ', max(0, $step['depth'] - $steps[0]['depth'])),

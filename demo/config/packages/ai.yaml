@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema.json
+when@dev:
+    ai:
+        agent:
+            domain_tracing:
+                platform: domain_tracing.platform
+                model:
+                    name: opus
+                    options:
+                        tools: []

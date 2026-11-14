@@ -47,7 +47,16 @@ final class TestKernel extends Kernel
         if ('agent_override' === $this->environment) {
             $container->services()->set('test.platform')->synthetic()->public();
             $agent = ['platform' => 'test.platform', 'model' => 'other-model'];
-            $container->extension('ai', ['agent' => ['domain_tracing_operation_namer' => $agent, 'project_agent' => $agent]]);
+            $container->extension('ai', ['agent' => ['domain_tracing' => $agent, 'project_agent' => $agent]]);
+        } elseif ('agent_option' === $this->environment) {
+            $container->services()->set('test.platform')->synthetic()->public();
+            $container->extension('ai', ['agent' => ['project_agent' => ['platform' => 'test.platform', 'model' => 'project-model']]]);
+            $container->extension('domain_tracing', ['agent' => 'project_agent']);
+        } elseif ('agent_off' === $this->environment) {
+            $container->extension('ai', ['agent' => ['domain_tracing' => ['platform' => 'domain_tracing.platform', 'model' => 'opus']]]);
+            $container->extension('domain_tracing', ['agent' => false]);
+        } elseif ('no_agent' !== $this->environment) {
+            $container->extension('ai', ['agent' => ['domain_tracing' => ['platform' => 'domain_tracing.platform', 'model' => ['name' => 'opus', 'options' => ['tools' => []]]]]]);
         }
     }
 }

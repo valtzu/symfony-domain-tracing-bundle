@@ -22,7 +22,9 @@
 <main>
     <h1>Live trace</h1>
     <p class="hint">Each request that runs application code after this page opened appears here while it runs.</p>
-    <label class="auto-describe"><input type="checkbox" id="auto-describe" checked> Describe each request with AI</label>
+    {% if describe %}
+        <label class="auto-describe"><input type="checkbox" id="auto-describe" checked> Describe each request with AI</label>
+    {% endif %}
     <div id="traces"></div>
 </main>
 <script type="module">
@@ -45,11 +47,12 @@
         return started.shift();
     }
 
+    // Without an AI agent, the page has no toggle and the requests are not described
     const autoDescribe = document.getElementById('auto-describe');
     try {
-        autoDescribe.checked = 'off' !== localStorage.getItem('domain-tracing-auto-describe');
+        autoDescribe && (autoDescribe.checked = 'off' !== localStorage.getItem('domain-tracing-auto-describe'));
     } catch {}
-    autoDescribe.addEventListener('change', () => {
+    autoDescribe?.addEventListener('change', () => {
         try {
             localStorage.setItem('domain-tracing-auto-describe', autoDescribe.checked ? 'on' : 'off');
         } catch {}
@@ -66,7 +69,7 @@
                 onEnd();
                 if (panel.hidden) {
                     panel.remove();
-                } else if (!describe) {
+                } else if (!describe && autoDescribe) {
                     const button = panel.appendChild(document.createElement('button'));
                     button.className = 'trace-describe';
                     button.textContent = 'Describe';
@@ -82,7 +85,7 @@
         // A request that runs no application code, such as a 404 for a favicon, has nothing to show
         const panel = traces.insertBefore(document.createElement('section'), traces.firstChild);
         panel.hidden = true;
-        await new Promise(resolve => follow(id, panel, autoDescribe.checked, resolve));
+        await new Promise(resolve => follow(id, panel, autoDescribe?.checked ?? false, resolve));
     }
 </script>
 </body>

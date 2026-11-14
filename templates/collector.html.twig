@@ -19,9 +19,12 @@
     {% if collector.requestId %}
         <link rel="stylesheet" href="{{ path('domain_tracing_asset', {file: 'trace.css'}) }}">
         <div id="domain-tracing"></div>
+        {% if not collector.describes %}
+            <p class="help">To describe the trace with AI, define an agent of the AI bundle and name it in the <code>agent</code> option of <code>domain_tracing</code>.</p>
+        {% endif %}
         <script type="module">
             import { followTrace } from {{ path('domain_tracing_asset', {file: 'trace.js'})|json_encode|raw }};
-            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('domain-tracing'), { describe: true, poll: {{ collector.shouldPoll ? 'true' : 'false' }} });
+            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('domain-tracing'), { describe: {{ collector.describes ? 'true' : 'false' }}, poll: {{ collector.shouldPoll ? 'true' : 'false' }} });
         </script>
     {% else %}
         <h2>Domain traces</h2>

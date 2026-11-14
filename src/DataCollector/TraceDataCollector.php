@@ -24,6 +24,7 @@ final class TraceDataCollector extends AbstractDataCollector
     public function __construct(
         private readonly TraceStore $store,
         private readonly XdebugSetup $xdebug,
+        private readonly bool $describes,
     ) {
     }
 
@@ -36,6 +37,7 @@ final class TraceDataCollector extends AbstractDataCollector
             'problems' => $recorded ? [] : $this->xdebug->problems(),
             'settings' => $recorded ? null : $this->xdebug->settings(),
             'poll' => BuiltInServer::hasOneWorker(),
+            'describe' => $this->describes,
         ];
 
         if (1 === mt_rand(1, self::EXPIRY_CHANCE)) {
@@ -59,6 +61,11 @@ final class TraceDataCollector extends AbstractDataCollector
     public function getProblems(): array
     {
         return $this->data['problems'] ?? [];
+    }
+
+    public function describes(): bool
+    {
+        return $this->data['describe'] ?? false;
     }
 
     public function shouldPoll(): bool

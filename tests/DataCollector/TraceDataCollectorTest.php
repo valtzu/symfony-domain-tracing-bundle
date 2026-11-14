@@ -55,7 +55,7 @@ final class TraceDataCollectorTest extends TestCase
 
     private function collector(?string $requestId): TraceDataCollector
     {
-        $collector = new TraceDataCollector($this->store, new XdebugSetup('/srv/app/var/share/traces'));
+        $collector = new TraceDataCollector($this->store, new XdebugSetup('/srv/app/var/share/traces'), true);
         $request = new Request();
         $request->server->set('DOMAIN_TRACING_SPAN_ID', $requestId);
         $collector->collect($request, new Response());

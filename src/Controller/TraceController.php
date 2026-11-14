@@ -32,6 +32,7 @@ final readonly class TraceController
         private Environment $twig,
         private string $projectDir,
         private string $environment,
+        private bool $describes,
     ) {
     }
 
@@ -42,7 +43,7 @@ final readonly class TraceController
             throw new NotFoundHttpException();
         }
         $id = $this->store->rootOf($id);
-        $describe = $request->query->getBoolean('describe');
+        $describe = $this->describes && $request->query->getBoolean('describe');
         if ($request->query->has('cursor')) {
             return $this->pollEvents($id, $describe, $request->query->getInt('cursor'));
         }
@@ -63,7 +64,7 @@ final readonly class TraceController
     #[Route('/_tracing/', name: 'domain_tracing_live', methods: ['GET'])]
     public function live(): Response
     {
-        return new Response($this->twig->render('@DomainTracing/live.html.twig', ['now' => microtime(true), 'poll' => BuiltInServer::hasOneWorker()]));
+        return new Response($this->twig->render('@DomainTracing/live.html.twig', ['now' => microtime(true), 'poll' => BuiltInServer::hasOneWorker(), 'describe' => $this->describes]));
     }
 
     #[Route('/_tracing/{file}', name: 'domain_tracing_asset', requirements: ['file' => 'trace\.(js|css)'], methods: ['GET'])]

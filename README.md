@@ -39,12 +39,12 @@ Then open the live traces and place an order in the demo shop.
 
 ## Install in an application
 
-Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, a git repository for the code, and the
-[Claude Code CLI](https://code.claude.com/docs/en/overview) logged in, as `claude` on the `PATH`.
+Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, and a git repository for the code. To
+describe the traces with AI, an agent of the [AI bundle](https://symfony.com/doc/current/ai/index.html), such as one
+that uses the [Claude Code CLI](https://code.claude.com/docs/en/overview).
 
 1. Require the bundle as a dev dependency. Symfony Flex enables it in the `dev` and `test` environments, with the
-   web profiler. The bundle needs no configuration, and the empty `config/packages/ai.yaml` of the AI bundle can stay
-   as it is. [Symfony AI](https://symfony.com/doc/current/ai/index.html) has only beta releases yet, so a project
+   web profiler. The bundle needs no configuration to record and show the traces. [Symfony AI](https://symfony.com/doc/current/ai/index.html) has only beta releases yet, so a project
    that accepts only stable packages, as a new Symfony project does, must allow betas first. With `prefer-stable`, the
    other packages stay stable.
 
@@ -93,17 +93,33 @@ Use the words of the shop: customers, products, prices, discounts, stock and pay
 the class names of the application to an AI agent. Read the description before you commit it. The `context_file`
 option changes the path of the file.
 
-The agents use Claude Code with the `opus` model. To use another platform of the AI bundle, one that can stream the
-answer, configure the agents of the bundle in `config/packages/ai.yaml`:
+### The AI agent
+
+The application defines the agent that names the operations and describes the traces. Without it, the traces are
+recorded and shown, but not described. The bundle uses the `domain_tracing` agent, and provides the
+`domain_tracing.platform` platform, which runs the Claude Code CLI (logged in, as `claude` on the `PATH`):
 
 ```yaml
-ai:
-    agent:
-        domain_tracing_operation_namer: &domain_tracing_agent
-            platform: ai.platform.anthropic
-            model: claude-sonnet-5-5
-        domain_tracing_trace_narrator: *domain_tracing_agent
-        domain_tracing_context_writer: *domain_tracing_agent
+# config/packages/ai.yaml
+when@dev:
+    ai:
+        agent:
+            domain_tracing:
+                platform: domain_tracing.platform
+                model:
+                    name: opus
+                    options:
+                        tools: []
+```
+
+Any other platform of the AI bundle that can stream the answer works too, such as `ai.platform.anthropic` with
+`model: claude-sonnet-5-5`. The `agent` option names another agent, and `agent: false` turns the description off:
+
+```yaml
+# config/packages/domain_tracing.yaml
+when@dev:
+    domain_tracing:
+        agent: my_agent
 ```
 
 ## Traces in the terminal

@@ -7948,6 +7948,11 @@
                         "$ref": "#/$defs/types/string_null",
                         "default": "%kernel.project_dir%/config/domain_tracing.md",
                         "description": "Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist."
+                    },
+                    "agent": {
+                        "$ref": "#/$defs/types/scalar",
+                        "default": "domain_tracing",
+                        "description": "Agent of the AI bundle that names the operations and describes the traces. The application defines it under \"ai.agent\". Without it, or with null or false, the traces are not described."
                     }
                 },
                 "additionalProperties": false

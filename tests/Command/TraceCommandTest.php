@@ -37,7 +37,7 @@ final class TraceCommandTest extends TestCase
         $agent = $this->createStub(AgentInterface::class);
         $namer = new OperationNamer($agent, new ArrayAdapter());
         $stream = new TraceStream($this->store, $blobs, $namer, new TraceIngester($this->store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($this->store, $blobs, $namer, new TraceNarrator($agent)));
-        $this->tester = new CommandTester(new Command(null, new TraceCommand($this->store, $stream)));
+        $this->tester = new CommandTester(new Command(null, new TraceCommand($this->store, $stream, true)));
     }
 
     #[\Override]

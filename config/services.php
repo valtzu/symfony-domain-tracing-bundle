@@ -70,22 +70,19 @@ return static function (ContainerConfigurator $container): void {
         ->args([param('domain_tracing.context_file')]);
 
     $services->set('domain_tracing.operation_namer', OperationNamer::class)
-        ->args([service('ai.agent.domain_tracing_operation_namer'), service('cache.app'), service('domain_tracing.system_prompts')]);
+        ->args([service('domain_tracing.agent'), service('cache.app'), service('domain_tracing.system_prompts')]);
 
     $services->set('domain_tracing.trace_narrator', TraceNarrator::class)
-        ->args([service('ai.agent.domain_tracing_trace_narrator'), service('domain_tracing.system_prompts')]);
+        ->args([service('domain_tracing.agent'), service('domain_tracing.system_prompts')]);
 
     $services->set('domain_tracing.project_summary', ProjectSummary::class)
         ->args([service('router'), '%kernel.project_dir%']);
 
     $services->set('domain_tracing.context_writer', ContextWriter::class)
-        ->args([service('ai.agent.domain_tracing_context_writer'), service('domain_tracing.project_summary'), service('domain_tracing.system_prompts')]);
+        ->args([service('domain_tracing.agent'), service('domain_tracing.project_summary'), service('domain_tracing.system_prompts')]);
 
     $services->set('domain_tracing.redact_secrets_input_processor', RedactSecretsInputProcessor::class)
-        ->args([service('domain_tracing.secret_redactor')])
-        ->tag('ai.agent.input_processor', ['agent' => 'ai.agent.domain_tracing_operation_namer', 'priority' => -1000])
-        ->tag('ai.agent.input_processor', ['agent' => 'ai.agent.domain_tracing_trace_narrator', 'priority' => -1000])
-        ->tag('ai.agent.input_processor', ['agent' => 'ai.agent.domain_tracing_context_writer', 'priority' => -1000]);
+        ->args([service('domain_tracing.secret_redactor')]);
 
     $services->set('domain_tracing.trace_describer', TraceDescriber::class)
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.blob_store'), service('domain_tracing.operation_namer'), service('domain_tracing.trace_narrator')]);
@@ -95,7 +92,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('domain_tracing.trace_controller', TraceController::class)
         ->public()
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), '%kernel.project_dir%', '%kernel.environment%'])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), '%kernel.project_dir%', '%kernel.environment%', '%domain_tracing.describe%'])
         // The "routing.controllers" resource of the application imports the routes of the tagged controllers
         ->tag('routing.controller');
     // The routes refer to the controller by its class
@@ -103,7 +100,7 @@ return static function (ContainerConfigurator $container): void {
         ->public();
 
     $services->set('domain_tracing.trace_command', TraceCommand::class)
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream')])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%domain_tracing.describe%'])
         ->tag('console.command');
 
     $services->set('domain_tracing.context_generate_command', ContextGenerateCommand::class)
@@ -119,7 +116,7 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('.inner')]);
 
     $services->set('domain_tracing.data_collector', TraceDataCollector::class)
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.xdebug_setup')])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.xdebug_setup'), '%domain_tracing.describe%'])
         // right after the "request" collector, which has priority 335
         ->tag('data_collector', ['id' => 'domain_traces', 'template' => '@DomainTracing/collector.html.twig', 'priority' => 334]);
 

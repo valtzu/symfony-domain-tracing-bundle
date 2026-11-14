@@ -24,6 +24,7 @@ final readonly class TraceCommand
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
+        private bool $describes,
     ) {
     }
 
@@ -54,6 +55,11 @@ final readonly class TraceCommand
             }
 
             return Command::FAILURE;
+        }
+
+        if ($describe && !$this->describes) {
+            $errors->writeln('The trace is not described: no AI agent is defined for the bundle. See the "agent" option of domain_tracing.');
+            $describe = false;
         }
 
         $formatter = new TraceTextFormatter($values);

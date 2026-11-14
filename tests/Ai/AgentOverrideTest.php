@@ -29,7 +29,7 @@ final class AgentOverrideTest extends KernelTestCase
 
     public function testTheProjectChoosesThePlatformAndTheModel(): void
     {
-        $this->agent('ai.agent.domain_tracing_operation_namer')->call(new MessageBag(Message::ofUser('Name it')))->getContent();
+        $this->agent('ai.agent.domain_tracing')->call(new MessageBag(Message::ofUser('Name it')))->getContent();
 
         static::assertSame('other-model', $this->calls[0][0] ?? null);
     }
@@ -39,7 +39,7 @@ final class AgentOverrideTest extends KernelTestCase
         $secret = bin2hex(random_bytes(16));
         $_SERVER['TEST_API_KEY'] = $secret;
         try {
-            $this->agent('ai.agent.domain_tracing_operation_namer')->call(new MessageBag(Message::ofUser($secret)))->getContent();
+            $this->agent('ai.agent.domain_tracing')->call(new MessageBag(Message::ofUser($secret)))->getContent();
             $this->agent('ai.agent.project_agent')->call(new MessageBag(Message::ofUser($secret)))->getContent();
         } finally {
             unset($_SERVER['TEST_API_KEY']);

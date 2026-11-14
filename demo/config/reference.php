@@ -1477,6 +1477,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     }>,
  * }
  * @psalm-type DomainTracingConfig = array{
+ *     context?: string|Param, // Description of the application that the AI agents get with their instructions, such as what it does, who reads the traces and the words of the business
  *     exclude_uris?: list<scalar|Param|null>,
  * }
  * @psalm-type ConfigType = array{

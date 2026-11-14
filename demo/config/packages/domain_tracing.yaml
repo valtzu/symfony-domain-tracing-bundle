@@ -2,8 +2,12 @@
 when@dev:
     domain_tracing:
         context: |
-            The application is a web shop. The people who read the traces work in customer support.
-            Use the words of the shop: customers, products, prices, discounts, stock and payment.
+            This application is a small online shop where customers check out and place orders, and a separate payments
+            service charges them. Customer support, operations and product owners probably read the traces to see why a
+            checkout or an order failed. The main business things are customers and their tiers, products in the
+            catalog, order lines, quotes, prices, coupons, stock and shipping. The main actions are pricing an order,
+            applying a coupon, checking and reserving stock, screening the order for fraud, calculating shipping and
+            charging the payment. Each order has a status, and a checkout can fail at any of these steps.
         exclude_uris:
             # FrankenPHP reloads the page with this query when the code changes
             - '[?&]frankenphp_hot_reloading='

@@ -7944,6 +7944,13 @@
             "domain_tracing": {
                 "$ref": "#/$defs/types/object_null",
                 "properties": {
+                    "context": {
+                        "$ref": "#/$defs/types/string_null",
+                        "description": "Description of the application that the AI agents get with their instructions, such as what it does, who reads the traces and the words of the business",
+                        "examples": [
+                            "The application is a web shop. The people who read the traces work in customer support."
+                        ]
+                    },
                     "exclude_uris": {
                         "$ref": "#/$defs/types/array_null",
                         "items": {

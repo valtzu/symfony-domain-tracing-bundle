@@ -214,7 +214,7 @@ count = 1
 file = "src/Tracing/SpanBuilder.php"
 code = "no-isset"
 message = "Use of the `isset` construct."
-count = 2
+count = 4
 
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
@@ -280,12 +280,6 @@ count = 1
 file = "src/Tracing/TraceDescriber.php"
 code = "cyclomatic-complexity"
 message = "Class has high complexity."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceDescriber.php"
-code = "halstead"
-message = "Method has a high halstead effort"
 count = 1
 
 [[issues]]
@@ -376,7 +370,7 @@ count = 1
 file = "src/Xdebug/TraceIngester.php"
 code = "no-error-control-operator"
 message = "Unsafe use of error control operator `@`."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Xdebug/TraceIngester.php"
@@ -430,7 +424,7 @@ count = 1
 file = "src/Ai/TraceNarrator.php"
 code = "no-isset"
 message = "Use of the `isset` construct."
-count = 1
+count = 7
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
@@ -556,7 +550,7 @@ count = 1
 file = "src/Tracing/TraceTextFormatter.php"
 code = "no-isset"
 message = "Use of the `isset` construct."
-count = 3
+count = 5
 
 [[issues]]
 file = "src/Tracing/TraceTextFormatter.php"
@@ -1013,3 +1007,39 @@ file = "tests/bootstrap.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "halstead"
+message = "Method has a high halstead volume and effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceTextFormatter.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Xdebug/TraceIngester.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+

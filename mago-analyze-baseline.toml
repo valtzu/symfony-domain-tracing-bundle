@@ -268,7 +268,7 @@ count = 1
 file = "src/Tracing/SpanBuilder.php"
 code = "imprecise-type"
 message = "Type `array` in parameter `$record` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 7
+count = 8
 
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
@@ -483,12 +483,6 @@ count = 1
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-null-argument"
-message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:90:18}` is possibly `null`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/SpanBuilder.php"
-code = "possibly-null-argument"
 message = "Argument #1 of function `array_pop` is possibly `null`, but parameter type `array<non-negative-int, string>` does not accept it."
 count = 1
 
@@ -538,7 +532,7 @@ count = 1
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-undefined-int-array-index"
 message = "Possibly undefined array key `mixed` accessed on `array<string, list<string>>`."
-count = 3
+count = 4
 
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
@@ -598,7 +592,7 @@ count = 1
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('request')` accessed on `array<array-key, mixed>`."
-count = 8
+count = 10
 
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
@@ -622,7 +616,7 @@ count = 2
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('type')` accessed on `array<array-key, mixed>`."
-count = 8
+count = 9
 
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
@@ -1414,7 +1408,7 @@ count = 1
 file = "src/Ai/TraceNarrator.php"
 code = "mixed-argument"
 message = "Invalid argument type for argument #3 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
-count = 1
+count = 3
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
@@ -1430,15 +1424,9 @@ count = 1
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
-code = "mixed-array-access"
-message = "Unsafe array access on type `truthy-mixed`."
-count = 3
-
-[[issues]]
-file = "src/Ai/TraceNarrator.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 5
+count = 6
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
@@ -1456,7 +1444,7 @@ count = 1
 file = "src/Ai/TraceNarrator.php"
 code = "possibly-false-operand"
 message = "Possibly false right operand used in string concatenation (type `false|non-empty-string`)."
-count = 2
+count = 3
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
@@ -1504,13 +1492,13 @@ count = 2
 file = "src/Ai/TraceNarrator.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('function')` accessed on `array<array-key, mixed>`."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('name')` accessed on `array<array-key, mixed>`."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Ai/TraceNarrator.php"
@@ -1810,13 +1798,13 @@ count = 1
 file = "src/Tracing/TraceTextFormatter.php"
 code = "mixed-argument"
 message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
-count = 3
+count = 4
 
 [[issues]]
 file = "src/Tracing/TraceTextFormatter.php"
 code = "mixed-argument"
 message = "Invalid argument type for argument #3 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
-count = 2
+count = 3
 
 [[issues]]
 file = "src/Tracing/TraceTextFormatter.php"
@@ -1864,7 +1852,7 @@ count = 2
 file = "src/Tracing/TraceTextFormatter.php"
 code = "mixed-operand"
 message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Tracing/TraceTextFormatter.php"
@@ -3004,7 +2992,7 @@ count = 1
 file = "tests/Ai/TraceNarratorTest.php"
 code = "missing-return-type"
 message = "Function `arrow function` is missing a return type hint."
-count = 1
+count = 2
 
 [[issues]]
 file = "tests/Ai/TraceNarratorTest.php"
@@ -3221,3 +3209,201 @@ file = "tests/Xdebug/XdebugValueTest.php"
 code = "missing-return-type"
 message = "Function `testParsesValues` is missing a return type hint."
 count = 1
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$exception` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `float`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Ai\TraceNarrator::exception`: expected `array<array-key, mixed>`, but found `nonnull`.'
+count = 2
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `parse_url`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `nonnull`."
+count = 4
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "mixed-operand"
+message = "Left operand in `>=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('class')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('kind')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('message')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Ai/TraceNarrator.php"
+code = "redundant-null-coalesce"
+message = "Redundant null coalesce: left-hand side can never be `null` or undefined."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/EventListener/ExceptionRecorder.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "imprecise-type"
+message = "Type `array` in return type of `setOutcome` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::innermostSpanOf`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::innermostSpanOf`: expected `list<string>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `nonnull`."
+count = 3
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::innermostSpanOf`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "possibly-null-argument"
+message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:94:18}` is possibly `null`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Tracing/SpanBuilder.php"
+code = "possibly-null-argument"
+message = "Argument #2 of function `in_array` is possibly `null`, but parameter type `array<array-key, string>` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceTextFormatter.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Xdebug/TraceIngester.php"
+code = "invalid-type-cast"
+message = "Casting `mixed` to `array`."
+count = 1
+
+[[issues]]
+file = "src/Xdebug/TraceIngester.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Xdebug\TraceIngester::outcome`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Xdebug/TraceIngester.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "tests/Command/TraceCommandTest.php"
+code = "imprecise-type"
+message = "Type `array` in return type of `arrow function` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Command/TraceCommandTest.php"
+code = "invalid-method-access"
+message = "Attempting to call method `format()` on a non-object type (`false`)."
+count = 1
+
+[[issues]]
+file = "tests/Command/TraceCommandTest.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "tests/Command/TraceCommandTest.php"
+code = "possibly-null-array-access"
+message = "Cannot perform array access on possibly `null` value."
+count = 1
+
+[[issues]]
+file = "tests/Command/TraceCommandTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('startedAt')` accessed on `array<array-key, mixed>`."
+count = 1
+

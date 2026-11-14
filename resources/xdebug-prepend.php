@@ -2,8 +2,8 @@
 
 // Starts the record of the request in the trace directory (xdebug.output_dir), next to the trace file that Xdebug
 // writes, and limits the trace and the code coverage to the application, from the PSR-4 autoload section of the
-// nearest composer.json. When the request ends, it writes the lines that ran next to the trace file, and the index of
-// the application code when this version of the code has none yet.
+// nearest composer.json. When the request ends, it writes the lines that ran and how the request ended next to the
+// trace file, and the index of the application code when this version of the code has none yet.
 (static function (): void {
     // The router of the Symfony CLI server includes the auto_prepend_file again
     if (\defined('DOMAIN_TRACING_PREPENDED')) {
@@ -63,6 +63,10 @@
         }
         if (xdebug_code_coverage_started()) {
             file_put_contents($traceFile.'.lines.json', json_encode(array_map(array_keys(...), xdebug_get_code_coverage())));
+        }
+        if (is_file($traceFile)) {
+            $outcome = ['status' => http_response_code() ?: null, 'exception' => $_SERVER['DOMAIN_TRACING_EXCEPTION'] ?? null];
+            file_put_contents($traceFile.'.outcome.json', json_encode($outcome, \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
         }
         $indexPath = $directory.'/codeindex-'.$fingerprint.'.json';
         if (!is_file($indexPath)) {

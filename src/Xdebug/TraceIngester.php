@@ -4,14 +4,18 @@ namespace Valtzu\DomainTracingBundle\Xdebug;
 
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 
+use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
+
 /**
  * Reads the Xdebug trace files of spans into the trace store while Xdebug writes them. One process reads each span:
  * the one that holds its lock. When that process stops before the trace ends, another one takes the lock and reads
- * the trace again from its start.
+ * the trace again from its start. Before the end of a span, it records how the request ended: its response status and
+ * the exception that it did not handle, from the file that the prepend file writes next to the trace file.
  */
 final class TraceIngester
 {
     private const SECONDS_WITHOUT_CHANGE_BEFORE_ENDING = 30;
+    private const int MAX_MESSAGE_LENGTH = 1000;
 
     /** @var array<string, array{lock: resource, request: array, reader: ?XdebugTraceReader}> */
     private array $spans = [];
@@ -19,6 +23,7 @@ final class TraceIngester
     public function __construct(
         private readonly TraceStore $store,
         private readonly XdebugValue $values,
+        private readonly SecretRedactor $redactor,
     ) {
     }
 
@@ -64,8 +69,26 @@ final class TraceIngester
 
     private function end(string $id, float $at): void
     {
-        $this->store->end($id, $at);
+        $this->store->end($id, $at, $this->outcome($this->spans[$id]['request']['traceFile'] ?? ''));
         fclose($this->spans[$id]['lock']);
         unset($this->spans[$id]);
+    }
+
+    /**
+     * @return array{status?: int, exception?: array{class: string, message: string, functions: list<string>}}
+     */
+    private function outcome(string $traceFile): array
+    {
+        $outcome = json_decode((string) @file_get_contents($traceFile.'.outcome.json'), associative: true);
+        $exception = $outcome['exception'] ?? null;
+
+        return array_filter([
+            'status' => \is_int($outcome['status'] ?? null) ? $outcome['status'] : null,
+            'exception' => \is_array($exception) && \is_string($exception['class'] ?? null) && \is_string($exception['message'] ?? null) ? [
+                'class' => $exception['class'],
+                'message' => $this->redactor->redact(mb_substr($exception['message'], start: 0, length: self::MAX_MESSAGE_LENGTH)),
+                'functions' => array_values(array_filter((array) ($exception['functions'] ?? []), is_string(...))),
+            ] : null,
+        ], static fn (mixed $value): bool => null !== $value);
     }
 }

@@ -59,6 +59,8 @@ final readonly class TraceDescriber
         $pending = [];
         $lastActivity = $startedAt = microtime(true);
         $seenRecords = false;
+        $describedAPart = false;
+        $describedTheEnd = false;
 
         while (true) {
             foreach ($follower->poll() as $record) {
@@ -72,7 +74,10 @@ final readonly class TraceDescriber
 
             $ended = $follower->hasEnded();
             $idle = microtime(true) - $lastActivity;
-            if ($pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_DESCRIBING)) {
+            // The last part tells how the request ended, even when it has no new calls
+            if ($pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_DESCRIBING) || $ended && $describedAPart && !$describedTheEnd) {
+                $describedAPart = true;
+                $describedTheEnd = $ended;
                 $names = $this->nameOperations($rootId, $builder, $names);
                 $spans = self::withNames($builder->spans(), $names);
                 $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), $events);

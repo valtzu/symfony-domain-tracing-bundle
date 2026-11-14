@@ -6,7 +6,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs, in the trace
- * directory of Xdebug: a "request" record, which the prepend file writes when the request starts, a step for each call of an application method with its arguments and its exit, and an "end" record. A step
+ * directory of Xdebug: a "request" record, which the prepend file writes when the request starts, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
  * is the array [function, line, call depth, microseconds since the request started], because it is the most frequent
  * record. Readers can follow the file while it is written. A trace index file lists the spans of each trace, in the
  * order they started.
@@ -160,8 +160,14 @@ final readonly class TraceStore
         $this->append($id, ['type' => 'function'] + $function);
     }
 
-    public function end(string $id, float $at): void
+    /**
+     * @param array{status?: int, exception?: array} $outcome how the request ended
+     */
+    public function end(string $id, float $at, array $outcome = []): void
     {
+        if ($outcome) {
+            $this->append($id, ['type' => 'outcome', 'at' => $at] + $outcome);
+        }
         $this->append($id, ['type' => 'end', 'at' => $at]);
     }
 

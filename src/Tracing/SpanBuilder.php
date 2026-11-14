@@ -11,6 +11,9 @@ namespace Valtzu\DomainTracingBundle\Tracing;
  *
  * The span of a method starts at its first line. It ends at the first line that runs after it returns, or when it
  * returns to code outside the application.
+ *
+ * The span of a request gets the response status and the exception that the request did not handle. The exception also
+ * goes to the span of the innermost method that was running when it was thrown.
  */
 final class SpanBuilder
 {
@@ -43,6 +46,7 @@ final class SpanBuilder
             'exit' => $this->exit($record),
             'arguments' => $this->setArguments($record),
             'lines' => $this->setExecutedLines($record),
+            'outcome' => $this->setOutcome($record),
             'end' => $this->closeRequest($record['request'], $record['at']),
             default => [],
         };
@@ -228,6 +232,48 @@ final class SpanBuilder
         }
 
         return $changes;
+    }
+
+    private function setOutcome(array $record): array
+    {
+        $requestSpanId = $this->requestSpans[$record['request']] ?? null;
+        if (null === $requestSpanId) {
+            return [];
+        }
+        if (isset($record['status'])) {
+            $this->spans[$requestSpanId]['status'] = $record['status'];
+        }
+        if (!isset($record['exception'])) {
+            return [];
+        }
+
+        $exception = ['class' => $record['exception']['class'], 'message' => $record['exception']['message']];
+        $thrower = $this->innermostSpanOf($record['request'], $record['exception']['functions']);
+        $this->spans[$requestSpanId]['exception'] = $exception + ['span' => $thrower];
+        if (null === $thrower || $thrower === $requestSpanId) {
+            return [];
+        }
+        $this->spans[$thrower]['exception'] = $exception;
+
+        return \in_array($thrower, $this->stacks[$record['request']], strict: true) ? [] : [['close', $this->spans[$thrower]]];
+    }
+
+    /**
+     * @param list<string> $functions the methods that were running, innermost first
+     *
+     * @return string|null the last span of the request that runs the innermost of these methods
+     */
+    private function innermostSpanOf(string $request, array $functions): ?string
+    {
+        foreach ($functions as $function) {
+            foreach (array_reverse($this->spans) as $span) {
+                if ($span['request'] === $request && $span['function'] === $function) {
+                    return $span['id'];
+                }
+            }
+        }
+
+        return null;
     }
 
     private function closeRequest(string $request, float $at): array

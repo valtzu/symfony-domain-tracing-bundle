@@ -135,7 +135,7 @@ function createWaterfall(container, describing) {
 
             const end = span.end ?? latest;
             const spanEvents = events.get(span.id) ?? [];
-            const failed = spanEvents.some(event => event.error);
+            const failed = spanEvents.some(event => event.error) || span.exception || span.status >= 500;
             const row = table.appendChild(document.createElement('div'));
             row.className = `waterfall-row service-${serviceColor(span.service)}${failed ? ' failed' : ''}${null === span.end ? ' running' : ''}`;
             enter(row, span.id);
@@ -147,9 +147,16 @@ function createWaterfall(container, describing) {
                 span.function ?? span.uri ?? '',
                 span.arguments ? `called with ${JSON.stringify(span.arguments)}` : '',
                 'returnValue' in span ? `returned ${JSON.stringify(span.returnValue)}` : '',
+                span.status ? `answered with status ${span.status}` : '',
+                span.exception ? `threw ${span.exception.class}: ${span.exception.message}` : '',
             ].filter(Boolean).join('\n');
             label.innerHTML = '<span class="waterfall-service"></span><span class="waterfall-name"></span>';
             label.querySelector('.waterfall-service').textContent = span.service;
+            if (span.status >= 400) {
+                const status = label.appendChild(document.createElement('span'));
+                status.className = 'waterfall-status';
+                status.textContent = span.status;
+            }
             const name = label.querySelector('.waterfall-name');
             name.textContent = names.get(span.function) ?? span.name;
             if (names.has(span.function)) {

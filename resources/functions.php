@@ -118,6 +118,7 @@ function discard_trace(string $traceFile): void
     xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, ['DomainTracingBundle\Discarded']);
     @unlink($traceFile);
     @unlink($traceFile.'.lines.json');
+    @unlink($traceFile.'.outcome.json');
     if (xdebug_code_coverage_started()) {
         xdebug_stop_code_coverage(false);
     }

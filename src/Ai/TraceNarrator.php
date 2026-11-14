@@ -33,11 +33,11 @@ final readonly class TraceNarrator
     {
         $json = static fn (mixed $value) => json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
-        $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew calls:\n";
+        $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew calls:\n".($steps ? '' : "(none)\n");
         foreach ($steps as $index => $step) {
             $span = $spans[$step['span']];
             $prompt .= \sprintf(
-                "%d: [%s] %s\"%s\" (%s)%s%s\n",
+                "%d: [%s] %s\"%s\" (%s)%s%s%s\n",
                 $index,
                 $span['service'],
                 str_repeat('  ', max(0, $step['depth'] - $steps[0]['depth'])),
@@ -45,6 +45,7 @@ final readonly class TraceNarrator
                 $span['function'],
                 isset($span['arguments']) ? ' called with '.$json($span['arguments']) : '',
                 \array_key_exists('returnValue', $span) ? ' returned '.$json($span['returnValue']) : '',
+                isset($span['exception']) && 'server' !== $span['kind'] ? ' threw '.self::exception($span['exception']) : '',
             );
         }
         if ($code) {
@@ -53,7 +54,7 @@ final readonly class TraceNarrator
                 $prompt .= \sprintf("\n%s():\n%s\n", $function, $source);
             }
         }
-        $prompt .= "\n".($traceEnded ? 'The request has finished.' : 'The request is still running. More calls will follow.');
+        $prompt .= "\n".($traceEnded ? "The request has finished.\n".self::outcomes($spans) : 'The request is still running. More calls will follow.');
 
         $buffer = '';
         foreach ($this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('trace_narrator')), Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
@@ -70,6 +71,35 @@ final readonly class TraceNarrator
     }
 
     /**
+     * @param array<string, array> $spans
+     */
+    private static function outcomes(array $spans): string
+    {
+        $outcomes = '';
+        foreach ($spans as $span) {
+            if ('server' !== $span['kind'] || (!isset($span['status']) && !isset($span['exception']))) {
+                continue;
+            }
+            $request = \sprintf('[%s] %s %s', $span['service'], $span['method'], parse_url($span['uri'], \PHP_URL_PATH));
+            $failed = isset($span['exception']) || ($span['status'] ?? 0) >= 400;
+            $outcomes .= $failed ? $request.' failed' : $request.' succeeded';
+            $outcomes .= isset($span['status']) ? ' with status '.$span['status'] : '';
+            if (isset($span['exception'])) {
+                $thrower = $spans[$span['exception']['span'] ?? ''] ?? null;
+                $outcomes .= ': '.self::exception($span['exception']).(null === $thrower ? '' : \sprintf(' was thrown in "%s" (%s)', $thrower['name'], $thrower['function']));
+            }
+            $outcomes .= ".\n";
+        }
+
+        return $outcomes;
+    }
+
+    private static function exception(array $exception): string
+    {
+        return $exception['class'].': '.json_encode($exception['message'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * Places an event at the start of the call it is about, or at its end when the event is about how the call ended,
      * such as what it returned or why it failed. The outcome of the request is placed at its end.
      *
@@ -78,19 +108,26 @@ final readonly class TraceNarrator
     private function toEvent(string $line, array $steps, array $spans, ?string $rootSpanId): iterable
     {
         $event = json_decode(trim($line), true);
-        $outcome = true === ($event['outcome'] ?? false) && null !== $rootSpanId;
-        $step = $outcome ? end($steps) : $steps[$event['line'] ?? -1] ?? null;
-        if (!$step || !\is_string($event['text'] ?? null) || '' === trim($event['text'])) {
+        if (!\is_string($event['text'] ?? null) || '' === trim($event['text'])) {
+            return;
+        }
+        if (true === ($event['outcome'] ?? false)) {
+            $at = null === $rootSpanId ? null : $spans[$rootSpanId]['end'] ?? $steps[array_key_last($steps) ?? -1]['at'] ?? null;
+            if (null !== $rootSpanId && null !== $at) {
+                yield ['span' => $rootSpanId, 'at' => (float) $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
+            }
+
             return;
         }
 
-        $spanId = $outcome ? $rootSpanId : $step['span'];
+        $step = $steps[$event['line'] ?? -1] ?? null;
         $atEnd = 'return' === ($event['when'] ?? null);
         // The outcome already says how the request ended, at the same place
-        if (!$outcome && $atEnd && $spanId === $rootSpanId) {
+        if (null === $step || $atEnd && $step['span'] === $rootSpanId) {
             return;
         }
-        $at = $outcome || $atEnd ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
+        $spanId = $step['span'];
+        $at = $atEnd ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
 
         yield ['span' => $spanId, 'at' => $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
     }

@@ -4,7 +4,7 @@ namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Writes the events of a trace stream as lines of plain text: a span when it opens, indented under its parent, with
- * the time since the trace started, and the events of the AI under their span.
+ * the time since the trace started, the exception that an operation threw, and the events of the AI under their span.
  */
 final class TraceTextFormatter
 {
@@ -57,8 +57,12 @@ final class TraceTextFormatter
         if ($this->values && \array_key_exists('returnValue', $span)) {
             $lines[] = $this->line(null, $level + 1, 'returned: '.self::value($span['returnValue']));
         }
+        if (isset($span['exception']) && \in_array($span['exception']['span'] ?? $span['id'], [$span['id'], null], strict: true)) {
+            $lines[] = $this->line(null, $level + 1, \sprintf('✗ threw %s: %s', $span['exception']['class'], $span['exception']['message']));
+        }
         if ('server' === $span['kind'] && null !== $span['end']) {
-            $lines[] = $this->line($span['end'], $level, \sprintf('end of %s %s [%s] after %.3fs', $span['method'], parse_url($span['uri'], \PHP_URL_PATH), $span['service'], $span['end'] - $span['start']));
+            $status = isset($span['status']) ? ' with status '.$span['status'] : '';
+            $lines[] = $this->line($span['end'], $level, \sprintf('end of %s %s [%s] after %.3fs%s', $span['method'], parse_url($span['uri'], \PHP_URL_PATH), $span['service'], $span['end'] - $span['start'], $status));
         }
 
         return $lines;

@@ -48,7 +48,7 @@ final readonly class TraceNarrator
                 isset($span['arguments']) ? ' called with '.$json($span['arguments']) : '',
                 \array_key_exists('returnValue', $span) ? ' returned '.$json($span['returnValue']) : '',
                 isset($span['exception']) && 'server' !== $span['kind'] ? ' threw '.self::exception($span['exception']) : '',
-                isset($step['repeats']) ? \sprintf(', called %d times in a loop, each time with the same calls and other values', $step['repeats']) : '',
+                self::loop($step),
             );
         }
         if ($omitted > 0) {
@@ -76,6 +76,17 @@ final readonly class TraceNarrator
             }
         }
         yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
+    }
+
+    private static function loop(array $step): string
+    {
+        if (!isset($step['repeats'])) {
+            return '';
+        }
+
+        return 1 === ($step['loopCalls'] ?? 1)
+            ? \sprintf(', called %d times in a loop, each time with the same calls and other values', $step['repeats'])
+            : \sprintf(', starts a loop of %d calls at this depth, this one and the next %d, which ran %d times, each time with the same calls and other values', $step['loopCalls'], $step['loopCalls'] - 1, $step['repeats']);
     }
 
     /**

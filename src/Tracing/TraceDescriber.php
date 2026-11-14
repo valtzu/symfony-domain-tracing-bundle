@@ -94,7 +94,7 @@ final readonly class TraceDescriber
                 $names = $this->nameOperations($rootId, $builder, $names);
                 $spans = self::withNames($builder->spans(), $names);
                 $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), \array_slice($events, -self::MAX_EVENTS_SO_FAR));
-                $pending = Loops::fold($pending);
+                $pending = Loops::fold($pending, static fn (array $step): bool => isset($spans[$step['span']]['exception']));
                 $omitted = max(0, \count($pending) - self::MAX_STEPS_PER_CALL);
                 $pending = \array_slice($pending, 0, self::MAX_STEPS_PER_CALL);
                 $code = [];

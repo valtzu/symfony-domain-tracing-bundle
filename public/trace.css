@@ -39,6 +39,8 @@
 .waterfall-marker.error { background: var(--trace-bad); opacity: 1; }
 .waterfall-row.failed .waterfall-name { color: var(--trace-bad); }
 .waterfall-status { color: var(--trace-bad); font-size: 11px; font-weight: 600; }
+.waterfall-loop .waterfall-label { box-shadow: inset 2px 0 var(--trace-color); }
+.waterfall-rounds { flex: none; padding: 0 5px; border-radius: 8px; background: var(--trace-track); color: var(--trace-muted); font-size: 11px; font-weight: 600; }
 .waterfall-row.running .waterfall-bar { opacity: .6; }
 .waterfall-event { color: var(--trace-muted); font-size: 12px; }
 .waterfall-event-text { padding-top: 3px; padding-bottom: 3px; }

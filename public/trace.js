@@ -3,6 +3,8 @@ const BASE_URL = new URL('./', import.meta.url);
 const ROW_ENTER_MILLISECONDS = 250;
 const NAME_ERASE_MILLISECONDS = 300;
 const NAME_WRITE_MILLISECONDS = 450;
+const MIN_ROUNDS = 3;
+const MAX_CALLS_PER_ROUND = 20;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 /**
@@ -28,9 +30,13 @@ function createWaterfall(container, describing) {
         return services.indexOf(service) % SERVICE_COLORS;
     };
 
+    const failedSpan = span => (events.get(span.id) ?? []).some(event => event.error) || span.exception || span.status >= 500;
+
     /**
      * The rows of the waterfall: each span followed by its events and its child spans, in time order, so that an event
-     * appears between the operations it happened between.
+     * appears between the operations it happened between. A loop, calls that are made again and again in the same
+     * order and make the same calls each time, shows its first round only, with the number of rounds. A round can be
+     * one call or several calls one after the other.
      */
     const ordered = () => {
         const children = new Map();
@@ -38,19 +44,61 @@ function createWaterfall(container, describing) {
             const parent = spans.has(span.parentId) ? span.parentId : null;
             children.set(parent, [...(children.get(parent) ?? []), span]);
         }
+        for (const list of children.values()) {
+            list.sort((a, b) => a.start - b.start);
+        }
+        // What a round does: its method, whether it failed, and the calls it made, whatever the number of rounds of
+        // its own loops
+        const shapes = new Map();
+        const shape = span => shapes.get(span.id) ?? shapes.set(span.id, `${span.function}${failedSpan(span) ? '!' : ''}(${
+            (children.get(span.id) ?? []).map(shape).filter((child, index, all) => child !== all[index - 1]).join(',')
+        })`).get(span.id);
+
+        // The number of calls in a round of the loop that starts at the item, and its number of rounds
+        const loopAt = (items, start) => {
+            const at = index => items[index]?.span ? shape(items[index].span) : null;
+            let best = [1, 1];
+            for (let size = 1; size <= MAX_CALLS_PER_ROUND && start + size * MIN_ROUNDS <= items.length; size++) {
+                const round = Array.from({ length: size }, (_, offset) => at(start + offset));
+                if (round.includes(null)) {
+                    break;
+                }
+                let rounds = 1;
+                while (round.every((path, offset) => at(start + rounds * size + offset) === path)) {
+                    rounds++;
+                }
+                if (rounds >= MIN_ROUNDS && size * rounds > best[0] * best[1]) {
+                    best = [size, rounds];
+                }
+            }
+            return best;
+        };
+
         const rows = [];
         const visit = (parent, depth) => {
             const items = [
                 ...(children.get(parent) ?? []).map(span => ({ at: span.start, span })),
                 ...(null === parent ? [] : events.get(parent) ?? []).map(event => ({ at: event.at, event })),
             ].sort((a, b) => a.at - b.at || (a.event ? 1 : -1));
-            for (const item of items) {
-                if (item.span) {
-                    rows.push({ span: item.span, depth });
-                    visit(item.span.id, depth + 1);
-                } else {
-                    rows.push({ event: item.event, depth });
+            for (let index = 0; index < items.length;) {
+                if (items[index].event) {
+                    rows.push({ event: items[index].event, depth });
+                    index++;
+                    continue;
                 }
+                const [size, rounds] = loopAt(items, index);
+                for (let offset = 0; offset < size; offset++) {
+                    const span = items[index + offset].span;
+                    rows.push(rounds < MIN_ROUNDS ? { span, depth } : {
+                        span,
+                        depth,
+                        rounds: 0 === offset ? rounds : null,
+                        loop: true,
+                        last: items[index + (rounds - 1) * size + offset].span,
+                    });
+                    visit(span.id, depth + 1);
+                }
+                index += size * rounds;
             }
         };
         visit(null, 0);
@@ -99,7 +147,7 @@ function createWaterfall(container, describing) {
         if (!rows.length) {
             return;
         }
-        const spanRows = rows.filter(row => row.span);
+        const spanRows = rows.filter(row => row.span).flatMap(row => row.last ? [row, { span: row.last }] : [row]);
         const start = Math.min(...spanRows.map(row => row.span.start));
         const range = Math.max(latest - start, ...spanRows.map(row => (row.span.end ?? latest) - start), 0.001);
 
@@ -109,7 +157,7 @@ function createWaterfall(container, describing) {
         axis.className = 'waterfall-axis';
         axis.innerHTML = `<span></span><span class="waterfall-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left: ${f * 100}%">${milliseconds(f * range)}</span>`).join('')}</span>`;
 
-        for (const [index, { span, event, depth }] of rows.entries()) {
+        for (const [index, { span, event, depth, rounds, loop, last }] of rows.entries()) {
             if (event) {
                 const item = table.appendChild(document.createElement('div'));
                 item.className = `waterfall-row waterfall-event${event.error ? ' error' : ''}`;
@@ -135,11 +183,11 @@ function createWaterfall(container, describing) {
                 continue;
             }
 
-            const end = span.end ?? latest;
+            const end = (last ?? span).end ?? latest;
             const spanEvents = events.get(span.id) ?? [];
-            const failed = spanEvents.some(event => event.error) || span.exception || span.status >= 500;
+            const failed = failedSpan(span);
             const row = table.appendChild(document.createElement('div'));
-            row.className = `waterfall-row service-${serviceColor(span.service)}${failed ? ' failed' : ''}${null === span.end ? ' running' : ''}`;
+            row.className = `waterfall-row service-${serviceColor(span.service)}${failed ? ' failed' : ''}${null === span.end ? ' running' : ''}${loop ? ' waterfall-loop' : ''}`;
             enter(row, span.id);
 
             const label = row.appendChild(document.createElement('div'));
@@ -151,9 +199,15 @@ function createWaterfall(container, describing) {
                 'returnValue' in span ? `returned ${JSON.stringify(span.returnValue)}` : '',
                 span.status ? `answered with status ${span.status}` : '',
                 span.exception ? `threw ${span.exception.class}: ${span.exception.message}` : '',
+                rounds ? `called ${rounds} times in a loop, with the same calls each time; the values are those of the first round` : '',
             ].filter(Boolean).join('\n');
             label.innerHTML = '<span class="waterfall-service"></span><span class="waterfall-name"></span>';
             label.querySelector('.waterfall-service').textContent = span.service;
+            if (rounds) {
+                const repeats = label.appendChild(document.createElement('span'));
+                repeats.className = 'waterfall-rounds';
+                repeats.textContent = `×${rounds}`;
+            }
             if (span.status >= 400) {
                 const status = label.appendChild(document.createElement('span'));
                 status.className = 'waterfall-status';

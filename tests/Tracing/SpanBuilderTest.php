@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
 use Valtzu\DomainTracingBundle\Tracing\SpanBuilder;
@@ -39,7 +36,7 @@ final class SpanBuilderTest extends TestCase
             $span['end'],
         ], array_values($builder->spans()));
 
-        static::assertSame([
+        $this->assertSame([
             ['Checkout: place order', null, 1.0, 2.0],
             ['Pricing: apply discounts', 'Checkout: place order', 1.2, 1.4],
             ['Payment gateway: charge', 'Checkout: place order', 1.5, 1.9],
@@ -66,7 +63,7 @@ final class SpanBuilderTest extends TestCase
 
         $lines = array_column(array_values($builder->spans()), 'executedLines', 'function');
 
-        static::assertSame(['App\Shipping->apply' => [15, 17, 18, 21]], $lines);
+        $this->assertSame(['App\Shipping->apply' => [15, 17, 18, 21]], $lines);
     }
 
     public function testUpdatesTheSpanWhenItsArgumentsArrive(): void
@@ -78,7 +75,7 @@ final class SpanBuilderTest extends TestCase
 
         $changes = $builder->add(['request' => 'shop', 'type' => 'arguments', 'depth' => 8, 'values' => ['coupon' => 'WELCOME10'], 'at' => 1.2]);
 
-        static::assertSame([['open', 'Pricing: apply discounts', ['coupon' => 'WELCOME10']]], array_map(static fn (array $change) => [$change[0], $change[1]['name'], $change[1]['arguments']], $changes));
+        $this->assertSame([['open', 'Pricing: apply discounts', ['coupon' => 'WELCOME10']]], array_map(static fn (array $change) => [$change[0], $change[1]['name'], $change[1]['arguments']], $changes));
     }
 
     private static function step(string $request, float $at, string $function, int $depth): array

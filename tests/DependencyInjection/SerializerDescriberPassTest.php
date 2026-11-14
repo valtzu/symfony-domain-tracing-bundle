@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
@@ -20,7 +17,7 @@ final class SerializerDescriberPassTest extends TestCase
 
         (new SerializerDescriberPass())->process($container);
 
-        static::assertSame([], $container->getDefinition('ai.platform.json_schema.describer.serializer')->getArguments());
+        $this->assertSame([], $container->getDefinition('ai.platform.json_schema.describer.serializer')->getArguments());
     }
 
     public function testKeepsTheMetadataOfTheSerializer()
@@ -30,7 +27,7 @@ final class SerializerDescriberPassTest extends TestCase
 
         (new SerializerDescriberPass())->process($container);
 
-        static::assertCount(1, $container->getDefinition('ai.platform.json_schema.describer.serializer')->getArguments());
+        $this->assertCount(1, $container->getDefinition('ai.platform.json_schema.describer.serializer')->getArguments());
     }
 
     private function container(): ContainerBuilder

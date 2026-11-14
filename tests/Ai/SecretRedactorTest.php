@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\Ai;
 
 use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
@@ -20,7 +17,7 @@ final class SecretRedactorTest extends TestCase
             'SHORT_TOKEN' => 'abc',
         ]);
 
-        static::assertSame(
+        $this->assertSame(
             'secret [APP_SECRET redacted], dsn [DATABASE_DSN redacted], env dev, abc',
             $redactor->redact('secret 71eeab6705819f0957d51dcaca8ef1b2, dsn pgsql:host=db;password=hunter22, env dev, abc'),
         );
@@ -29,7 +26,7 @@ final class SecretRedactorTest extends TestCase
     #[DataProvider('provideSecrets')]
     public function testRedactsSecrets(string $text, string $expected)
     {
-        static::assertSame($expected, (new SecretRedactor([]))->redact($text));
+        $this->assertSame($expected, (new SecretRedactor([]))->redact($text));
     }
 
     public static function provideSecrets(): iterable
@@ -52,7 +49,7 @@ final class SecretRedactorTest extends TestCase
     #[DataProvider('provideHarmlessText')]
     public function testKeepsHarmlessText(string $text)
     {
-        static::assertSame($text, (new SecretRedactor([]))->redact($text));
+        $this->assertSame($text, (new SecretRedactor([]))->redact($text));
     }
 
     public static function provideHarmlessText(): iterable

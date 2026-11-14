@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\Xdebug;
 
 use PHPUnit\Framework\TestCase;
@@ -26,13 +23,13 @@ final class TraceFileTest extends TestCase
     public function testReadsWhatWasWrittenSinceTheLastRead()
     {
         $file = new TraceFile($this->path);
-        static::assertSame('', $file->read());
+        $this->assertSame('', $file->read());
 
         file_put_contents($this->path, "TRACE START\n1\t0");
-        static::assertSame("TRACE START\n1\t0", $file->read());
+        $this->assertSame("TRACE START\n1\t0", $file->read());
 
         file_put_contents($this->path, "\t0\n", \FILE_APPEND);
-        static::assertSame("\t0\n", $file->read());
+        $this->assertSame("\t0\n", $file->read());
     }
 
     public function testReadsACompressedTraceWhileItIsWritten()
@@ -41,9 +38,9 @@ final class TraceFileTest extends TestCase
         $deflate = deflate_init(\ZLIB_ENCODING_GZIP);
 
         file_put_contents($this->path.'.gz', deflate_add($deflate, "TRACE START\n1\t0", \ZLIB_SYNC_FLUSH));
-        static::assertSame("TRACE START\n1\t0", $file->read());
+        $this->assertSame("TRACE START\n1\t0", $file->read());
 
         file_put_contents($this->path.'.gz', deflate_add($deflate, "\t0\nTRACE END\n", \ZLIB_FINISH), \FILE_APPEND);
-        static::assertSame("\t0\nTRACE END\n", $file->read());
+        $this->assertSame("\t0\nTRACE END\n", $file->read());
     }
 }

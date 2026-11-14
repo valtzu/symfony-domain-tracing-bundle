@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Ai;
 
 /**
@@ -43,11 +40,9 @@ final class SecretRedactor
     public function __construct(?array $environment = null)
     {
         foreach ($environment ?? $_SERVER + $_ENV + getenv() as $name => $value) {
-            if (!(\is_string($name) && \is_string($value) && \strlen($value) >= self::MIN_SECRET_VALUE_LENGTH && preg_match('/^'.self::SECRET_NAME.'$/i', $name))) {
-                continue;
+            if (\is_string($name) && \is_string($value) && \strlen($value) >= self::MIN_SECRET_VALUE_LENGTH && preg_match('/^'.self::SECRET_NAME.'$/i', $name)) {
+                $this->knownSecrets[$value] = '['.$name.' redacted]';
             }
-
-            $this->knownSecrets[$value] = '['.$name.' redacted]';
         }
         uksort($this->knownSecrets, static fn (string $a, string $b) => \strlen($b) <=> \strlen($a));
     }

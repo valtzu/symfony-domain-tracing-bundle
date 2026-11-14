@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\Ai;
 
 use PHPUnit\Framework\TestCase;
@@ -32,8 +29,8 @@ final class TraceNarratorTest extends TestCase
             '{"outcome": true, "text": "Greeting page shown to Ada"}',
         ), false);
 
-        static::assertSame(['Greeting is "Hello"', 'Greeting page shown to Ada'], array_column($events, 'text'));
-        static::assertSame(['greet', 'request'], array_column($events, 'span'));
+        $this->assertSame(['Greeting is "Hello"', 'Greeting page shown to Ada'], array_column($events, 'text'));
+        $this->assertSame(['greet', 'request'], array_column($events, 'span'));
     }
 
     public function testTellsHowTheRequestFailed(): void

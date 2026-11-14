@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
 use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
@@ -159,7 +156,7 @@ final class XdebugValue
         return $match[0];
     }
 
-    private function expect(#[\SensitiveParameter] string $token): null
+    private function expect(string $token): null
     {
         if (!$this->consume($token)) {
             throw new \UnexpectedValueException();
@@ -168,7 +165,7 @@ final class XdebugValue
         return null;
     }
 
-    private function consume(#[\SensitiveParameter] string $token): bool
+    private function consume(string $token): bool
     {
         $this->skipSpaces();
         if (substr($this->text, $this->position, \strlen($token)) !== $token) {

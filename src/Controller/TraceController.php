@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Controller;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;

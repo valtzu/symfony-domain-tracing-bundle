@@ -1,8 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
-
 namespace Valtzu\DomainTracingBundle\Tests\DataCollector;
 
 use PHPUnit\Framework\TestCase;
@@ -26,26 +23,26 @@ final class TraceDataCollectorTest extends TestCase
 
     public function testKeepsTheIdOfARecordedRequest()
     {
-        static::assertSame(self::RECORDED, $this->collect(self::RECORDED));
+        $this->assertSame(self::RECORDED, $this->collect(self::RECORDED));
     }
 
     public function testIgnoresARequestThatWasNotRecorded()
     {
-        static::assertNull($this->collect('97f16856e73a4d4a'));
-        static::assertNull($this->collect(null));
+        $this->assertNull($this->collect('97f16856e73a4d4a'));
+        $this->assertNull($this->collect(null));
     }
 
     public function testSaysWhyARequestWasNotRecorded()
     {
         if (\extension_loaded('xdebug')) {
-            static::markTestSkipped('Xdebug is loaded.');
+            $this->markTestSkipped('Xdebug is loaded.');
         }
 
         $collector = $this->collector(null);
 
-        static::assertSame(['Xdebug is not loaded.'], $collector->getProblems());
-        static::assertStringContainsString('xdebug.output_dir=/srv/app/var/share/traces', $collector->getXdebugSettings());
-        static::assertSame([], $this->collector(self::RECORDED)->getProblems());
+        $this->assertSame(['Xdebug is not loaded.'], $collector->getProblems());
+        $this->assertStringContainsString('xdebug.output_dir=/srv/app/var/share/traces', $collector->getXdebugSettings());
+        $this->assertSame([], $this->collector(self::RECORDED)->getProblems());
     }
 
     private function collect(?string $requestId): ?string

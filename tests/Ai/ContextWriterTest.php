@@ -73,21 +73,21 @@ final class ContextWriterTest extends TestCase
 
     public function testCommandWritesTheContextFile(): void
     {
-        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/domain_tracing.md')));
+        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/prompts/domain_tracing_context.md')));
 
         static::assertSame(0, $tester->execute(['--write' => true]));
-        static::assertStringEndsWith("\n".$this->projectDir."/config/domain_tracing.md\n", $tester->getDisplay());
-        static::assertSame("The shop sells shirts.\n", file_get_contents($this->projectDir.'/config/domain_tracing.md'));
+        static::assertStringEndsWith("\n".$this->projectDir."/config/prompts/domain_tracing_context.md\n", $tester->getDisplay());
+        static::assertSame("The shop sells shirts.\n", file_get_contents($this->projectDir.'/config/prompts/domain_tracing_context.md'));
     }
 
     public function testCommandWritesNothingWithoutAsking(): void
     {
-        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/domain_tracing.md')));
+        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/prompts/domain_tracing_context.md')));
 
         static::assertSame(0, $tester->execute([], ['interactive' => false]));
         static::assertStringContainsString('The shop sells shirts.', $tester->getDisplay());
-        static::assertStringEndsWith("\n".$this->projectDir."/config/domain_tracing.md\n", $tester->getDisplay());
-        static::assertFileDoesNotExist($this->projectDir.'/config/domain_tracing.md');
+        static::assertStringEndsWith("\n".$this->projectDir."/config/prompts/domain_tracing_context.md\n", $tester->getDisplay());
+        static::assertFileDoesNotExist($this->projectDir.'/config/prompts/domain_tracing_context.md');
     }
 
     private function project(): ProjectSummary

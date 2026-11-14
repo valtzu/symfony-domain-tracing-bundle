@@ -1,0 +1,4 @@
+# yaml-language-server: $schema=../schema.json
+when@dev:
+    domain_tracing:
+        context_file: '%kernel.project_dir%/config/prompts/domain_tracing_context.md'

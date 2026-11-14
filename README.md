@@ -81,8 +81,9 @@ has the bundle too and writes its traces into the same directory. Set `OTEL_SERV
 service to name it; otherwise a service is named after its project directory.
 
 The AI agents name the operations and describe the requests with general instructions, in
-[`config/prompts/`](config/prompts/). To get the words of your business in the traces, describe the application in
-`config/domain_tracing.md`. The agents get this description after their instructions:
+[`config/prompts/`](config/prompts/) of the bundle. To get the words of your business in the traces, describe the
+application in `config/prompts/domain_tracing_context.md` of the project. The agents get this description after their
+instructions:
 
 ```text
 The application is a web shop. The people who read the traces work in customer support.
@@ -91,7 +92,14 @@ Use the words of the shop: customers, products, prices, discounts, stock and pay
 
 `bin/console domain-tracing:context:generate` writes a first version of this file. It sends the README, the routes and
 the class names of the application to an AI agent. Read the description before you commit it. The `context_file`
-option changes the path of the file.
+option changes the path of the file:
+
+```yaml
+# config/packages/domain_tracing.yaml
+when@dev:
+    domain_tracing:
+        context_file: '%kernel.project_dir%/config/prompts/domain_tracing_context.md'
+```
 
 ### The AI agent
 

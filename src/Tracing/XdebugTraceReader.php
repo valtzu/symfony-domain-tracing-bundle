@@ -13,7 +13,7 @@ namespace Valtzu\DomainTracingBundle\Tracing;
  */
 final class XdebugTraceReader
 {
-    private int $offset = 0;
+    private ?TraceFile $file = null;
     private string $buffer = '';
     private ?float $traceStartedAt = null;
     private float $lastTime = 0.0;
@@ -58,9 +58,8 @@ final class XdebugTraceReader
             return $this->ended;
         }
 
-        $data = (string) file_get_contents($this->path, offset: $this->offset);
-        $this->offset += \strlen($data);
-        $lines = explode("\n", $this->buffer.$data);
+        $this->file ??= new TraceFile($this->path);
+        $lines = explode("\n", $this->buffer.$this->file->read());
         $this->buffer = array_pop($lines);
 
         foreach ($lines as $line) {

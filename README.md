@@ -95,17 +95,31 @@ option changes the path of the file.
 
 ### The AI agent
 
-The application defines the agent that names the operations and describes the traces. Without it, the traces are
-recorded and shown, but not described. The bundle uses the `domain_tracing` agent, and provides the
-`domain_tracing.platform` platform, which runs the Claude Code CLI (logged in, as `claude` on the `PATH`):
+The application defines the agent that names the operations and describes the traces, and its platform. Without
+the agent, the traces are recorded and shown, but not described. The bundle uses the `domain_tracing` agent. With the
+Claude Code CLI (logged in, as `claude` on the `PATH`), install its platform:
+
+```shell
+composer require --dev symfony/ai-claude-code-platform
+```
+
+The AI bundle has no option for this platform yet, so the application defines it as a service:
 
 ```yaml
 # config/packages/ai.yaml
 when@dev:
+    services:
+        claude_code.platform:
+            class: Symfony\AI\Platform\Platform
+            factory: ['Symfony\AI\Platform\Bridge\ClaudeCode\Factory', 'createPlatform']
+            arguments:
+                $workingDirectory: '%kernel.project_dir%/var'
+                $timeout: 600
+
     ai:
         agent:
             domain_tracing:
-                platform: domain_tracing.platform
+                platform: claude_code.platform
                 model:
                     name: opus
                     options:

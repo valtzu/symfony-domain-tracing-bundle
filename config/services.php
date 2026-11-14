@@ -1,7 +1,5 @@
 <?php
 
-use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
-use Symfony\AI\Platform\Platform;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -119,11 +117,4 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.xdebug_setup'), '%domain_tracing.describe%'])
         // right after the "request" collector, which has priority 335
         ->tag('data_collector', ['id' => 'domain_traces', 'template' => '@DomainTracing/collector.html.twig', 'priority' => 334]);
-
-    $services->set('domain_tracing.platform', Platform::class)
-        // public so that tests can replace it with a mock platform
-        ->public()
-        ->factory([Factory::class, 'createPlatform'])
-        ->arg('$workingDirectory', '%kernel.project_dir%/var')
-        ->arg('$timeout', 600);
 };

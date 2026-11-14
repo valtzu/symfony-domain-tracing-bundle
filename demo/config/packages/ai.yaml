@@ -1,9 +1,17 @@
 # yaml-language-server: $schema=../schema.json
 when@dev:
+    services:
+        claude_code.platform:
+            class: Symfony\AI\Platform\Platform
+            factory: ['Symfony\AI\Platform\Bridge\ClaudeCode\Factory', 'createPlatform']
+            arguments:
+                $workingDirectory: '%kernel.project_dir%/var'
+                $timeout: 600
+
     ai:
         agent:
             domain_tracing:
-                platform: domain_tracing.platform
+                platform: claude_code.platform
                 model:
                     name: opus
                     options:

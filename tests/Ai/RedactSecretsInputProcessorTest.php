@@ -50,7 +50,7 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
     {
         $_SERVER['TEST_API_KEY'] = 'live-key-1234567890';
         $sent = null;
-        self::getContainer()->set('domain_tracing.platform', MockPlatformFactory::createPlatform(static function ($model, $payload) use (&$sent) {
+        self::getContainer()->set('test.platform', MockPlatformFactory::createPlatform(static function ($model, $payload) use (&$sent) {
             $sent = json_encode($payload);
 
             return 'ok';

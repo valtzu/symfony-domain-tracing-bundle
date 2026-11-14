@@ -1,125 +1,71 @@
 # AGENTS.md
 
-This is a Symfony application. `composer.json` gives the versions of Symfony and
-PHP. `symfony.lock` lists the recipes that ran. Check both before you assume
-that a package is installed.
+This repository is a Symfony bundle, `valtzu/domain-tracing-bundle`. `composer.json` gives the versions of PHP,
+Symfony and Symfony AI that it supports. `demo/` is a Symfony application that installs the bundle from `..`, to try
+it out and to record the demo video.
 
-## Installing packages
+## Layout
 
-Before writing infrastructure code or adding a third-party library, check
-whether a Symfony component does the job: Lock, Cache, HttpClient, Mailer,
-Messenger, Scheduler, RateLimiter, Workflow... Usually there is one, and
-`composer require` installs it.
+- `src/Xdebug/`: records a request with Xdebug and reads its trace files.
+- `src/Storage/`: the files of the traces in `var/share/traces`, and the copies of the source in `var/blobs`.
+- `src/Tracing/`: builds the spans of a trace, follows it while it grows, and has it described.
+- `src/Ai/`: the AI agents, their prompts (`config/prompts/`) and the secret redaction.
+- `src/Controller/`, `templates/`, `public/`: the profiler panel and the live page at `/_tracing/`.
+- `config/services.php`: the services are wired explicitly, with `domain_tracing.` IDs, as in other bundles. Don't
+  rely on autowiring or autoconfiguration in the bundle.
 
-## Configuration
+## Checks
 
-- Since Symfony 8.2, each component is configured at its own root key:
-  `messenger:`, `cache:`, `mailer:`, `validation:`... not under `framework:` as
-  in older versions.
-- `config/reference.php` describes every option of the installed bundles, and
-  `config/schema.json` is their JSON schema, which editors use and `lint:yaml`
-  checks when `opis/json-schema` is installed. Both are regenerated when the
-  container is rebuilt in debug mode. Read them instead of guessing an option.
-- Prefer attributes to configuration files: `#[Route]`, `#[IsGranted]`,
-  `#[AsCommand]`, `#[AsEventListener]`, `#[AsMessageHandler]`, `#[Autowire]`,
-  `#[Target]`... Services are autowired and autoconfigured, so a service
-  definition in YAML is the last resort.
-- Map request data with `#[MapRequestPayload]` and `#[MapQueryString]` on the
-  arguments of an action. These attributes deserialize and validate the data,
-  unlike `json_decode()`.
-- `.env` is committed and contains default values only. Secrets go in
-  `.env.local`, which is ignored by git, or in the vault
-  (`bin/console secrets:set`).
+Run them before you commit:
 
-## Running the app
+```shell
+php vendor/bin/phpunit
+vendor/bin/phpcs -q
+vendor/bin/mago analyze
+```
 
-- If `compose.yaml` runs services (database, mailer...), run commands through
-  the Symfony CLI: `symfony console ...`, `symfony php bin/phpunit`. The CLI
-  exposes the env vars of the running containers, and `bin/console` alone
-  doesn't see them. `symfony serve -d` starts a web server.
-- There's no need to clear the cache in dev: the kernel rebuilds what changed.
-- When something fails, read `var/log/dev.log` and the profiler (`/_profiler`
-  lists the last requests) before changing code.
-- Makers (`bin/console make:*`) ask for missing arguments, and a
-  non-interactive shell then waits forever. Pass all the arguments, with
-  `--no-interaction`.
+- The recorder tests run PHP with Xdebug in a separate process, so Xdebug must be installed.
+- CI runs the tests on PHP 8.4 and 8.5, and with the lowest dependencies.
 
-## Tests
+## Demo
 
-`symfony/test-pack` provides PHPUnit: run `php bin/phpunit`. Extend
-`WebTestCase` to test HTTP requests and `KernelTestCase` to test services. These
-helpers replace a lot of setup code:
+```shell
+docker compose up -d   # from the repository root: .env points to demo/compose.yaml
+```
 
-- `$client->loginUser($user)` instead of submitting a login form;
-- `MessengerAssertionsTrait`: a message sent to an async transport isn't handled
-  during a test. Call `consumeQueuedMessages()` and check what the handler did,
-  such as the email it sent, or the handler stays untested;
-- `#[UseRecord]` to record HTTP exchanges once and replay them, instead of
-  calling real APIs;
-- `ClockSensitiveTrait::mockTime()` to control the time.
+The shop is at http://localhost:8100/. Run its console in the container, such as
+`docker compose exec shop bin/console cache:clear`. The AI names of the operations are cached in `cache.app`, which
+`cache:clear` keeps: clear it with `cache:pool:clear cache.app` to see them generated again.
 
 ## Writing
 
-These rules apply to comments, commit messages, docs and anything written for
-the team:
+These rules apply to comments, commit messages, docs and anything written for the team:
 
-- Write plain, factual English, because many readers aren't native speakers.
-  Write one idea per sentence and use verbs in their everyday sense. Repeat the
-  noun instead of using a pronoun that makes the reader look back.
-- State facts, not how good they are. Avoid words like "robust", "seamless",
-  "powerful" or "simply", exclamation marks and emoji.
-- Start with what changes for the reader, then explain why. Don't repeat what
-  the code or the diff already shows.
+- Write plain, factual English, because many readers aren't native speakers. Write one idea per sentence and use
+  verbs in their everyday sense. Repeat the noun instead of using a pronoun that makes the reader look back.
+- State facts, not how good they are. Avoid words like "robust", "seamless", "powerful" or "simply", exclamation
+  marks and emoji.
+- Start with what changes for the reader, then explain why. Don't repeat what the code or the diff already shows.
 - Use commas, colons and parentheses, not em-dashes.
-- A commit message says what changed in one line, plus a sentence or two when
-  the reason isn't obvious.
+- A commit message says what changed in one line, plus a sentence or two when the reason isn't obvious.
 
 ## Code
 
-- Write a comment only for what the code can't say, such as a reason, a
-  reference to a spec or a non-obvious constraint. Don't narrate the code.
-- Don't set an option to its default value. `config/reference.php` shows the
-  defaults.
+- Write a comment only for what the code can't say, such as a reason, a reference to a spec or a non-obvious
+  constraint. Don't narrate the code.
 - Fix a bug by writing a test that reproduces it first.
-- Keep the diff to what the task needs: no unrelated renames, reformatting or
-  refactoring.
+- Keep the diff to what the task needs: no unrelated renames, reformatting or refactoring.
+- For a performance issue, measure it first, and keep the numbers.
 
 ## When a package gets in the way
 
-These rules apply to bugs, missing features, slow code paths and APIs that make
-the app write boilerplate, in Symfony or in any other package:
+These rules apply to bugs, missing features and slow code paths in Symfony, Symfony AI, Xdebug or any other package:
 
-- Before you write a workaround, check that the problem is real. Reproduce it in
-  a few lines, compare the installed version with the latest release, and
-  search the issues and pull requests of the project.
-- For a performance issue, measure it first, with the profiler or a benchmark,
-  and keep the numbers.
-- Keep the workaround small. Link the workaround to the upstream issue or pull
-  request in a comment, so that it can be removed after the fix is released.
-- Offer to report it upstream. Draft the issue with the reproduction or the
-  numbers, or a pull request with a test when the fix is clear. Ask before
-  posting anything, since it is published under the name of the person you
-  work for.
-- Report security issues privately, as the security policy of the project says,
-  never in a public issue. For Symfony, see
-  https://symfony.com/doc/current/contributing/code/security.html.
-
-## Look it up
-
-Symfony's APIs change between versions, and what you remember may be outdated.
-The application can tell what exists:
-
-- `bin/console debug:autowiring <keyword>`: the services you can type-hint;
-- `bin/console debug:autoconfiguration <keyword>`: the attributes and interfaces
-  that make a class a command, a listener, a voter, a message handler...;
-- `bin/console debug:config <root key>`: the configuration as resolved;
-- `bin/console debug:router`, `debug:container --env-vars`, `debug:messenger`,
-  `debug:event-dispatcher`...;
-- `bin/console lint:container`, `lint:yaml config/`, `lint:twig templates/`: to
-  catch errors before running;
-- `vendor/symfony/<package>/CHANGELOG.md`: what each version added, deprecated
-  or removed. Read the sections of the recent versions before you use a
-  component;
-- the source and the docblocks in `vendor/`;
-- https://symfony.com/doc/current/, switched to the version of `composer.json`
-  when it differs.
+- Before you write a workaround, check that the problem is real. Reproduce it in a few lines, compare the installed
+  version with the latest release, and search the issues and pull requests of the project.
+- Keep the workaround small. Link the workaround to the upstream issue or pull request in a comment, so that it can
+  be removed after the fix is released.
+- Offer to report it upstream. Draft the issue with the reproduction or the numbers, or a pull request with a test
+  when the fix is clear. Ask before posting anything, since it is published under the name of the person you work
+  for.
+- Report security issues privately, as the security policy of the project says, never in a public issue.

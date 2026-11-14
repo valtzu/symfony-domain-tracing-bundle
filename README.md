@@ -76,6 +76,17 @@ that uses the [Claude Code CLI](https://code.claude.com/docs/en/overview).
    A console command is recorded only when it runs with `--profile`, like its profile. Its trace is in the "Domain
    traces" panel of that profile.
 
+   The bundle works only in debug mode, as the profiler does. Its routes load with the controllers of the
+   application, through the `routing.controllers` resource of the Symfony 8.1 skeleton. When `config/routes.yaml`
+   imports the controllers in another way, import the routes of the bundle:
+
+   ```yaml
+   # config/routes/domain_tracing.yaml
+   when@dev:
+       domain_tracing:
+           resource: '@DomainTracingBundle/config/routes.php'
+   ```
+
 When a request calls other services with Symfony HttpClient, the bundle adds the `traceparent` header, unless the
 request already has one, from OpenTelemetry for example. A service records its requests in the same trace when it
 has the bundle too and writes its traces into the same directory. Set `OTEL_SERVICE_NAME` in the environment of each
@@ -130,11 +141,11 @@ when@dev:
         agent:
             domain_tracing:
                 platform: claude_code.platform
-                model:
-                    name: opus
-                    options:
-                        tools: []
+                model: opus
 ```
+
+The bundle calls an agent on the Claude Code platform without the tools of the CLI, such as reading files, because
+the traces that the agent reads come from the requests.
 
 Any other platform of the AI bundle that can stream the answer works too, such as `ai.platform.anthropic` with
 `model: claude-sonnet-5-5`. The `agent` option names another agent, and `agent: false` turns the description off:

@@ -16,6 +16,7 @@ use Valtzu\DomainTracingBundle\Tracing\TraceTextFormatter;
 final readonly class TraceCommand
 {
     private const int TIMEOUT_SECONDS = 600;
+    private const string HINT = 'The web server records the requests when its php.ini has xdebug.mode=trace,coverage. When a request is not recorded, the "Domain traces" panel of its profile tells why.';
 
     public function __construct(
         private TraceStore $store,
@@ -45,6 +46,9 @@ final readonly class TraceCommand
                 'next' => 'No request started.',
                 default => \sprintf('No request "%s" was recorded.', $request),
             });
+            if ('latest' === $request || 'next' === $request) {
+                $errors->writeln(self::HINT);
+            }
 
             return Command::FAILURE;
         }

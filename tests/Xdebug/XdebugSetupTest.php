@@ -7,14 +7,9 @@ use Valtzu\DomainTracingBundle\Xdebug\XdebugSetup;
 
 final class XdebugSetupTest extends TestCase
 {
-    public function testGivesTheSettingsWithThePathsOfTheProject()
+    public function testNeedsOnlyTheXdebugMode()
     {
-        $settings = (new XdebugSetup('/srv/app/var/share/traces'))->settings();
-
-        $this->assertStringContainsString("xdebug.mode=trace,coverage\n", $settings);
-        $this->assertStringContainsString("xdebug.output_dir=/srv/app/var/share/traces\n", $settings);
-        $this->assertStringNotContainsString('auto_prepend_file', $settings);
-        $this->assertStringNotContainsString('xdebug.start_with_request', $settings);
+        $this->assertSame("[xdebug]\nxdebug.mode=trace,coverage\n", (new XdebugSetup('/srv/app/var/share/traces'))->settings());
     }
 
     public function testSaysThatXdebugIsMissing()

@@ -8,19 +8,32 @@ use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\ExcludedUris;
 
 /**
- * Records one request at a time: it starts the Xdebug trace and the code coverage of the application, from the PSR-4
- * autoload section of its composer.json, and writes the request record next to the trace file. When the request ends,
- * it writes the lines that ran and how the request ended next to the trace file, stops the trace, and writes the index
- * of the application code when this version of the code has none yet.
+ * Records one request at a time: it starts an Xdebug trace of the application, from the PSR-4 autoload section of its
+ * composer.json, into the trace store, with the code coverage, and writes the request record. When the request ends,
+ * it writes the lines that ran and how the request ended, stops the trace, and writes the index of the application
+ * code when this version of the code has none yet.
  *
  * The trace starts when the kernel handles the request, not with the PHP process, so that a worker process that handles
- * many requests records each of them, and so that the requests that are not recorded cost nothing.
+ * many requests records each of them, and so that the requests that are not recorded cost nothing. Only xdebug.mode
+ * must be set: the other Xdebug settings that the trace needs are set while it runs, and restored after it.
+ *
+ * Xdebug runs one trace at a time. When Xdebug traces the request already, because of xdebug.start_with_request or a
+ * trigger, the recorder leaves that trace as it is, and reads the request from it when it is in the format that the
+ * recorder reads.
  */
 final class Recorder implements ResetInterface
 {
     private const int MAX_EXCEPTION_FUNCTIONS = 100;
 
-    /** @var array{traceFile: string, spanId: string, codeIndex: string}|null */
+    /** The Xdebug settings of the trace, which the trace files of the bundle and the value parser expect */
+    private const array SETTINGS = [
+        'xdebug.collect_return' => '1',
+        'xdebug.var_display_max_depth' => '2',
+        'xdebug.var_display_max_children' => '16',
+        'xdebug.var_display_max_data' => '256',
+    ];
+
+    /** @var array{traceFile: string, spanId: string, codeIndex: string, ownTrace: bool, ownCoverage: bool, settings: array<string, string|false>}|null */
     private ?array $current = null;
     private ?array $exception = null;
     private bool $shutdownRegistered = false;
@@ -43,10 +56,6 @@ final class Recorder implements ResetInterface
         if (null !== $this->current || !\function_exists('xdebug_info') || !\in_array('trace', xdebug_info('mode'), true)) {
             return null;
         }
-        self::discardTheTraceOfXdebug();
-        if (false !== xdebug_get_tracefile_name()) {
-            return null;
-        }
 
         $context = RequestContext::fromServer($server);
         if (null === $context || 'CLI' !== $context['method'] && null !== $context['uri'] && $this->excluded->matches($context['uri'])) {
@@ -54,23 +63,38 @@ final class Recorder implements ResetInterface
         }
 
         $autoload = (json_decode((string) @file_get_contents($this->projectDir.'/composer.json'), true) ?: [])['autoload']['psr-4'] ?? [];
-        if (!$autoload) {
+        $runningTrace = xdebug_get_tracefile_name();
+        $traced = \is_string($runningTrace);
+        if (!$autoload || $traced && !self::readsTheRunningTrace()) {
             return null;
         }
 
-        xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, array_keys($autoload));
-        $traceFile = xdebug_start_trace();
+        $settings = [];
+        foreach (self::SETTINGS as $name => $value) {
+            $settings[$name] = ini_set($name, $value);
+        }
+
+        if (!$traced) {
+            $this->store->createDirectory();
+            xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, array_keys($autoload));
+            $traceFile = xdebug_start_trace($this->store->directory().'/trace.'.$context['spanId'], \XDEBUG_TRACE_COMPUTERIZED);
+        } else {
+            $traceFile = $runningTrace;
+        }
         if (!\is_string($traceFile)) {
+            self::restore($settings);
+
             return null;
         }
 
         $codeIndex = CodeIndex::build($this->projectDir, false)['fingerprint'];
         $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex]);
-        $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex];
+        $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
+        $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings];
         $this->exception = null;
         $_SERVER['DOMAIN_TRACING_TRACEPARENT'] = \sprintf('00-%s-%s-01', $context['traceId'], $context['spanId']);
 
-        if (\in_array('coverage', xdebug_info('mode'), true)) {
+        if ($ownCoverage) {
             xdebug_set_filter(\XDEBUG_FILTER_CODE_COVERAGE, \XDEBUG_PATH_INCLUDE, $this->sourceDirectories($autoload));
             xdebug_start_code_coverage();
         }
@@ -110,19 +134,18 @@ final class Recorder implements ResetInterface
         }
         $this->current = null;
         unset($_SERVER['DOMAIN_TRACING_TRACEPARENT']);
-        if (xdebug_get_tracefile_name() !== $current['traceFile']) {
-            return;
-        }
 
-        $traceFile = $current['traceFile'];
-        if (xdebug_code_coverage_started()) {
-            file_put_contents($traceFile.'.lines.json', json_encode(array_map(array_keys(...), xdebug_get_code_coverage())));
+        if ($current['ownCoverage'] && xdebug_code_coverage_started()) {
+            file_put_contents($this->store->linesPath($current['spanId']), json_encode(array_map(array_keys(...), xdebug_get_code_coverage())));
             xdebug_stop_code_coverage();
         }
-        file_put_contents($traceFile.'.outcome.json', json_encode(['status' => $status, 'exception' => $this->exception], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
-        xdebug_stop_trace();
+        file_put_contents($this->store->outcomePath($current['spanId']), json_encode(['status' => $status, 'exception' => $this->exception], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
+        if ($current['ownTrace'] && xdebug_get_tracefile_name() === $current['traceFile']) {
+            xdebug_stop_trace();
+        }
+        self::restore($current['settings']);
 
-        $indexPath = \dirname($traceFile).'/codeindex-'.$current['codeIndex'].'.json';
+        $indexPath = $this->store->directory().'/codeindex-'.$current['codeIndex'].'.json';
         if (!is_file($indexPath)) {
             $temporary = $indexPath.'.'.getmypid();
             file_put_contents($temporary, json_encode(CodeIndex::build($this->projectDir, true), \JSON_UNESCAPED_SLASHES));
@@ -142,17 +165,22 @@ final class Recorder implements ResetInterface
     }
 
     /**
-     * With xdebug.start_with_request=yes, Xdebug traces the whole request, from the first line of the front controller
-     * and without a filter. The bundle replaces that trace with its own, or stops it when the request is not recorded.
+     * The recorder reads the trace format 1 (computerized) only. The format of a running trace cannot change.
      */
-    private static function discardTheTraceOfXdebug(): void
+    public static function readsTheRunningTrace(): bool
     {
-        if (!\in_array(ini_get('xdebug.start_with_request'), ['yes', '1'], strict: true) || !\is_string($traceFile = xdebug_get_tracefile_name())) {
-            return;
-        }
-        xdebug_stop_trace();
-        if (is_file($traceFile)) {
-            unlink($traceFile);
+        return '1' === ini_get('xdebug.trace_format');
+    }
+
+    /**
+     * @param array<string, string|false> $settings
+     */
+    private static function restore(array $settings): void
+    {
+        foreach ($settings as $name => $value) {
+            if (false !== $value) {
+                ini_set($name, $value);
+            }
         }
     }
 

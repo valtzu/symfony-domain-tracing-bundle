@@ -13,8 +13,13 @@ require __DIR__.'/project/src/Greeter.php';
 [, $traceDirectory, $uri] = $argv;
 $recorder = new Recorder(__DIR__.'/project', new ExcludedUris(['^/health$']), new TraceStore($traceDirectory));
 $spanId = $recorder->start(['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $uri, 'SCRIPT_FILENAME' => __DIR__.'/project/public/index.php']);
-(new Acme\Shop\Greeter())->greet('Ada');
+$greeting = (new Acme\Shop\Greeter())->greet('Ada');
 $recorder->recordException(new RuntimeException('Greeting failed'));
 $recorder->stop(500);
 
-echo json_encode(['spanId' => $spanId, 'traceparent' => $_SERVER['DOMAIN_TRACING_TRACEPARENT'] ?? null]);
+echo json_encode([
+    'spanId' => $spanId,
+    'traceparent' => $_SERVER['DOMAIN_TRACING_TRACEPARENT'] ?? null,
+    'collectReturn' => ini_get('xdebug.collect_return'),
+    'traceFile' => xdebug_get_tracefile_name(),
+]);

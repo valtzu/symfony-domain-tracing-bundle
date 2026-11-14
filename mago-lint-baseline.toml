@@ -133,12 +133,6 @@ message = "Missing `declare(strict_types=1);` statement at the beginning of the 
 count = 1
 
 [[issues]]
-file = "src/Command/XdebugSettingsCommand.php"
-code = "strict-types"
-message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
-count = 1
-
-[[issues]]
 file = "src/Controller/TraceController.php"
 code = "literal-named-argument"
 message = "Literal argument `2` should be passed as a named argument for clarity."
@@ -640,13 +634,25 @@ count = 1
 file = "src/Xdebug/Recorder.php"
 code = "no-debug-symbols"
 message = "Do not commit debug functions."
-count = 14
+count = 13
+
+[[issues]]
+file = "src/Xdebug/Recorder.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
 
 [[issues]]
 file = "src/Xdebug/Recorder.php"
 code = "no-error-control-operator"
 message = "Unsafe use of error control operator `@`."
 count = 1
+
+[[issues]]
+file = "src/Xdebug/Recorder.php"
+code = "no-ini-set"
+message = "ini_set should not be used."
+count = 2
 
 [[issues]]
 file = "src/Xdebug/Recorder.php"
@@ -664,7 +670,7 @@ count = 2
 file = "src/Xdebug/Recorder.php"
 code = "prefer-early-continue"
 message = "Consider using early continue pattern to reduce nesting."
-count = 2
+count = 3
 
 [[issues]]
 file = "src/Xdebug/Recorder.php"
@@ -758,6 +764,12 @@ count = 1
 
 [[issues]]
 file = "src/Xdebug/XdebugSetup.php"
+code = "literal-named-argument"
+message = "Literal argument `true` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "src/Xdebug/XdebugSetup.php"
 code = "no-assign-in-condition"
 message = "Avoid assignments in conditions."
 count = 1
@@ -766,13 +778,7 @@ count = 1
 file = "src/Xdebug/XdebugSetup.php"
 code = "no-debug-symbols"
 message = "Do not commit debug functions."
-count = 1
-
-[[issues]]
-file = "src/Xdebug/XdebugSetup.php"
-code = "no-else-clause"
-message = "Avoid `elseif` clauses."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Xdebug/XdebugSetup.php"
@@ -1022,6 +1028,12 @@ count = 1
 
 [[issues]]
 file = "tests/Fixtures/record.php"
+code = "no-debug-symbols"
+message = "Do not commit debug functions."
+count = 1
+
+[[issues]]
+file = "tests/Fixtures/record.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1
@@ -1192,7 +1204,7 @@ count = 1
 file = "tests/Xdebug/XdebugSetupTest.php"
 code = "assertion-style"
 message = "Inconsistent assertions style."
-count = 6
+count = 3
 
 [[issues]]
 file = "tests/Xdebug/XdebugSetupTest.php"

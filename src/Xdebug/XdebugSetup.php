@@ -5,7 +5,8 @@ namespace Valtzu\DomainTracingBundle\Xdebug;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * The Xdebug settings that a request needs to be recorded, and what is wrong with them in the current request.
+ * The Xdebug settings that a request needs to be recorded, and what is wrong with them in the current request. The
+ * bundle writes its traces into its own directory, and does not use xdebug.output_dir.
  */
 final readonly class XdebugSetup
 {
@@ -17,19 +18,12 @@ final readonly class XdebugSetup
     ) {
     }
 
+    /**
+     * The settings of the php.ini. The other Xdebug settings that a trace needs are set while it runs.
+     */
     public function settings(): string
     {
-        return implode("\n", [
-            '[xdebug]',
-            'xdebug.mode='.implode(',', self::MODES),
-            'xdebug.trace_format=1',
-            'xdebug.collect_return=1',
-            'xdebug.output_dir='.$this->traceDirectory,
-            'xdebug.trace_output_name=trace.%t.%r',
-            'xdebug.var_display_max_depth=2',
-            'xdebug.var_display_max_children=16',
-            'xdebug.var_display_max_data=256',
-        ])."\n";
+        return "[xdebug]\nxdebug.mode=".implode(',', self::MODES)."\n";
     }
 
     /**
@@ -46,21 +40,11 @@ final readonly class XdebugSetup
         if ($missing = array_diff(self::MODES, $modes)) {
             $problems[] = \sprintf('xdebug.mode is "%s", and it must also contain %s.', implode(',', $modes), implode(' and ', $missing));
         }
-        if ('1' !== ini_get('xdebug.trace_format')) {
-            $problems[] = 'xdebug.trace_format must be 1.';
+        if (\in_array('trace', $modes, true) && \is_string(xdebug_get_tracefile_name()) && !Recorder::readsTheRunningTrace()) {
+            $problems[] = \sprintf('Xdebug traces this request already, because of xdebug.start_with_request or a trigger, in the trace format %s. Xdebug runs one trace at a time, and the bundle reads the format 1 only: set xdebug.trace_format=1, or do not start the trace with the request.', ini_get('xdebug.trace_format'));
         }
-        if (!ini_get('xdebug.collect_return')) {
-            $problems[] = 'xdebug.collect_return must be 1.';
-        }
-
-        $outputDirectory = (string) ini_get('xdebug.output_dir');
-        if (realpath($outputDirectory) !== realpath($this->traceDirectory)) {
-            $problems[] = \sprintf('xdebug.output_dir is "%s", and it must be "%s", where the bundle reads the traces.', $outputDirectory, $this->traceDirectory);
-        }
-        if (!is_dir($outputDirectory)) {
-            $problems[] = \sprintf('The trace directory "%s" (xdebug.output_dir) does not exist.', $outputDirectory);
-        } elseif (!is_writable($outputDirectory)) {
-            $problems[] = \sprintf('PHP cannot write to the trace directory "%s" (xdebug.output_dir).', $outputDirectory);
+        if (is_dir($this->traceDirectory) && !is_writable($this->traceDirectory)) {
+            $problems[] = \sprintf('PHP cannot write to the trace directory "%s".', $this->traceDirectory);
         }
 
         return $problems;

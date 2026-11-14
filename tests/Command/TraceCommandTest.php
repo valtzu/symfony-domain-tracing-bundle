@@ -77,7 +77,7 @@ final class TraceCommandTest extends TestCase
             'message' => 'Could not resolve host for https://shop:hunter2@payments.invalid/charges',
             'functions' => ['Symfony\Component\HttpClient\Response\CurlResponse::perform', 'App\Gateway->charge', 'App\Shop->order'],
         ];
-        file_put_contents($traceFile.'.outcome.json', json_encode(['status' => 500, 'exception' => $exception]));
+        file_put_contents($this->store->outcomePath('aaaaaaaaaaaaaaaa'), json_encode(['status' => 500, 'exception' => $exception]));
 
         $this->tester->execute([]);
 
@@ -99,7 +99,7 @@ final class TraceCommandTest extends TestCase
     public function testFailsWhenNoRequestWasRecorded(): void
     {
         static::assertSame(Command::FAILURE, $this->tester->execute([]));
-        static::assertSame("No request was recorded yet.\n", $this->tester->getDisplay());
+        static::assertStringStartsWith("No request was recorded yet.\nThe web server records the requests when its php.ini has xdebug.mode=trace,coverage.", $this->tester->getDisplay());
     }
 
     public function testFailsForAnUnknownRequest(): void

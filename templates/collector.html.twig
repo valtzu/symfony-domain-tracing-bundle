@@ -37,7 +37,7 @@
         </div>
         {% if collector.problems %}
             <h3>Xdebug settings</h3>
-            <p>Add these settings to the php.ini of the web server, and restart it. <code>bin/console domain-tracing:xdebug-settings</code> prints them too.</p>
+            <p>Add these settings to the php.ini of the web server, and restart it.</p>
             <pre>{{ collector.xdebugSettings }}</pre>
         {% endif %}
     {% endif %}

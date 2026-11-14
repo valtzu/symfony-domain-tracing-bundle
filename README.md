@@ -53,21 +53,20 @@ Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, a git 
    composer require --dev valtzu/domain-tracing-bundle
    ```
 
-2. Create the trace directory, and add the Xdebug settings to the `php.ini` of the web server. The command prints
-   them with the paths of the application. Restart the web server after that.
+2. Enable the trace and code coverage modes of Xdebug in the `php.ini` of the web server, and restart it:
 
-   ```shell
-   mkdir -p var/share/traces
-   bin/console domain-tracing:xdebug-settings
+   ```ini
+   [xdebug]
+   xdebug.mode=trace,coverage
    ```
 
-   With the [Symfony CLI](https://symfony.com/download), write them into the `php.ini` of the project directory
-   instead, which `symfony serve` and `symfony console` read:
+   The bundle writes its traces into `var/share/traces`, and sets the other Xdebug settings that it needs while it records a request. Your own Xdebug
+   settings, such as `xdebug.output_dir`, stay as they are. With the [Symfony CLI](https://symfony.com/download),
+   put the settings into the `php.ini` of the project directory, which `symfony serve` and `symfony console` read.
 
-   ```shell
-   mkdir -p var/share/traces
-   symfony console domain-tracing:xdebug-settings > php.ini
-   ```
+   Xdebug runs one trace at a time. When it traces a request already, because of `xdebug.start_with_request=yes` or
+   a trigger, the bundle leaves that trace as it is and reads the request from it, if it is in the trace format 1
+   (`xdebug.trace_format=1`). In another format, the request is not recorded, and the profiler panel tells why.
 
 3. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
    the panel tells why. `/_tracing/` shows the requests live.
@@ -166,8 +165,8 @@ it, then read the output. Add `--describe` for a description in business terms.
   next to the trace file. When the request ends, it writes the lines that ran, the response status and the exception
   that the request did not handle, stops the trace, and writes an index of the application code once per version of
   the code. A trace refers to code by git blob ID and line. The bundle needs no `auto_prepend_file`, and the
-  requests that are not recorded are not traced. With `xdebug.start_with_request=yes`, the bundle stops the trace
-  that Xdebug starts with the request and removes its file, and starts its own trace for a recorded request.
+  requests that are not recorded are not traced. The trace starts as a file of the bundle, so the
+  Xdebug settings and the traces of the project are left as they are.
 - The event stream of the live view and of the profiler panel reads the trace files while Xdebug writes them, from
   the first method of the entrypoint on. One stream reads each trace file, and another one takes over when it stops.
 - The stream of the profiler panel also builds the spans, names the operations (once per method and code version),
@@ -194,6 +193,8 @@ In the demo, both services write their traces into the same `traces` volume, mou
 - The lines that ran come from the code coverage of the whole request. When a method runs more than once in a request,
   its span shows the lines of all its calls together.
 - The times in a trace include the overhead of Xdebug.
+- With `xdebug.start_with_request=yes`, Xdebug traces the whole request, the framework included, and the bundle
+  reads its trace in that case, so a recorded request is much slower than with the trace that the bundle starts.
 - The record starts when the kernel handles the request, so application code that runs before, such as the kernel
   class or a request listener with a priority above 4096, is not in the trace.
 - Only Symfony HttpClient carries the trace to other services.

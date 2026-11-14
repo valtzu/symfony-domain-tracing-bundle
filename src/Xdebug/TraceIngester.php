@@ -69,7 +69,7 @@ final class TraceIngester
 
     private function end(string $id, float $at): void
     {
-        $this->store->end($id, $at, $this->outcome($this->spans[$id]['request']['traceFile'] ?? ''));
+        $this->store->end($id, $at, $this->outcome($id));
         fclose($this->spans[$id]['lock']);
         unset($this->spans[$id]);
     }
@@ -77,9 +77,9 @@ final class TraceIngester
     /**
      * @return array{status?: int, exception?: array{class: string, message: string, functions: list<string>}}
      */
-    private function outcome(string $traceFile): array
+    private function outcome(string $id): array
     {
-        $outcome = json_decode((string) @file_get_contents($traceFile.'.outcome.json'), associative: true);
+        $outcome = json_decode((string) @file_get_contents($this->store->outcomePath($id)), associative: true);
         $exception = $outcome['exception'] ?? null;
 
         return array_filter([

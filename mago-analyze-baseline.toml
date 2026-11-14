@@ -2227,18 +2227,6 @@ message = 'Possible argument type mismatch for argument #1 of `Valtzu\DomainTrac
 count = 1
 
 [[issues]]
-file = "src/Xdebug/Recorder.php"
-code = "redundant-comparison"
-message = "Redundant `!==` comparison: left-hand side is always not identical to right-hand side."
-count = 1
-
-[[issues]]
-file = "src/Xdebug/Recorder.php"
-code = "redundant-condition"
-message = "This condition (type `true`) will always evaluate to true."
-count = 1
-
-[[issues]]
 file = "src/Xdebug/RequestContext.php"
 code = "imprecise-type"
 message = "Type `array` in parameter `$server` is imprecise, equivalent to `array<array-key, mixed>`."
@@ -2337,12 +2325,6 @@ count = 1
 [[issues]]
 file = "src/Xdebug/TraceIngester.php"
 code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Xdebug\TraceIngester::outcome`: expected `string`, but found `nonnull`.'
-count = 1
-
-[[issues]]
-file = "src/Xdebug/TraceIngester.php"
-code = "mixed-argument"
 message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Xdebug\XdebugTraceReader::__construct`: expected `string`, but found `nonnull`.'
 count = 1
 
@@ -2422,6 +2404,12 @@ count = 1
 file = "src/Xdebug/XdebugSetup.php"
 code = "mixed-argument"
 message = "Invalid argument type for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Xdebug/XdebugSetup.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `in_array`: expected `array<array-key, ('V.in_array() extends mixed)>`, but found `mixed`."
 count = 1
 
 [[issues]]
@@ -3566,8 +3554,8 @@ count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `PHPUnit\Framework\Assert::assertFileExists`: expected `string`, but found `mixed`.'
+code = "imprecise-type"
+message = "Type `array` in return type of `request` is imprecise, equivalent to `array<array-key, mixed>`."
 count = 1
 
 [[issues]]
@@ -3578,21 +3566,21 @@ count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertStringStartsWith`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
 code = "mixed-array-access"
 message = "Unsafe array access on type `mixed`."
-count = 15
+count = 5
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
-
-[[issues]]
-file = "tests/Xdebug/RecorderTest.php"
-code = "mixed-operand"
-message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
-count = 2
+count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
@@ -3614,20 +3602,74 @@ count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
-code = "possibly-false-argument"
-message = "Argument #1 of function `json_decode` is possibly `false`, but parameter type `string` does not accept it."
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tests\Xdebug\RecorderTest::request`. Saw type `mixed`.'
 count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
-code = "possibly-null-argument"
-message = 'Argument #2 of method `PHPUnit\Framework\Assert::assertMatchesRegularExpression` is possibly `null`, but parameter type `string` does not accept it.'
+code = "possibly-false-argument"
+message = 'Argument #1 of method `PHPUnit\Framework\Assert::assertFileExists` is possibly `false`, but parameter type `string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-false-argument"
+message = 'Argument #2 of method `PHPUnit\Framework\Assert::assertCount` is possibly `false`, but parameter type `Countable|iterable<mixed, mixed>` does not accept it.'
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-false-argument"
+message = 'Argument #2 of method `PHPUnit\Framework\Assert::assertStringStartsWith` is possibly `false`, but parameter type `string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-false-operand"
+message = "Possibly false right operand used in string concatenation (type `false|string`)."
 count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
 code = "possibly-null-operand"
 message = "Possibly null middle operand used in string concatenation (type `null|string`)."
+count = 4
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('codeIndex')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('method')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('service')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('traceFile')` accessed on `array<array-key, mixed>`."
+count = 3
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('type')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('uri')` accessed on `array<array-key, mixed>`."
 count = 1
 
 [[issues]]
@@ -3711,7 +3753,7 @@ count = 2
 [[issues]]
 file = "tests/Xdebug/XdebugSetupTest.php"
 code = "missing-return-type"
-message = "Function `testGivesTheSettingsWithThePathsOfTheProject` is missing a return type hint."
+message = "Function `testNeedsOnlyTheXdebugMode` is missing a return type hint."
 count = 1
 
 [[issues]]

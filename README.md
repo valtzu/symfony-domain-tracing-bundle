@@ -2,6 +2,8 @@
 
 Business-level traces of PHP requests, without instrumenting the code.
 
+https://github.com/user-attachments/assets/39e56c64-3818-459c-b766-c72d5c74a27f
+
 ## What
 
 [Xdebug](https://xdebug.org/) traces the calls of the application methods of each request, with their arguments,

@@ -15,6 +15,24 @@ namespace Valtzu\DomainTracingBundle\Tracing;
  */
 final class TraceSession
 {
+    /**
+     * Code that the debugged process runs to describe its request. Without OTEL_SERVICE_NAME, the service is named after
+     * the project directory, the parent of the directory of the entry script (public/index.php or bin/console).
+     */
+    public const REQUEST = <<<'PHP'
+        json_encode([
+            'id' => $_SERVER['HTTP_X_REQUEST_ID'] ?? null,
+            'traceparent' => $_SERVER['HTTP_TRACEPARENT'] ?? null,
+            'service' => $_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: (static function (string $script): ?string {
+                $project = basename(dirname(realpath($script) ?: $script, 2));
+
+                return '' === $project || '.' === $project ? null : $project;
+            })($_SERVER['SCRIPT_FILENAME'] ?? '')),
+            'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+            'uri' => $_SERVER['REQUEST_URI'] ?? null,
+        ])
+        PHP;
+
     private const AUTOLOADER = 'Composer\\Autoload\\ClassLoader';
     private const HTTP_CLIENTS = [
         'Symfony\\Component\\HttpClient\\CurlHttpClient',
@@ -47,7 +65,7 @@ final class TraceSession
     {
         if ('init' === $message->getName()) {
             $this->connection->send('feature_set', '-n max_data -v 0');
-            $this->evaluate('request', "json_encode(['id' => \$_SERVER['HTTP_X_REQUEST_ID'] ?? null, 'traceparent' => \$_SERVER['HTTP_TRACEPARENT'] ?? null, 'service' => \$_SERVER['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: null), 'method' => \$_SERVER['REQUEST_METHOD'] ?? null, 'uri' => \$_SERVER['REQUEST_URI'] ?? null])");
+            $this->evaluate('request', self::REQUEST);
 
             return;
         }

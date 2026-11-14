@@ -11,11 +11,13 @@ final class TraceStoreTest extends TestCase
     private const CHILD = '97f16856e73a4d4a';
     private const TRACE = '8985fb33258f422981f678dc02d1ee28';
 
+    private string $directory;
     private TraceStore $store;
 
     protected function setUp(): void
     {
-        $this->store = new TraceStore(sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4)));
+        $this->directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $this->store = new TraceStore($this->directory);
         $this->store->start(self::ROOT, ['traceId' => self::TRACE, 'parentSpanId' => null]);
         $this->store->start(self::CHILD, ['traceId' => self::TRACE, 'parentSpanId' => self::ROOT]);
     }
@@ -64,5 +66,32 @@ final class TraceStoreTest extends TestCase
 
         $this->store->clearNarration(self::ROOT);
         $this->assertFalse($this->store->isDescribed(self::ROOT));
+    }
+
+    public function testRemovesTheTracesOlderThanTheGivenTime()
+    {
+        $this->store->addNarration(self::ROOT, ['type' => 'start']);
+        file_put_contents($this->directory.'/trace.1794671096.0728f2.xt.gz', '');
+        file_put_contents($this->directory.'/trace.1794671096.0728f2.xt.gz.lines.json', '[]');
+        file_put_contents($this->directory.'/codeindex-6151f083bbd6339185fa5352b12567f4.json', '{}');
+        file_put_contents($this->directory.'/notes.txt', '');
+        foreach (glob($this->directory.'/*') as $path) {
+            touch($path, time() - 3 * 86400);
+        }
+        touch($this->directory.'/'.self::CHILD.'.jsonl');
+
+        $this->store->removeOlderThan(time() - 2 * 86400);
+
+        $this->assertSame([self::CHILD.'.jsonl', 'notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
+    }
+
+    public function testRemovesAllTheTraces()
+    {
+        file_put_contents($this->directory.'/trace.1794671096.0728f2.xt', '');
+        file_put_contents($this->directory.'/notes.txt', '');
+
+        $this->store->clear();
+
+        $this->assertSame(['notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
     }
 }

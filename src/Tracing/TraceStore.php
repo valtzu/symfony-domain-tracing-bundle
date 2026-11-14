@@ -195,6 +195,25 @@ final readonly class TraceStore
         }
     }
 
+    /**
+     * Removes the files of the traces, and of the Xdebug traces, that changed last before the given Unix timestamp.
+     */
+    public function removeOlderThan(int $timestamp): void
+    {
+        foreach ($this->files() as $path) {
+            if ((@filemtime($path) ?: \PHP_INT_MAX) < $timestamp) {
+                @unlink($path);
+            }
+        }
+    }
+
+    public function clear(): void
+    {
+        foreach ($this->files() as $path) {
+            @unlink($path);
+        }
+    }
+
     public function isDescribed(string $rootId): bool
     {
         $path = $this->narrationPath($rootId);
@@ -273,6 +292,20 @@ final readonly class TraceStore
     private function tracePath(string $traceId): string
     {
         return $this->directory.'/trace-'.$traceId.'.spans';
+    }
+
+    /**
+     * @return list<string> the files that this store and the prepend file write, and not the other files of the
+     *                      directory
+     */
+    private function files(): array
+    {
+        $files = [];
+        foreach (['*.jsonl', '*.narration', 'trace-*.spans', 'trace.*.xt*', 'codeindex-*.json'] as $pattern) {
+            $files = [...$files, ...glob($this->directory.'/'.$pattern) ?: []];
+        }
+
+        return $files;
     }
 
     /**

@@ -7,10 +7,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Shows the recorded trace of a request in the profiler.
+ * Shows the recorded trace of a request in the profiler. The traces expire as the profiles do: the file storage of the
+ * profiler removes the profiles older than 2 days, on 1 write in 10 (FileProfilerStorage::removeExpiredProfiles()).
  */
 final class TraceDataCollector extends AbstractDataCollector
 {
+    private const int EXPIRY_SECONDS = 2 * 86_400;
+    private const int EXPIRY_CHANCE = 10;
+
     public function __construct(
         private readonly TraceStore $store,
         private readonly XdebugSetup $xdebug,
@@ -26,6 +30,10 @@ final class TraceDataCollector extends AbstractDataCollector
             'problems' => $recorded ? [] : $this->xdebug->problems(),
             'settings' => $recorded ? null : $this->xdebug->settings(),
         ];
+
+        if (1 === mt_rand(1, self::EXPIRY_CHANCE)) {
+            $this->store->removeOlderThan(time() - self::EXPIRY_SECONDS);
+        }
     }
 
     public function getName(): string

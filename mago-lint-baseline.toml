@@ -229,6 +229,12 @@ message = "Class has too many methods."
 count = 1
 
 [[issues]]
+file = "src/Tracing/TraceCacheClearer.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
 file = "src/Tracing/TraceController.php"
 code = "cyclomatic-complexity"
 message = "Class has high complexity."
@@ -488,6 +494,12 @@ count = 1
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
 code = "literal-named-argument"
 message = "Literal argument `''` should be passed as a named argument for clarity."
 count = 1
@@ -520,12 +532,18 @@ count = 5
 file = "src/Tracing/TraceStore.php"
 code = "no-error-control-operator"
 message = "Unsafe use of error control operator `@`."
-count = 3
+count = 6
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
 code = "no-shorthand-ternary"
 message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
 count = 1
 
 [[issues]]
@@ -886,7 +904,31 @@ count = 1
 file = "tests/Tracing/TraceStoreTest.php"
 code = "assertion-style"
 message = "Inconsistent assertions style."
-count = 15
+count = 17
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "literal-named-argument"
+message = "Literal argument `''` should be passed as a named argument for clarity."
+count = 4
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "literal-named-argument"
+message = "Literal argument `'[]'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "literal-named-argument"
+message = "Literal argument `'{}'` should be passed as a named argument for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 2
 
 [[issues]]
 file = "tests/Tracing/TraceStoreTest.php"

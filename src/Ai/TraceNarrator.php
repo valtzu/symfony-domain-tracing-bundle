@@ -27,10 +27,11 @@ final readonly class TraceNarrator
      * @param array<string, array>  $spans
      * @param list<string>          $eventsSoFar
      * @param array<string, string> $code        source of the methods that the model has not seen yet, by function
+     * @param int                   $omitted     the new calls after the listed ones, which are not listed
      *
      * @return iterable<array{span: string, at: float, text: string, error: bool}>
      */
-    public function narrate(array $steps, array $spans, ?string $rootSpanId, array $eventsSoFar, bool $traceEnded, array $code = []): iterable
+    public function narrate(array $steps, array $spans, ?string $rootSpanId, array $eventsSoFar, bool $traceEnded, array $code = [], int $omitted = 0): iterable
     {
         $json = static fn (mixed $value) => (string) json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE);
 
@@ -48,6 +49,9 @@ final readonly class TraceNarrator
                 \array_key_exists('returnValue', $span) ? ' returned '.$json($span['returnValue']) : '',
                 isset($span['exception']) && 'server' !== $span['kind'] ? ' threw '.self::exception($span['exception']) : '',
             );
+        }
+        if ($omitted > 0) {
+            $prompt .= \sprintf("(%d more calls are not listed.)\n", $omitted);
         }
         if ($code) {
             $prompt .= "\nCode of these operations:\n";

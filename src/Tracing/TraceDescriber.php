@@ -17,8 +17,16 @@ use Valtzu\DomainTracingBundle\Storage\TraceStore;
  */
 final readonly class TraceDescriber
 {
-    private const MAX_STEPS_PER_PART = 80;
-    private const IDLE_SECONDS_BEFORE_DESCRIBING = 1.0;
+    /**
+     * The calls that arrive while the AI describes the previous ones are described together in the next call, so a
+     * trace gets at most one call of the AI at a time, and the number of calls grows with the time the AI takes, not
+     * with the number of calls in the trace.
+     */
+    private const float MIN_SECONDS_BETWEEN_CALLS = 0.02;
+    /** The calls listed in one prompt; the others are counted, such as in a loop over many rows */
+    private const int MAX_STEPS_PER_CALL = 200;
+    /** The events of the previous calls that a prompt repeats */
+    private const int MAX_EVENTS_SO_FAR = 50;
     private const TIMEOUT_SECONDS = 30;
     private const SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD = 10;
 
@@ -61,6 +69,7 @@ final readonly class TraceDescriber
         $events = [];
         $pending = [];
         $lastActivity = $startedAt = microtime(true);
+        $lastCall = 0.0;
         $seenRecords = false;
         $describedAPart = false;
         $describedTheEnd = false;
@@ -78,12 +87,15 @@ final readonly class TraceDescriber
             $ended = $follower->hasEnded();
             $idle = microtime(true) - $lastActivity;
             // The last part tells how the request ended, even when it has no new calls
-            if ([] !== $pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_DESCRIBING) || $ended && $describedAPart && !$describedTheEnd) {
+            if ([] !== $pending && ($ended || microtime(true) - $lastCall >= self::MIN_SECONDS_BETWEEN_CALLS) || $ended && $describedAPart && !$describedTheEnd) {
+                $lastCall = microtime(true);
                 $describedAPart = true;
                 $describedTheEnd = $ended;
                 $names = $this->nameOperations($rootId, $builder, $names);
                 $spans = self::withNames($builder->spans(), $names);
-                $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), $events);
+                $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), \array_slice($events, -self::MAX_EVENTS_SO_FAR));
+                $omitted = max(0, \count($pending) - self::MAX_STEPS_PER_CALL);
+                $pending = \array_slice($pending, 0, self::MAX_STEPS_PER_CALL);
                 $code = [];
                 /** @var array<string> $functions */
                 $functions = array_unique([...array_column($pending, 'function'), ...array_keys($described)]);
@@ -97,7 +109,7 @@ final readonly class TraceDescriber
                         $described[$name] = null !== $executedLines;
                     }
                 }
-                foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended, $code) as $event) {
+                foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended, $code, $omitted) as $event) {
                     $events[] = $event;
                     $this->store->addNarration($rootId, ['type' => 'event'] + $event);
                     yield;

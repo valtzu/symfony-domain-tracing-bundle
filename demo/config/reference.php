@@ -171,25 +171,25 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     }>,
  * }
  * @psalm-type SerializerConfig = bool|array{
- *     enabled?: bool|Param, // Default: true
- *     enable_attributes?: bool|Param, // Default: true
- *     name_converter?: scalar|Param|null,
- *     circular_reference_handler?: scalar|Param|null,
- *     max_depth_handler?: scalar|Param|null,
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
+ *     enable_attributes?: bool|Param, // Resolved at compile time // Default: true
+ *     name_converter?: scalar|Param|null, // Resolved at compile time
+ *     circular_reference_handler?: scalar|Param|null, // Resolved at compile time
+ *     max_depth_handler?: scalar|Param|null, // Resolved at compile time
  *     mapping?: array{
  *         paths?: list<scalar|Param|null>,
  *     },
  *     default_context?: array<string, mixed>,
  *     named_serializers?: array<string, array{ // Default: []
- *         name_converter?: scalar|Param|null,
+ *         name_converter?: scalar|Param|null, // Resolved at compile time
  *         default_context?: array<string, mixed>,
- *         include_built_in_normalizers?: bool|Param, // Whether to include the built-in normalizers // Default: true
- *         include_built_in_encoders?: bool|Param, // Whether to include the built-in encoders // Default: true
+ *         include_built_in_normalizers?: bool|Param, // Whether to include the built-in normalizers // Resolved at compile time // Default: true
+ *         include_built_in_encoders?: bool|Param, // Whether to include the built-in encoders // Resolved at compile time // Default: true
  *     }>,
  * }
  * @psalm-type ValidationConfig = bool|array{
- *     enabled?: bool|Param, // Default: true
- *     enable_attributes?: bool|Param, // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
+ *     enable_attributes?: bool|Param, // Resolved at compile time // Default: true
  *     static_method?: Param|string|list<scalar|Param|null>,
  *     translation_domain?: scalar|Param|null, // Default: "validators"
  *     email_validation_mode?: "html5"|"html5-allow-no-tld"|"strict"|Param, // Default: "html5"
@@ -197,34 +197,34 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         paths?: list<scalar|Param|null>,
  *     },
  *     not_compromised_password?: bool|array{
- *         enabled?: bool|Param|null, // When disabled, compromised passwords will be accepted as valid. Defaults to false when "framework.test" is enabled, to true otherwise. // Default: null
+ *         enabled?: bool|Param|null, // When disabled, compromised passwords will be accepted as valid. Defaults to false when "framework.test" is enabled, to true otherwise. // Resolved at compile time // Default: null
  *         endpoint?: scalar|Param|null, // API endpoint for the NotCompromisedPassword Validator. // Default: null
  *     },
- *     disable_translation?: bool|Param, // Default: false
- *     property_metadata_existence_check?: bool|Param, // When enabled, validateProperty() and validatePropertyValue() throw an exception if no metadata is found for the given property. // Default: false
+ *     disable_translation?: bool|Param, // Resolved at compile time // Default: false
+ *     property_metadata_existence_check?: bool|Param, // When enabled, validateProperty() and validatePropertyValue() throw an exception if no metadata is found for the given property. // Resolved at compile time // Default: false
  *     auto_mapping?: array<string, array{ // Default: []
  *         services?: list<scalar|Param|null>,
  *     }>,
  * }
  * @psalm-type TypeInfoConfig = bool|array{
- *     enabled?: bool|Param, // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
  *     aliases?: array<string, scalar|Param|null>,
  * }
  * @psalm-type PropertyAccessConfig = bool|array{ // Property access configuration
- *     enabled?: bool|Param, // Default: true
- *     magic_call?: bool|Param, // Default: false
- *     magic_get?: bool|Param, // Default: true
- *     magic_set?: bool|Param, // Default: true
- *     throw_exception_on_invalid_index?: bool|Param, // Default: false
- *     throw_exception_on_invalid_property_path?: bool|Param, // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
+ *     magic_call?: bool|Param, // Resolved at compile time // Default: false
+ *     magic_get?: bool|Param, // Resolved at compile time // Default: true
+ *     magic_set?: bool|Param, // Resolved at compile time // Default: true
+ *     throw_exception_on_invalid_index?: bool|Param, // Resolved at compile time // Default: false
+ *     throw_exception_on_invalid_property_path?: bool|Param, // Resolved at compile time // Default: true
  *     wildcard_reads?: bool|Param, // Enables reading every element of a collection through a "[*]" wildcard. // Default: false
  * }
  * @psalm-type PropertyInfoConfig = bool|array{ // Property info configuration
- *     enabled?: bool|Param, // Default: true
- *     with_constructor_extractor?: bool|Param, // Registers the constructor extractor. // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
+ *     with_constructor_extractor?: bool|Param, // Registers the constructor extractor. // Resolved at compile time // Default: true
  * }
  * @psalm-type UidConfig = bool|array{
- *     enabled?: bool|Param, // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
  *     default_uuid_version?: 7|6|4|1|Param, // Default: 7
  *     name_based_uuid_version?: 5|3|Param, // Default: 5
  *     name_based_uuid_namespace?: scalar|Param|null,
@@ -233,11 +233,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     uuid47_secret?: scalar|Param|null, // A high-entropy secret used by the "uuid47_transformer" service. Defaults to the "kernel.secret" parameter; the service is not registered when neither is defined. // Default: null
  * }
  * @psalm-type HttpClientConfig = bool|array{
- *     enabled?: bool|Param, // Default: true
+ *     enabled?: bool|Param, // Resolved at compile time // Default: true
  *     max_host_connections?: int|Param, // The maximum number of connections to a single host.
  *     recorder?: bool|array{ // Record HTTP exchanges into HAR files and replay them in tests (see RecorderHttpClient).
- *         enabled?: bool|Param|null, // Defaults to true when "framework.test" is enabled, to false otherwise. // Default: null
- *         redactor?: scalar|Param|null, // Service id of a RedactorInterface; when set, "redact" and "redact_except" are ignored. // Default: null
+ *         enabled?: bool|Param|null, // Defaults to true when "framework.test" is enabled, to false otherwise. // Resolved at compile time // Default: null
+ *         redactor?: scalar|Param|null, // Service id of a RedactorInterface; when set, "redact" and "redact_except" are ignored. // Resolved at compile time // Default: null
  *         redact?: list<scalar|Param|null>,
  *         redact_except?: list<scalar|Param|null>,
  *     },
@@ -268,17 +268,17 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         },
  *         crypto_method?: scalar|Param|null, // The minimum version of TLS to accept; must be one of STREAM_CRYPTO_METHOD_TLSv*_CLIENT constants.
  *         extra?: array<string, mixed>,
- *         rate_limiter?: scalar|Param|null, // Rate limiter name to use for throttling requests. // Default: null
+ *         rate_limiter?: scalar|Param|null, // Rate limiter name to use for throttling requests. // Resolved at compile time // Default: null
  *         caching?: bool|array{ // Caching configuration.
- *             enabled?: bool|Param, // Default: false
- *             cache_pool?: string|Param, // The taggable cache pool to use for storing the responses. // Default: "cache.http_client"
+ *             enabled?: bool|Param, // Resolved at compile time // Default: false
+ *             cache_pool?: string|Param, // The taggable cache pool to use for storing the responses. // Resolved at compile time // Default: "cache.http_client"
  *             shared?: bool|Param, // Indicates whether the cache is shared (public) or private. // Default: true
  *             max_ttl?: int|Param, // The maximum TTL (in seconds) allowed for cached responses. // Default: 86400
  *         },
  *         retry_failed?: bool|array{
- *             enabled?: bool|Param, // Default: false
+ *             enabled?: bool|Param, // Resolved at compile time // Default: false
  *             base_uris?: Param|string|list<string|Param>,
- *             retry_strategy?: scalar|Param|null, // service id to override the retry strategy. // Default: null
+ *             retry_strategy?: scalar|Param|null, // service id to override the retry strategy. // Resolved at compile time // Default: null
  *             http_codes?: Param|int|string|array<string, array{ // Default: []
  *                 code?: int|Param,
  *                 methods?: Param|string|list<string|Param>,
@@ -290,15 +290,15 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             jitter?: float|Param, // Randomness in percent (between 0 and 1) to apply to the delay. // Default: 0.1
  *         },
  *     },
- *     mock_response_factory?: scalar|Param|null, // `true` to always return empty 200 responses, or the id of the service to use to generate mock responses - which should be either an invokable or an iterable.
+ *     mock_response_factory?: scalar|Param|null, // `true` to always return empty 200 responses, or the id of the service to use to generate mock responses - which should be either an invokable or an iterable. // Resolved at compile time
  *     scoped_clients?: array<string, Param|string|array{ // Default: []
- *         scope?: scalar|Param|null, // The regular expression that the request URL must match before adding the other options. When none is provided, the base URI is used instead.
+ *         scope?: scalar|Param|null, // The regular expression that the request URL must match before adding the other options. When none is provided, the base URI is used instead. The regular expression should end with a "/", for example "https://api\.github\.com/", so that it doesn't match other hosts.
  *         base_uri?: scalar|Param|null, // The URI to resolve relative URLs, following rules in RFC 3985, section 2.
  *         auth_basic?: scalar|Param|null, // An HTTP Basic authentication "username:password".
  *         auth_bearer?: scalar|Param|null, // A token enabling HTTP Bearer authorization.
  *         auth_ntlm?: scalar|Param|null, // A "username:password" pair to use Microsoft NTLM authentication (requires the cURL extension).
  *         query?: array<string, scalar|Param|null>,
- *         mock_response_factory?: scalar|Param|null, // `true` to always return empty 200 responses, `false` to disable mocking, or the id of the service to use to generate mock responses (invokable or iterable).
+ *         mock_response_factory?: scalar|Param|null, // `true` to always return empty 200 responses, `false` to disable mocking, or the id of the service to use to generate mock responses (invokable or iterable). // Resolved at compile time
  *         headers?: array<string, mixed>,
  *         max_redirects?: int|Param, // The maximum number of redirects to follow.
  *         http_version?: scalar|Param|null, // The default HTTP version, typically 1.1 or 2.0, leave to null for the best version.
@@ -324,17 +324,17 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         },
  *         crypto_method?: scalar|Param|null, // The minimum version of TLS to accept; must be one of STREAM_CRYPTO_METHOD_TLSv*_CLIENT constants.
  *         extra?: array<string, mixed>,
- *         rate_limiter?: scalar|Param|null, // Rate limiter name to use for throttling requests. // Default: null
+ *         rate_limiter?: scalar|Param|null, // Rate limiter name to use for throttling requests. // Resolved at compile time // Default: null
  *         caching?: bool|array{ // Caching configuration.
- *             enabled?: bool|Param, // Default: false
- *             cache_pool?: string|Param, // The taggable cache pool to use for storing the responses. // Default: "cache.http_client"
+ *             enabled?: bool|Param, // Resolved at compile time // Default: false
+ *             cache_pool?: string|Param, // The taggable cache pool to use for storing the responses. // Resolved at compile time // Default: "cache.http_client"
  *             shared?: bool|Param, // Indicates whether the cache is shared (public) or private. // Default: true
  *             max_ttl?: int|Param, // The maximum TTL (in seconds) allowed for cached responses. // Default: 86400
  *         },
  *         retry_failed?: bool|array{
- *             enabled?: bool|Param, // Default: false
+ *             enabled?: bool|Param, // Resolved at compile time // Default: false
  *             base_uris?: Param|string|list<string|Param>,
- *             retry_strategy?: scalar|Param|null, // service id to override the retry strategy. // Default: null
+ *             retry_strategy?: scalar|Param|null, // service id to override the retry strategy. // Resolved at compile time // Default: null
  *             http_codes?: Param|int|string|array<string, array{ // Default: []
  *                 code?: int|Param,
  *                 methods?: Param|string|list<string|Param>,
@@ -349,11 +349,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * }
  * @psalm-type FrameworkConfig = array{
  *     secret?: scalar|Param|null, // A secret that must not change. The options that sign data default to it and take a list of secrets to rotate theirs.
- *     http_method_override?: bool|Param, // Set true to enable support for the '_method' request parameter to determine the intended HTTP method on POST requests. // Default: false
+ *     http_method_override?: bool|Param, // Set true to enable support for the '_method' request parameter to determine the intended HTTP method on POST requests. // Resolved at compile time // Default: false
  *     allowed_http_method_override?: null|list<string|Param>,
  *     trust_x_sendfile_type_header?: scalar|Param|null, // Set true to enable support for xsendfile in binary file responses. // Default: "%env(bool:default::SYMFONY_TRUST_X_SENDFILE_TYPE_HEADER)%"
  *     ide?: scalar|Param|null, // Deprecated: Setting the "framework.ide.ide" configuration option is deprecated, use the "SYMFONY_IDE" env var instead. // Default: null
- *     test?: bool|Param,
+ *     test?: bool|Param, // Resolved at compile time
  *     default_locale?: scalar|Param|null, // Default: "en"
  *     set_locale_from_accept_language?: bool|Param, // Whether to use the Accept-Language HTTP header to set the Request locale (only when the "_locale" request attribute is not passed). // Default: false
  *     set_content_language_from_locale?: bool|Param, // Whether to set the Content-Language HTTP header on the Response using the Request locale. // Default: false
@@ -364,22 +364,22 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     error_controller?: scalar|Param|null, // Default: "error_controller"
  *     handle_all_throwables?: bool|Param, // HttpKernel will handle all kinds of \Throwable. // Default: true
  *     csrf_protection?: bool|array{
- *         enabled?: scalar|Param|null, // Default: null
+ *         enabled?: scalar|Param|null, // Resolved at compile time // Default: null
  *         stateless_token_ids?: list<scalar|Param|null>,
  *         check_header?: scalar|Param|null, // Whether to check the CSRF token in a header in addition to a cookie when using stateless protection. // Default: false
  *         cookie_name?: scalar|Param|null, // The name of the cookie to use when using stateless protection. // Default: "csrf-token"
  *     },
  *     form?: bool|array{ // Form configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         csrf_protection?: bool|array{
- *             enabled?: scalar|Param|null, // Default: null
+ *             enabled?: scalar|Param|null, // Resolved at compile time // Default: null
  *             token_id?: scalar|Param|null, // Default: null
  *             field_name?: scalar|Param|null, // Default: "_token"
  *             field_attr?: array<string, scalar|Param|null>,
  *         },
  *     },
  *     http_cache?: bool|array{ // HTTP cache configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         debug?: bool|Param, // Default: "%kernel.debug%"
  *         trace_level?: "none"|"short"|"full"|Param,
  *         trace_header?: scalar|Param|null,
@@ -394,13 +394,13 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         terminate_on_cache_hit?: bool|Param, // Deprecated: Setting the "framework.http_cache.terminate_on_cache_hit.terminate_on_cache_hit" configuration option is deprecated. It will be removed in version 9.0.
  *     },
  *     esi?: bool|array{ // ESI configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *     },
  *     ssi?: bool|array{ // SSI configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *     },
  *     fragments?: bool|array{ // Fragments configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         hinclude_default_template?: scalar|Param|null, // Deprecated: Setting the "framework.fragments.hinclude_default_template.hinclude_default_template" configuration option is deprecated. It will be removed in version 9.0. // Default: null
  *         path?: scalar|Param|null, // Default: "/_fragment"
  *     },
@@ -409,14 +409,14 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         expiration?: int|Param, // Default expiration of signed URIs, in seconds. // Default: null
  *     },
  *     profiler?: bool|array{ // Profiler configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         collect?: bool|Param, // Default: true
  *         collect_parameter?: scalar|Param|null, // The name of the parameter to use to enable or disable collection on a per request basis. // Default: null
  *         only_exceptions?: bool|Param, // Default: false
  *         only_main_requests?: bool|Param, // Default: false
  *         excluded_paths?: Param|string|list<scalar|Param|null>,
  *         excluded_http_codes?: Param|int|string|list<Param|string|list<scalar|Param|null>>,
- *         dsn?: scalar|Param|null, // Default: "file:%kernel.cache_dir%/profiler"
+ *         dsn?: scalar|Param|null, // Resolved at compile time // Default: "file:%kernel.cache_dir%/profiler"
  *         collect_serializer_data?: true|Param, // Deprecated: Setting the "framework.profiler.collect_serializer_data.collect_serializer_data" configuration option is deprecated. It will be removed in version 9.0. // Default: true
  *     },
  *     workflows?: mixed,
@@ -445,14 +445,14 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     remote_event?: mixed,
  *     json_streamer?: mixed,
  *     session?: bool|array{ // Session configuration
- *         enabled?: bool|Param, // Default: false
- *         storage_factory_id?: scalar|Param|null, // Defaults to "session.storage.factory.mock_file" when "framework.test" is true, to "session.storage.factory.native" otherwise. // Default: null
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
+ *         storage_factory_id?: scalar|Param|null, // Defaults to "session.storage.factory.mock_file" when "framework.test" is true, to "session.storage.factory.native" otherwise. // Resolved at compile time // Default: null
  *         handler_id?: scalar|Param|null, // Defaults to using the native session handler, or to the native *file* session handler if "save_path" is not null.
  *         name?: scalar|Param|null,
  *         cookie_lifetime?: scalar|Param|null,
  *         cookie_path?: scalar|Param|null,
  *         cookie_domain?: scalar|Param|null,
- *         cookie_secure?: true|false|"auto"|Param, // Default: "auto"
+ *         cookie_secure?: true|false|"auto"|Param, // Resolved at compile time // Default: "auto"
  *         cookie_httponly?: bool|Param, // Default: true
  *         cookie_samesite?: null|"lax"|"strict"|"none"|Param, // Default: "lax"
  *         use_cookies?: bool|Param,
@@ -464,47 +464,47 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         isolate_attributes?: bool|Param, // Whether to deep-clone the values read from and passed to session attributes, so that only values passed to set() are saved. // Default: false
  *     },
  *     request?: bool|array{ // Request configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         formats?: array<string, Param|string|list<scalar|Param|null>>,
- *         serializer?: scalar|Param|null, // Service id of the serializer that maps request payloads and query strings to controller arguments with #[MapRequestPayload] and #[MapQueryString], e.g. "serializer.api" for the named serializer "api". // Default: null
+ *         serializer?: scalar|Param|null, // Service id of the serializer that maps request payloads and query strings to controller arguments with #[MapRequestPayload] and #[MapQueryString], e.g. "serializer.api" for the named serializer "api". // Resolved at compile time // Default: null
  *     },
  *     response?: array{ // Response configuration
- *         serializer?: scalar|Param|null, // Service id of the serializer that serializes the values returned by controllers with #[Serialize], e.g. "serializer.api" for the named serializer "api". // Default: null
+ *         serializer?: scalar|Param|null, // Service id of the serializer that serializes the values returned by controllers with #[Serialize], e.g. "serializer.api" for the named serializer "api". // Resolved at compile time // Default: null
  *     },
  *     php_errors?: array{ // PHP errors handling configuration
- *         log?: mixed, // Use the application logger instead of the PHP logger for logging PHP errors. // Default: true
- *         throw?: bool|Param|null, // Throw PHP errors as \ErrorException instances. Enabled by default when debug is enabled. // Default: null
+ *         log?: mixed, // Use the application logger instead of the PHP logger for logging PHP errors. // Resolved at compile time // Default: true
+ *         throw?: bool|Param|null, // Throw PHP errors as \ErrorException instances. Enabled by default when debug is enabled. // Resolved at compile time // Default: null
  *     },
  *     exceptions?: array<string, array{ // Default: []
  *         log_level?: scalar|Param|null, // The level of log message. Null to let Symfony decide. // Default: null
  *         status_code?: scalar|Param|null, // The status code of the response. Null or 0 to let Symfony decide. // Default: null
- *         log_channel?: scalar|Param|null, // The channel of log message. Null to let Symfony decide. // Default: null
+ *         log_channel?: scalar|Param|null, // The channel of log message. Null to let Symfony decide. // Resolved at compile time // Default: null
  *     }>,
- *     disallow_search_engine_index?: bool|Param|null, // Enabled by default when debug is enabled. // Default: null
+ *     disallow_search_engine_index?: bool|Param|null, // Enabled by default when debug is enabled. // Resolved at compile time // Default: null
  *     secrets?: bool|array{
- *         enabled?: bool|Param, // Default: true
+ *         enabled?: bool|Param, // Resolved at compile time // Default: true
  *         vault_directory?: scalar|Param|null, // Default: "%kernel.project_dir%/config/secrets/%kernel.runtime_environment%"
- *         local_dotenv_file?: scalar|Param|null, // Default: "%kernel.project_dir%/.env.%kernel.environment%.local"
- *         decryption_env_var?: scalar|Param|null, // Default: "base64:default::SYMFONY_DECRYPTION_SECRET"
+ *         local_dotenv_file?: scalar|Param|null, // Resolved at compile time // Default: "%kernel.project_dir%/.env.%kernel.environment%.local"
+ *         decryption_env_var?: scalar|Param|null, // Resolved at compile time // Default: "base64:default::SYMFONY_DECRYPTION_SECRET"
  *     },
  * }
  * @psalm-type TwigConfig = array{
  *     form_themes?: list<scalar|Param|null>,
  *     globals?: array<string, array{ // Default: []
- *         id?: scalar|Param|null,
- *         type?: scalar|Param|null,
+ *         id?: scalar|Param|null, // Resolved at compile time
+ *         type?: scalar|Param|null, // Resolved at compile time
  *         value?: mixed,
  *         ...<string, mixed>
  *     }>,
- *     autoescape_service?: scalar|Param|null, // Default: null
+ *     autoescape_service?: scalar|Param|null, // Resolved at compile time // Default: null
  *     autoescape_service_method?: scalar|Param|null, // Default: null
- *     cache?: scalar|Param|null, // Default: true
+ *     cache?: scalar|Param|null, // Resolved at compile time // Default: true
  *     charset?: scalar|Param|null, // Default: "%kernel.charset%"
- *     debug?: bool|Param, // Default: "%kernel.debug%"
+ *     debug?: bool|Param, // Resolved at compile time // Default: "%kernel.debug%"
  *     strict_variables?: bool|Param, // Default: "%kernel.debug%"
- *     auto_reload?: scalar|Param|null,
+ *     auto_reload?: scalar|Param|null, // Resolved at compile time
  *     optimizations?: int|Param,
- *     default_path?: scalar|Param|null, // The default path used to load templates. // Default: "%kernel.project_dir%/templates"
+ *     default_path?: scalar|Param|null, // The default path used to load templates. // Resolved at compile time // Default: "%kernel.project_dir%/templates"
  *     file_name_pattern?: Param|string|list<scalar|Param|null>,
  *     paths?: array<string, mixed>,
  *     date?: array{ // The default format options used by the date filter.
@@ -518,15 +518,15 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         thousands_separator?: scalar|Param|null, // Default: ","
  *     },
  *     mailer?: array{
- *         html_to_text_converter?: scalar|Param|null, // A service implementing the "Symfony\Component\Mime\HtmlToTextConverter\HtmlToTextConverterInterface". // Default: null
+ *         html_to_text_converter?: scalar|Param|null, // A service implementing the "Symfony\Component\Mime\HtmlToTextConverter\HtmlToTextConverterInterface". // Resolved at compile time // Default: null
  *     },
  * }
  * @psalm-type WebProfilerConfig = array{
  *     toolbar?: bool|array{ // Profiler toolbar configuration
- *         enabled?: bool|Param, // Default: false
+ *         enabled?: bool|Param, // Resolved at compile time // Default: false
  *         ajax_replace?: bool|Param, // Replace toolbar on AJAX requests // Default: false
  *     },
- *     intercept_redirects?: bool|Param, // Default: false
+ *     intercept_redirects?: bool|Param, // Resolved at compile time // Default: false
  *     excluded_ajax_paths?: scalar|Param|null, // Default: "^/((index|app(_[\\w]+)?)\\.php/)?_wdt"
  * }
  * @psalm-type AiConfig = array{
@@ -542,7 +542,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -559,7 +559,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -577,7 +577,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -596,7 +596,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -619,7 +619,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -642,7 +642,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -658,7 +658,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -674,7 +674,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -691,7 +691,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -708,7 +708,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -724,7 +724,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -740,7 +740,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -757,7 +757,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -774,7 +774,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -794,7 +794,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -810,7 +810,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -827,7 +827,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -849,7 +849,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -867,7 +867,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -883,7 +883,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -900,7 +900,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -916,7 +916,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -933,7 +933,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -950,7 +950,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -967,7 +967,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -985,7 +985,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1001,7 +1001,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1017,7 +1017,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1033,7 +1033,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1050,7 +1050,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1064,7 +1064,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1080,7 +1080,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1097,7 +1097,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1115,7 +1115,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },
@@ -1131,7 +1131,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     capabilities?: list<value-of<\Symfony\AI\Platform\Capability>|\Symfony\AI\Platform\Capability|Param>,
  *                 }>,
  *                 cache?: bool|array{ // Caches the model lookups, "true" is short for enabling it with the defaults
- *                     enabled?: bool|Param, // Default: false
+ *                     enabled?: bool|Param, // Resolved at compile time // Default: false
  *                     service?: string|Param, // The cache service id as defined under the "cache" configuration key // Default: "cache.app"
  *                     ttl?: int|Param, // Lifetime of the cached lookups in seconds // Default: 3600
  *                 },

@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Valtzu\DomainTracingBundle\DependencyInjection\EntrypointPass;
-use Valtzu\DomainTracingBundle\DependencyInjection\MissingAgentPass;
+use Valtzu\DomainTracingBundle\DependencyInjection\AgentPass;
 use Valtzu\DomainTracingBundle\DependencyInjection\SerializerDescriberPass;
 
 final class DomainTracingBundle extends AbstractBundle
@@ -35,7 +35,7 @@ final class DomainTracingBundle extends AbstractBundle
     public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new SerializerDescriberPass());
-        $container->addCompilerPass(new MissingAgentPass());
+        $container->addCompilerPass(new AgentPass());
         $container->addCompilerPass(new EntrypointPass());
     }
 

@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "domain-tracing": {
+            "command": "docker",
+            "args": ["compose", "exec", "-T", "shop", "php", "bin/console", "debug:domain:trace", "--format=mcp"]
+        }
+    }
+}

@@ -20,6 +20,9 @@ usleep(300_000);
 $spanId = $recorder->start(['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $uri, 'SCRIPT_FILENAME' => __DIR__.'/project/public/index.php']);
 $greeting = (new Acme\Shop\Greeter())->greet('Ada');
 $recorder->recordException(new RuntimeException('Greeting failed'));
+$recorder->respond();
+// The work after the response is sent, such as the kernel.terminate listeners
+usleep(200_000);
 $recorder->stop(500);
 
 echo json_encode([

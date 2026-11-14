@@ -70,6 +70,11 @@ final class RecorderTest extends TestCase
         $steps = array_values(array_filter($store->read($spanId)['records'] ?? [], array_is_list(...)));
 
         static::assertCount(1, $steps, 'Greeter->greet is the only step');
+        $records = $store->read($spanId)['records'] ?? [];
+        $end = end($records);
+        static::assertIsArray($end);
+        static::assertSame('end', $end['type'] ?? null);
+        static::assertLessThan(0.1, $end['at'] - $records[0]['startedAt'], 'The request ends when its response is sent, without the 200 ms after it');
         static::assertLessThan(50_000, $steps[0][3], 'The step is stamped in microseconds since the request started, without the 300 ms before the recording');
     }
 

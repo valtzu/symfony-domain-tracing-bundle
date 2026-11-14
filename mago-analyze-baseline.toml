@@ -2338,7 +2338,7 @@ count = 1
 file = "src/Xdebug/TraceIngester.php"
 code = "mixed-assignment"
 message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
+count = 4
 
 [[issues]]
 file = "src/Xdebug/TraceIngester.php"
@@ -3590,6 +3590,18 @@ count = 1
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
+code = "mixed-operand"
+message = "Left operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "mixed-operand"
+message = "Right operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
 code = "mixed-return-statement"
 message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tests\Xdebug\RecorderTest::record`. Saw type `mixed`.'
 count = 1
@@ -3628,7 +3640,7 @@ count = 1
 file = "tests/Xdebug/RecorderTest.php"
 code = "possibly-null-array-access"
 message = "Cannot perform array access on possibly `null` value."
-count = 1
+count = 2
 
 [[issues]]
 file = "tests/Xdebug/RecorderTest.php"
@@ -3640,6 +3652,12 @@ count = 4
 file = "tests/Xdebug/RecorderTest.php"
 code = "possibly-undefined-int-array-index"
 message = "Possibly undefined array index accessed on `list<('V.array_is_list() extends mixed)>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-int-array-index"
+message = "Possibly undefined array index accessed on `list<array<array-key, mixed>>`."
 count = 1
 
 [[issues]]
@@ -3664,6 +3682,12 @@ count = 1
 file = "tests/Xdebug/RecorderTest.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('service')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Xdebug/RecorderTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('startedAt')` accessed on `array<array-key, mixed>`."
 count = 1
 
 [[issues]]

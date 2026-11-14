@@ -61,6 +61,7 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('domain_tracing.recorder')])
         ->tag('kernel.event_listener', ['event' => KernelEvents::REQUEST, 'method' => 'onRequest', 'priority' => 4096])
         ->tag('kernel.event_listener', ['event' => KernelEvents::EXCEPTION, 'method' => 'onException', 'priority' => 4096])
+        ->tag('kernel.event_listener', ['event' => KernelEvents::RESPONSE, 'method' => 'onResponse', 'priority' => -4096])
         ->tag('kernel.event_listener', ['event' => KernelEvents::TERMINATE, 'method' => 'onTerminate', 'priority' => -4096])
         ->tag('kernel.event_listener', ['event' => ConsoleEvents::COMMAND, 'method' => 'onCommand', 'priority' => 4096])
         ->tag('kernel.event_listener', ['event' => ConsoleEvents::ERROR, 'method' => 'onConsoleError', 'priority' => 4096])

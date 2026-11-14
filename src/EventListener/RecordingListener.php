@@ -8,6 +8,7 @@ namespace Valtzu\DomainTracingBundle\EventListener;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Valtzu\DomainTracingBundle\Xdebug\Recorder;
 
@@ -37,6 +38,13 @@ final readonly class RecordingListener
     {
         if ($event->isMainRequest()) {
             $this->recorder->recordException($event->getThrowable());
+        }
+    }
+
+    public function onResponse(ResponseEvent $event): void
+    {
+        if ($event->isMainRequest()) {
+            $this->recorder->respond();
         }
     }
 

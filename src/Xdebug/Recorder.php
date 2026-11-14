@@ -38,6 +38,7 @@ final class Recorder implements ResetInterface
     /** @var array{traceFile: string, spanId: string, codeIndex: string, ownTrace: bool, ownCoverage: bool, settings: array<string, string|false>}|null */
     private ?array $current = null;
     private ?array $exception = null;
+    private ?float $respondedAt = null;
     private bool $shutdownRegistered = false;
 
     public function __construct(
@@ -94,6 +95,7 @@ final class Recorder implements ResetInterface
         $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
         $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings];
         $this->exception = null;
+        $this->respondedAt = null;
         $_SERVER['DOMAIN_TRACING_TRACEPARENT'] = \sprintf('00-%s-%s-01', $context['traceId'], $context['spanId']);
 
         if ($ownCoverage) {
@@ -108,6 +110,17 @@ final class Recorder implements ResetInterface
         }
 
         return $context['spanId'];
+    }
+
+    /**
+     * Keeps when the response is sent, which ends the request for its caller. The record goes on until the request
+     * ends, such as with the kernel.terminate listeners.
+     */
+    public function respond(): void
+    {
+        if (null !== $this->current) {
+            $this->respondedAt ??= microtime(true);
+        }
     }
 
     /**
@@ -141,7 +154,7 @@ final class Recorder implements ResetInterface
             file_put_contents($this->store->linesPath($current['spanId']), json_encode(array_map(array_keys(...), xdebug_get_code_coverage())));
             xdebug_stop_code_coverage();
         }
-        file_put_contents($this->store->outcomePath($current['spanId']), json_encode(['status' => $status, 'exception' => $this->exception], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
+        file_put_contents($this->store->outcomePath($current['spanId']), json_encode(['status' => $status, 'exception' => $this->exception, 'respondedAt' => $this->respondedAt], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
         if ($current['ownTrace'] && xdebug_get_tracefile_name() === $current['traceFile']) {
             xdebug_stop_trace();
         }

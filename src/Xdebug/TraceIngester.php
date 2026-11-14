@@ -72,7 +72,10 @@ final class TraceIngester
 
     private function end(string $id, float $at): void
     {
-        $this->store->end($id, $at, $this->outcome($id));
+        $path = $this->store->outcomePath($id);
+        $outcome = is_file($path) ? json_decode((string) file_get_contents($path), associative: true) : null;
+        $respondedAt = \is_array($outcome) ? $outcome['respondedAt'] ?? null : null;
+        $this->store->end($id, \is_float($respondedAt) ? min($at, $respondedAt) : $at, $this->outcome($outcome));
         fclose($this->spans[$id]['lock']);
         unset($this->spans[$id]);
     }
@@ -80,9 +83,8 @@ final class TraceIngester
     /**
      * @return array{status?: int, exception?: array{class: string, message: string, functions: list<string>}}
      */
-    private function outcome(string $id): array
+    private function outcome(mixed $outcome): array
     {
-        $outcome = json_decode((string) @file_get_contents($this->store->outcomePath($id)), associative: true);
         $exception = $outcome['exception'] ?? null;
 
         return array_filter([

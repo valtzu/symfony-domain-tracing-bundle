@@ -14,6 +14,9 @@ require __DIR__.'/project/src/Greeter.php';
 
 /** @var list<string> $argv */
 [, $traceDirectory, $uri] = $argv;
+$removeDirectory = 'remove-directory' === ($argv[3] ?? null);
+// As in debug mode, where Symfony turns warnings into exceptions
+set_error_handler(static fn (int $type, string $message) => throw new ErrorException($message, 0, $type));
 $recorder = new Recorder(__DIR__.'/project', new TraceStore($traceDirectory), ['Acme\Shop\Greeter']);
 // The time between the start of the script and the start of the recording, as in a worker process
 usleep(300_000);
@@ -23,11 +26,21 @@ $recorder->recordException(new RuntimeException('Greeting failed'));
 $recorder->respond();
 // The work after the response is sent, such as the kernel.terminate listeners
 usleep(200_000);
-$recorder->stop(500);
+if ($removeDirectory) {
+    (new Symfony\Component\Filesystem\Filesystem())->remove($traceDirectory);
+}
+$error = null;
+try {
+    $recorder->stop(500);
+} catch (Throwable $e) {
+    $error = $e->getMessage();
+}
 
 echo json_encode([
     'spanId' => $spanId,
     'traceparent' => $_SERVER['DOMAIN_TRACING_TRACEPARENT'] ?? null,
     'collectReturn' => ini_get('xdebug.collect_return'),
     'traceFile' => xdebug_get_tracefile_name(),
+    'coverage' => xdebug_code_coverage_started(),
+    'error' => $error,
 ]);

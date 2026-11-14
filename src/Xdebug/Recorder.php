@@ -158,15 +158,25 @@ final class Recorder implements ResetInterface
         $this->current = null;
         unset($_SERVER['DOMAIN_TRACING_TRACEPARENT']);
 
+        // Xdebug stops before the record is written, because a worker that keeps tracing would never record again
+        $coverage = null;
         if ($current['ownCoverage'] && xdebug_code_coverage_started()) {
-            file_put_contents($this->store->linesPath($current['spanId']), json_encode(array_map(array_keys(...), xdebug_get_code_coverage())));
+            $coverage = xdebug_get_code_coverage();
             xdebug_stop_code_coverage();
+            xdebug_set_filter(\XDEBUG_FILTER_CODE_COVERAGE, \XDEBUG_FILTER_NONE, []);
         }
-        file_put_contents($this->store->outcomePath($current['spanId']), json_encode(['status' => $status, 'exception' => $this->exception, 'respondedAt' => $this->respondedAt], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
         if ($current['ownTrace'] && xdebug_get_tracefile_name() === $current['traceFile']) {
             xdebug_stop_trace();
         }
+        if ($current['ownTrace']) {
+            xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_FILTER_NONE, []);
+        }
         self::restore($current['settings']);
+
+        if (null !== $coverage) {
+            file_put_contents($this->store->linesPath($current['spanId']), json_encode(array_map(array_keys(...), $coverage)));
+        }
+        file_put_contents($this->store->outcomePath($current['spanId']), json_encode(['status' => $status, 'exception' => $this->exception, 'respondedAt' => $this->respondedAt], \JSON_UNESCAPED_SLASHES | \JSON_INVALID_UTF8_SUBSTITUTE));
 
         $indexPath = $this->store->directory().'/codeindex-'.$current['codeIndex'].'.json';
         if (is_file($indexPath)) {

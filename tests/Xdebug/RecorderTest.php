@@ -122,6 +122,16 @@ final class RecorderTest extends TestCase
         static::assertSame([$index], glob($this->traceDirectory.'/codeindex-*'), 'No temporary file is left');
     }
 
+    public function testStopsTheTraceWhenTheRecordCannotBeWritten(): void
+    {
+        $result = $this->record('/greet?name=Ada', [], 'remove-directory');
+
+        static::assertIsString($result['error']);
+        static::assertFalse($result['traceFile']);
+        static::assertFalse($result['coverage']);
+        static::assertSame('0', $result['collectReturn']);
+    }
+
     public function testDoesNotRecordWhenTheTraceDirectoryIsNotWritable(): void
     {
         mkdir($this->traceDirectory, 0555, recursive: true);
@@ -151,15 +161,15 @@ final class RecorderTest extends TestCase
     /**
      * @param array<string, string> $settings Xdebug settings besides xdebug.mode
      *
-     * @return array{spanId: ?string, traceparent: ?string, collectReturn: string, traceFile: string|false}
+     * @return array{spanId: ?string, traceparent: ?string, collectReturn: string, traceFile: string|false, coverage: bool, error: ?string}
      */
-    private function record(string $uri, array $settings = []): array
+    private function record(string $uri, array $settings = [], ?string $option = null): array
     {
         $arguments = [\PHP_BINARY, '-d', 'xdebug.mode=trace,coverage', '-d', 'xdebug.start_with_request=no'];
         foreach ($settings as $name => $value) {
             $arguments = [...$arguments, '-d', $name.'='.$value];
         }
-        $process = new Process([...$arguments, \dirname(__DIR__).'/Fixtures/record.php', $this->traceDirectory, $uri]);
+        $process = new Process([...$arguments, \dirname(__DIR__).'/Fixtures/record.php', $this->traceDirectory, $uri, ...(null === $option ? [] : [$option])]);
         $process->mustRun();
 
         return json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR);

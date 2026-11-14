@@ -76,6 +76,12 @@ final class Recorder implements ResetInterface
 
         if (!$traced) {
             $this->store->createDirectory();
+            // Xdebug 3.5 crashes PHP when it cannot create the trace file
+            if (!is_writable($this->store->directory())) {
+                self::restore($settings);
+
+                return null;
+            }
             xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, [...array_keys($autoload), TraceClock::class]);
             $traceFile = xdebug_start_trace($this->store->directory().'/trace.'.$context['spanId'], \XDEBUG_TRACE_COMPUTERIZED);
         } else {

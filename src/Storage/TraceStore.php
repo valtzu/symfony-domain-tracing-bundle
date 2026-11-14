@@ -38,8 +38,9 @@ final readonly class TraceStore
 
     public function createDirectory(): void
     {
+        // Another process can create it meanwhile, and the recorder checks that it is writable
         if (!is_dir($this->directory)) {
-            mkdir($this->directory, 0777, true);
+            @mkdir($this->directory, 0777, true);
         }
     }
 

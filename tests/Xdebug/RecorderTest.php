@@ -34,6 +34,7 @@ final class RecorderTest extends TestCase
     #[\Override]
     protected function tearDown(): void
     {
+        @chmod($this->traceDirectory, 0755);
         (new Filesystem())->remove($this->directory);
     }
 
@@ -105,6 +106,17 @@ final class RecorderTest extends TestCase
         static::assertIsString($result['traceFile']);
         static::assertFileExists($result['traceFile'], 'The trace of Xdebug is left as it is');
         static::assertDirectoryDoesNotExist($this->traceDirectory);
+    }
+
+    public function testDoesNotRecordWhenTheTraceDirectoryIsNotWritable(): void
+    {
+        mkdir($this->traceDirectory, 0555, recursive: true);
+        if (is_writable($this->traceDirectory)) {
+            static::markTestSkipped('The user can write into any directory.');
+        }
+
+        // Xdebug 3.5 crashes PHP when it cannot create the trace file
+        static::assertNull($this->record('/greet?name=Ada')['spanId']);
     }
 
     public function testDoesNotRecordTheProfiler(): void

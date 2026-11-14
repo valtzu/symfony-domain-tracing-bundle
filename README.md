@@ -106,6 +106,43 @@ ai:
         domain_tracing_context_writer: *domain_tracing_agent
 ```
 
+## Traces in the terminal
+
+`bin/console domain-tracing:trace` prints a trace while it is recorded, one line per operation, indented under its
+caller. Coding agents can read it, too: run it in the background, send the request, and read the output while it
+comes.
+
+```shell
+bin/console domain-tracing:trace next                   # waits for the next request
+bin/console domain-tracing:trace latest --values        # with the arguments and the return values
+bin/console domain-tracing:trace 3f2a9c1b7d4e8a60 --describe   # with the events that the AI writes
+```
+
+```text
+  +0.000s POST / [shop]
+            → Check out cart  App\Controller\ShopController->checkout
+  +0.010s   Place order [shop]  App\Checkout\Checkout->placeOrder
+  +0.010s     Apply discounts [shop]  App\Checkout\Pricing->applyDiscounts
+                arguments: {"couponCode":"WELCOME10", …}
+  +0.011s     Charge payment [shop]  App\Checkout\PaymentGateway->charge
+  +0.032s       POST /charges [payments]
+  +0.085s end of POST / [shop] after 0.085s
+  +0.011s       • Coupon WELCOME10 accepted because the subtotal of 178.00 meets the 50.00 minimum
+```
+
+- The argument is the ID of a request, as the profiler shows it, `latest` (the default) or `next`.
+- `--describe` asks the AI to describe the trace, unless it is described already. The events appear when the AI
+  writes them, after the operations they are about.
+- `--json` prints each event as a line of JSON, as the live view receives it.
+- The values are redacted like the values that the AI gets.
+
+To tell a coding agent about it, add a line like this to the `AGENTS.md` or `CLAUDE.md` of the project:
+
+```markdown
+To see what a request did, run `bin/console domain-tracing:trace next --values` in the background before you send
+it, then read the output. Add `--describe` for a description in business terms.
+```
+
 ## How it is put together
 
 - The root directory is a Symfony bundle, `DomainTracingBundle`. In debug mode, it serves the live view and its event

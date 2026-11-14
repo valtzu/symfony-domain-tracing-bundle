@@ -241,57 +241,15 @@ message = "Missing `declare(strict_types=1);` statement at the beginning of the 
 count = 1
 
 [[issues]]
-file = "src/Tracing/TraceController.php"
-code = "cyclomatic-complexity"
-message = "Class has high complexity."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "cyclomatic-complexity"
-message = "Closure has high complexity."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "excessive-parameter-list"
-message = "Parameter list is too long."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "halstead"
-message = "Closure has a high halstead effort"
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "halstead"
-message = "Method has a high halstead volume and effort"
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "kan-defect"
-message = "Class has a high kan defect score."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "kan-defect"
-message = "Closure has a high kan defect score."
+file = "src/Tracing/TraceCommand.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1
 
 [[issues]]
 file = "src/Tracing/TraceController.php"
 code = "literal-named-argument"
 message = "Literal argument `2` should be passed as a named argument for clarity."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceController.php"
-code = "no-else-clause"
-message = "Avoid `else` clauses."
 count = 1
 
 [[issues]]
@@ -556,6 +514,54 @@ count = 1
 file = "src/Tracing/TraceStore.php"
 code = "too-many-methods"
 message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStream.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStream.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStream.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStream.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStream.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceTextFormatter.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceTextFormatter.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 3
+
+[[issues]]
+file = "src/Tracing/TraceTextFormatter.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1
 
 [[issues]]
@@ -832,16 +838,22 @@ count = 1
 file = "tests/Tracing/SpanBuilderTest.php"
 code = "assertion-style"
 message = "Inconsistent assertions style."
-count = 2
+count = 3
 
 [[issues]]
 file = "tests/Tracing/SpanBuilderTest.php"
 code = "literal-named-argument"
 message = "Literal argument `32` should be passed as a named argument for clarity."
-count = 3
+count = 4
 
 [[issues]]
 file = "tests/Tracing/SpanBuilderTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceCommandTest.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1
@@ -944,6 +956,12 @@ count = 2
 
 [[issues]]
 file = "tests/Tracing/TraceStoreTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceTextFormatterTest.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1

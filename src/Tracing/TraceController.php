@@ -19,10 +19,7 @@ final class TraceController extends AbstractController
         string $id,
         Request $request,
         TraceStore $store,
-        BlobStore $blobs,
-        OperationNamer $namer,
-        TraceIngester $ingester,
-        TraceDescriber $describer,
+        TraceStream $traces,
     ): Response {
         if (!TraceStore::isValidId($id)) {
             throw $this->createNotFoundException();
@@ -30,65 +27,15 @@ final class TraceController extends AbstractController
         $id = $store->rootOf($id);
         $describe = $request->query->getBoolean('describe');
 
-        $stream = function () use ($id, $describe, $store, $blobs, $namer, $ingester, $describer) {
+        $stream = function () use ($id, $describe, $traces) {
             // The stream reads the traces and waits for the AI, for longer than a page usually takes
             set_time_limit(0);
-            $send = static function (string $event, mixed $data): void {
+            $startedAt = microtime(true);
+            $stop = static fn (): bool => connection_aborted() || microtime(true) - $startedAt >= self::TIMEOUT_SECONDS;
+            foreach ($traces->follow($id, $describe, $stop) as [$event, $data]) {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
-            };
-
-            $follower = new TraceFollower($store, $blobs, $id);
-            $description = $describe ? $describer->describe($id) : null;
-            $builder = new SpanBuilder();
-            $names = [];
-            $narrationOffset = 0;
-            $startedAt = microtime(true);
-
-            while (!connection_aborted() && microtime(true) - $startedAt < self::TIMEOUT_SECONDS) {
-                $ingester->poll($follower->spanIds());
-                foreach ($follower->poll() as $record) {
-                    $changes = $builder->add($record);
-                    match ($record['type']) {
-                        'request' => $record['request'] === $id ? $send('request', $record) : null,
-                        'step' => $send('step', $record + ['service' => $builder->span($builder->currentSpanOf($record['request']))['service'] ?? null]),
-                        'end' => $record['request'] === $id ? $send('end', $record) : null,
-                        default => null,
-                    };
-                    foreach ($changes as [$change, $span]) {
-                        $function = null === $span['function'] ? null : $builder->function($span['function']);
-                        $span['name'] = $names[$span['function'] ?? ''] ?? (null === $function ? null : $namer->cachedName($span['service'], $span['function'], $function['code'])) ?? $span['name'];
-                        $send('span', ['change' => $change] + $span);
-                    }
-                }
-
-                if (!$describe && $follower->hasEnded()) {
-                    break;
-                }
-
-                $narration = $store->readNarration($id, $narrationOffset);
-                $narrationOffset = $narration['offset'];
-                foreach ($narration['records'] as $record) {
-                    match ($record['type']) {
-                        'name' => [$names[$record['function']] = $record['name'], $send('name', $record)],
-                        'event' => $send('event', $record),
-                        'failure' => $send('failure', $record['message']),
-                        'end' => $send('done', ['traceId' => $record['traceId']]),
-                        default => null,
-                    };
-                    if ('end' === $record['type']) {
-                        return;
-                    }
-                }
-
-                if ($description?->valid()) {
-                    $description->next();
-                } else {
-                    usleep(100_000);
-                }
             }
-
-            $send('done', ['traceId' => $follower->traceId()]);
         };
 
         return new StreamedResponse($stream, headers: [

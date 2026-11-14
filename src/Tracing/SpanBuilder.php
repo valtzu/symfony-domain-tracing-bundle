@@ -208,11 +208,12 @@ final class SpanBuilder
     private function setArguments(array $record): array
     {
         $spanId = end($this->stacks[$record['request']]);
-        if ($spanId && $this->spans[$spanId]['depth'] === $record['depth']) {
-            $this->spans[$spanId]['arguments'] = $record['values'];
+        if (!$spanId || $this->spans[$spanId]['depth'] !== $record['depth']) {
+            return [];
         }
+        $this->spans[$spanId]['arguments'] = $record['values'];
 
-        return [];
+        return [['open', $this->spans[$spanId]]];
     }
 
     private function exit(array $record): array

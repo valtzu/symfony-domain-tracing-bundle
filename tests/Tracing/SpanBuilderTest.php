@@ -66,6 +66,18 @@ final class SpanBuilderTest extends TestCase
         $this->assertSame(['App\Shipping->apply' => [15, 17, 18, 21]], $lines);
     }
 
+    public function testUpdatesTheSpanWhenItsArgumentsArrive(): void
+    {
+        $builder = new SpanBuilder();
+        $builder->add(['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'POST', 'uri' => '/']);
+        $builder->add(self::step('shop', 1.1, 'App\Checkout\Checkout->placeOrder', 7));
+        $builder->add(self::step('shop', 1.2, 'App\Checkout\Pricing->applyDiscounts', 8));
+
+        $changes = $builder->add(['request' => 'shop', 'type' => 'arguments', 'depth' => 8, 'values' => ['coupon' => 'WELCOME10'], 'at' => 1.2]);
+
+        $this->assertSame([['open', 'Pricing: apply discounts', ['coupon' => 'WELCOME10']]], array_map(static fn (array $change) => [$change[0], $change[1]['name'], $change[1]['arguments']], $changes));
+    }
+
     private static function step(string $request, float $at, string $function, int $depth): array
     {
         return ['request' => $request, 'type' => 'step', 'at' => $at, 'function' => $function, 'depth' => $depth, 'file' => 'src/X.php', 'line' => 1, 'code' => ''];

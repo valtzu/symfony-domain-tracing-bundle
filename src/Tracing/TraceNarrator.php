@@ -83,7 +83,12 @@ final readonly class TraceNarrator
         }
 
         $spanId = $outcome ? $rootSpanId : $step['span'];
-        $at = $outcome || 'return' === ($event['when'] ?? null) ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
+        $atEnd = 'return' === ($event['when'] ?? null);
+        // The outcome already says how the request ended, at the same place
+        if (!$outcome && $atEnd && $spanId === $rootSpanId) {
+            return;
+        }
+        $at = $outcome || $atEnd ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
 
         yield ['span' => $spanId, 'at' => $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
     }

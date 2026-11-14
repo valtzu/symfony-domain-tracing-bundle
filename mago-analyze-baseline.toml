@@ -1029,7 +1029,7 @@ count = 1
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-null-argument"
-message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:94:18}` is possibly `null`, but parameter type `string` does not accept it."
+message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:97:18}` is possibly `null`, but parameter type `string` does not accept it."
 count = 1
 
 [[issues]]

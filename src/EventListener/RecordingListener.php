@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\EventListener;
 
 use Symfony\Component\Console\Event\ConsoleErrorEvent;

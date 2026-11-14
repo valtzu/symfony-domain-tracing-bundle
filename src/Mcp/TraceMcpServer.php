@@ -8,33 +8,32 @@ namespace Valtzu\DomainTracingBundle\Mcp;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Extension\Apps\McpApps;
-use Mcp\Schema\Extension\Apps\ToolVisibility;
 use Mcp\Schema\Extension\Apps\UiToolMeta;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Server;
 use Mcp\Server\Transport\StdioTransport;
 use Twig\Environment;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
-use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Tracing\TraceTextFormatter;
 
 /**
  * Serves the traces to AI tools as an MCP server on the standard input and output. The "domain_trace" tool gives a
- * trace as text, and hosts that show MCP apps show its waterfall too. The waterfall gets its events with the
- * "domain_trace_events" tool, through the host, so that it needs no access to the network of the application.
+ * trace as text, and hosts that show MCP apps show its waterfall too. The events of the waterfall are in the "_meta"
+ * of the result, not in its structured content, because some hosts give the structured content to the model instead
+ * of the text.
  *
  * The MCP SDK (mcp/sdk) is optional: only this server needs it.
  */
 final readonly class TraceMcpServer
 {
     public const string APP_URI = 'ui://domain-tracing/trace';
+    public const string META_KEY = 'valtzu/domain-tracing';
     private const int TIMEOUT_SECONDS = 600;
 
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
-        private TracePoller $poller,
         private Environment $twig,
         private bool $describes,
     ) {
@@ -69,22 +68,6 @@ final readonly class TraceMcpServer
                 ],
                 meta: ['ui' => new UiToolMeta(self::APP_URI)],
             )
-            ->addTool(
-                $this->events(...),
-                'domain_trace_events',
-                'Domain trace events',
-                'Gives the events of a trace after a cursor, for the waterfall of the trace.',
-                inputSchema: [
-                    'type' => 'object',
-                    'properties' => [
-                        'id' => ['type' => 'string'],
-                        'cursor' => ['type' => 'string'],
-                        'describe' => ['type' => 'boolean'],
-                    ],
-                    'required' => ['id'],
-                ],
-                meta: ['ui' => new UiToolMeta(visibility: [ToolVisibility::App])],
-            )
             ->addResource(
                 fn (): TextResourceContents => new TextResourceContents(self::APP_URI, McpApps::MIME_TYPE, $this->app()),
                 self::APP_URI,
@@ -115,25 +98,16 @@ final readonly class TraceMcpServer
         $describe = $describe && $this->describes;
         $formatter = new TraceTextFormatter($values);
         $lines = [];
+        $events = [];
         foreach ($this->traces->follow($id, $describe, $stop) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
+            $events[] = [$event, $data];
         }
 
         return new CallToolResult(
             [new TextContent(implode("\n", $lines))],
-            structuredContent: ['id' => $id, 'describe' => $this->describes],
+            meta: [self::META_KEY => ['id' => $id, 'describe' => $describe, 'events' => $events]],
         );
-    }
-
-    public function events(string $id, string $cursor = '0', bool $describe = false): CallToolResult
-    {
-        if (!TraceStore::isValidId($id) || !$this->store->has($id)) {
-            return new CallToolResult([new TextContent(\sprintf('No request "%s" was recorded.', $id))], isError: true);
-        }
-
-        $events = $this->poller->events($this->store->rootOf($id), $describe && $this->describes, $cursor);
-
-        return new CallToolResult([new TextContent(\sprintf('%d events', \count($events['events'])))], structuredContent: $events);
     }
 
     private function app(): string
@@ -143,6 +117,7 @@ final readonly class TraceMcpServer
         return $this->twig->render('@DomainTracing/mcp_app.html.twig', [
             'style' => (string) file_get_contents($public.'/trace.css'),
             'script' => (string) file_get_contents($public.'/trace.js'),
+            'meta_key' => self::META_KEY,
         ]);
     }
 }

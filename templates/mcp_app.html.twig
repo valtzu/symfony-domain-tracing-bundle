@@ -25,20 +25,14 @@ const request = (method, params) => new Promise((resolve, reject) => {
 
 let followed = null;
 const follow = result => {
-    const trace = result?.structuredContent;
+    const trace = result?._meta?.['{{ meta_key }}'];
     if (!trace?.id || trace.id === followed) {
         return;
     }
     followed = trace.id;
     followTrace(trace.id, document.getElementById('domain-tracing'), {
         describe: trace.describe,
-        load: async (cursor, describe) => {
-            const events = await request('tools/call', { name: 'domain_trace_events', arguments: { id: trace.id, cursor, describe } });
-            if (events.isError) {
-                throw new Error(events.content?.[0]?.text ?? 'The events could not be read.');
-            }
-            return events.structuredContent;
-        },
+        load: async () => ({ events: trace.events, cursor: '', done: true }),
     });
 };
 

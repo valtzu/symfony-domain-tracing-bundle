@@ -213,9 +213,8 @@ the application, such as `docker compose exec -T app php bin/console debug:domai
 
 The `domain_trace` tool gives a trace as text, like the command: the ID of a request, `latest` or `next`, with
 `describe` and `values` options. Hosts that show [MCP apps](https://github.com/modelcontextprotocol/ext-apps),
-such as Claude, show its waterfall too, live. The app gets the events of the trace through the host, with the
-`domain_trace_events` tool, which only the app can call, so it does not need to reach the web server of the
-application.
+such as Claude, show its waterfall too. The events of the trace are in the result of the tool, so the app does not
+need to reach the web server of the application.
 
 ## How it is put together
 

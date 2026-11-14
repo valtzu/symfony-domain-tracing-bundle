@@ -104,7 +104,7 @@ return static function (ContainerConfigurator $container): void {
         ->public();
 
     $services->set('domain_tracing.mcp_server', TraceMcpServer::class)
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('domain_tracing.trace_poller'), service('twig'), '%domain_tracing.describe%']);
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), '%domain_tracing.describe%']);
 
     $services->set('domain_tracing.trace_command', TraceCommand::class)
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%domain_tracing.describe%', service('domain_tracing.mcp_server')])

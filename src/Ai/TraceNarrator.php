@@ -39,7 +39,7 @@ final readonly class TraceNarrator
         foreach ($steps as $index => $step) {
             $span = $spans[$step['span']];
             $prompt .= \sprintf(
-                "%d: [%s] %s\"%s\" (%s)%s%s%s\n",
+                "%d: [%s] %s\"%s\" (%s)%s%s%s%s\n",
                 $index,
                 $span['service'],
                 str_repeat('  ', max(0, $step['depth'] - $steps[0]['depth'])),
@@ -48,6 +48,7 @@ final readonly class TraceNarrator
                 isset($span['arguments']) ? ' called with '.$json($span['arguments']) : '',
                 \array_key_exists('returnValue', $span) ? ' returned '.$json($span['returnValue']) : '',
                 isset($span['exception']) && 'server' !== $span['kind'] ? ' threw '.self::exception($span['exception']) : '',
+                isset($step['repeats']) ? \sprintf(', called %d times in a loop, each time with the same calls and other values', $step['repeats']) : '',
             );
         }
         if ($omitted > 0) {

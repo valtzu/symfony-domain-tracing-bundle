@@ -65,7 +65,9 @@ final class TraceDescriberTest extends TestCase
         foreach ($narrations as $prompt) {
             static::assertLessThanOrEqual(200, preg_match_all('/^\d+: /m', $prompt), 'The calls in one prompt are limited');
         }
-        static::assertStringContainsString('4800 more calls are not listed', (string) end($narrations));
+        $prompt = (string) end($narrations);
+        static::assertSame(1, preg_match_all('/^\d+: .*App\\\\Import->importRow/m', $prompt), 'A loop is described once');
+        static::assertStringContainsString('called 5000 times in a loop', $prompt);
         static::assertTrue($store->isDescribed(self::ROOT));
     }
 }

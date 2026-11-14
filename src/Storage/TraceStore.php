@@ -268,7 +268,17 @@ final readonly class TraceStore
 
     public function newestStartedAfter(float $timestamp): ?string
     {
-        $newest = null;
+        $started = $this->startedAfter($timestamp);
+
+        return array_pop($started)['id'] ?? null;
+    }
+
+    /**
+     * @return list<array{id: string, startedAt: float}> the traces that started after the time, oldest first
+     */
+    public function startedAfter(float $timestamp): array
+    {
+        $started = [];
         foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
             if ((int) filemtime($path) < floor($timestamp)) {
                 continue;
@@ -276,13 +286,14 @@ final readonly class TraceStore
 
             $request = json_decode((string) fgets($handle = fopen($path, 'r')), true) ?? [];
             fclose($handle);
-            $startedAt = $request['startedAt'] ?? 0;
-            if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp && (null === $newest || $startedAt > $newest[1])) {
-                $newest = [basename($path, '.jsonl'), $startedAt];
+            $startedAt = is_numeric($request['startedAt'] ?? null) ? (float) $request['startedAt'] : 0.0;
+            if (null === ($request['parentSpanId'] ?? null) && $startedAt > $timestamp) {
+                $started[] = ['id' => basename($path, '.jsonl'), 'startedAt' => $startedAt];
             }
         }
+        usort($started, static fn (array $a, array $b): int => $a['startedAt'] <=> $b['startedAt']);
 
-        return $newest[0] ?? null;
+        return $started;
     }
 
     /**

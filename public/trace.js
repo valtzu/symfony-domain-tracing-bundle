@@ -272,7 +272,7 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { describe = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
     panel.innerHTML = '<h2></h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     if (title) {
@@ -307,6 +307,7 @@ export function followTrace(id, panel, { describe = false, title = 'What happene
         console.groupEnd();
         waterfall.recordingEnded();
         status.textContent = `${label}: ${steps} calls.${describe ? ' Describing…' : ''}`;
+        onEnd();
     });
     on('name', record => waterfall.name(record.function, record.name));
     on('event', event => waterfall.event(event));
@@ -326,6 +327,7 @@ export function followTrace(id, panel, { describe = false, title = 'What happene
         source.close();
         waterfall.describingEnded();
         panel.querySelector('.trace-status .trace-spinner')?.remove();
+        onDone();
     };
 
     return source;

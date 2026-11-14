@@ -31,6 +31,20 @@ final class TraceStoreTest extends TestCase
         $this->assertSame(self::ROOT, $this->store->rootOf(self::ROOT));
     }
 
+    public function testListsTheTracesThatStartedAfterATime()
+    {
+        $after = microtime(true);
+        usleep(1000);
+        $this->store->start($first = 'f1e2d3c4b5a69788', ['traceId' => str_repeat('c', 32), 'parentSpanId' => null]);
+        usleep(1000);
+        $this->store->start($second = 'a1b2c3d4e5f60718', ['traceId' => str_repeat('b', 32), 'parentSpanId' => null]);
+
+        $started = $this->store->startedAfter($after);
+        $this->assertSame([$first, $second], array_column($started, 'id'));
+        $this->assertSame([$second], array_column($this->store->startedAfter($started[0]['startedAt']), 'id'));
+        $this->assertSame($second, $this->store->newestStartedAfter($after));
+    }
+
     public function testKeepsTheRequestWhenItRestarts()
     {
         $this->store->addStep(self::ROOT, 0, 12, 1, 100);

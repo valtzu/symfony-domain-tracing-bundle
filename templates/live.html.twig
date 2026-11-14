@@ -13,46 +13,73 @@
     h1 { margin: 0; font-size: 22px; }
     .hint { color: var(--muted); margin: 0; }
     #traces { display: grid; gap: 16px; }
+    .auto-describe { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+    .trace-describe { margin-top: 12px; font: inherit; font-size: 13px; padding: 4px 12px; border: 1px solid var(--trace-line); border-radius: 6px; background: transparent; color: var(--trace-text); cursor: pointer; }
+    .trace-describe:hover { background: var(--trace-track); }
 </style>
 </head>
 <body>
 <main>
     <h1>Live trace</h1>
-    <p class="hint">Each request that starts after this page opened appears here while it runs. To describe a request with AI, open its Domain traces panel in the profiler.</p>
+    <p class="hint">Each request that runs application code after this page opened appears here while it runs.</p>
+    <label class="auto-describe"><input type="checkbox" id="auto-describe" checked> Describe each request with AI</label>
     <div id="traces"></div>
 </main>
 <script type="module">
     import { followTrace } from {{ path('domain_tracing_asset', {file: 'trace.js'})|json_encode|raw }};
 
     const traces = document.getElementById('traces');
-    let after = {{ now|json_encode|raw }};
+    const started = [];
+    let wake = () => {};
+    new EventSource(`{{ path('domain_tracing_started') }}?after={{ now|json_encode|raw }}`).addEventListener('trace', message => {
+        started.push(JSON.parse(message.data).id);
+        wake();
+    });
 
     async function waitForNextTrace() {
-        while (true) {
-            const { id } = await (await fetch(`{{ path('domain_tracing_newest') }}?after=${after}`)).json();
-            if (id) {
-                return id;
-            }
-            await new Promise(resolve => setTimeout(resolve, 500));
+        while (!started.length) {
+            await new Promise(resolve => wake = resolve);
         }
+        return started.shift();
     }
 
+    const autoDescribe = document.getElementById('auto-describe');
+    try {
+        autoDescribe.checked = 'off' !== localStorage.getItem('domain-tracing-auto-describe');
+    } catch {}
+    autoDescribe.addEventListener('change', () => {
+        try {
+            localStorage.setItem('domain-tracing-auto-describe', autoDescribe.checked ? 'on' : 'off');
+        } catch {}
+    });
+
+    function follow(id, panel, describe, onEnd = () => {}) {
+        followTrace(id, panel, {
+            describe,
+            title: null,
+            onStep: () => panel.hidden = false,
+            onEnd,
+            onDone: () => {
+                onEnd();
+                if (panel.hidden) {
+                    panel.remove();
+                } else if (!describe) {
+                    const button = panel.appendChild(document.createElement('button'));
+                    button.className = 'trace-describe';
+                    button.textContent = 'Describe';
+                    button.addEventListener('click', () => follow(id, panel, true));
+                }
+            },
+        });
+    }
+
+    // The next request is followed when the recording of this one ends, while its description goes on
     while (true) {
         const id = await waitForNextTrace();
         // A request that runs no application code, such as a 404 for a favicon, has nothing to show
         const panel = traces.insertBefore(document.createElement('section'), traces.firstChild);
         panel.hidden = true;
-        await new Promise(resolve => {
-            followTrace(id, panel, {
-                title: null,
-                onRequest: request => after = request.startedAt,
-                onStep: () => panel.hidden = false,
-                onDone: resolve,
-            });
-        });
-        if (panel.hidden) {
-            panel.remove();
-        }
+        await new Promise(resolve => follow(id, panel, autoDescribe.checked, resolve));
     }
 </script>
 </body>

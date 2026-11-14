@@ -6,7 +6,6 @@ declare(strict_types=1);
 namespace Valtzu\DomainTracingBundle\Controller;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,6 +18,8 @@ use Twig\Environment;
 final readonly class TraceController
 {
     private const TIMEOUT_SECONDS = 600;
+    private const HEARTBEAT_SECONDS = 15;
+    private const POLL_MICROSECONDS = 250_000;
 
     public function __construct(
         private TraceStore $store,
@@ -69,9 +70,38 @@ final readonly class TraceController
         return $response;
     }
 
-    #[Route('/_tracing/newest', name: 'domain_tracing_newest', methods: ['GET'])]
-    public function newest(Request $request): JsonResponse
+    /**
+     * Sends each trace that starts after the time of the "after" query parameter. Each event and heartbeat carries the
+     * time it reached as its ID, so that the browser resumes from there when it reconnects.
+     */
+    #[Route('/_tracing/started', name: 'domain_tracing_started', methods: ['GET'])]
+    public function started(Request $request): StreamedResponse
     {
-        return new JsonResponse(['id' => $this->store->newestStartedAfter(is_numeric($after = $request->query->get('after')) ? (float) $after : 0.0)]);
+        $after = $request->headers->get('Last-Event-ID') ?? $request->query->get('after');
+        $after = is_numeric($after) ? (float) $after : microtime(true);
+
+        $stream = function () use ($after) {
+            set_time_limit(0);
+            $startedAt = $heartbeatAt = microtime(true);
+            while (!connection_aborted() && microtime(true) - $startedAt < self::TIMEOUT_SECONDS) {
+                foreach ($this->store->startedAfter($after) as $trace) {
+                    $after = $trace['startedAt'];
+                    echo 'id: ', json_encode($after), "\nevent: trace\ndata: ", json_encode($trace), "\n\n";
+                    $heartbeatAt = microtime(true);
+                }
+                if (microtime(true) - $heartbeatAt >= self::HEARTBEAT_SECONDS) {
+                    echo 'id: ', json_encode($after), "\n\n";
+                    $heartbeatAt = microtime(true);
+                }
+                flush();
+                usleep(self::POLL_MICROSECONDS);
+            }
+        };
+
+        return new StreamedResponse($stream, headers: [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+        ]);
     }
 }

@@ -2,6 +2,11 @@
 
 namespace Valtzu\DomainTracingBundle\Tracing;
 
+use Valtzu\DomainTracingBundle\Ai\OperationNamer;
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
+use Valtzu\DomainTracingBundle\Storage\TraceStore;
+use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
+
 /**
  * Follows a trace while it is recorded, and gives what a person sees of it: the request, the spans with the names of
  * their operations, and, when the trace is described, the events and the names that the AI writes. It reads the Xdebug

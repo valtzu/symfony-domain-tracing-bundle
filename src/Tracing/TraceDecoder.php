@@ -2,6 +2,8 @@
 
 namespace Valtzu\DomainTracingBundle\Tracing;
 
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
+
 /**
  * Expands the compact records of a trace, which refer to code by file and function tables, into records with the
  * file path, the function name and the source line, read from the blob store.

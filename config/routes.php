@@ -3,5 +3,5 @@
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return static function (RoutingConfigurator $routes): void {
-    $routes->import('../src/Tracing/TraceController.php', 'attribute');
+    $routes->import('../src/Controller/TraceController.php', 'attribute');
 };

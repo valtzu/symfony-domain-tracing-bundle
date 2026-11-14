@@ -3,7 +3,7 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Valtzu\DomainTracingBundle\Tracing\TraceDataCollector;
+use Valtzu\DomainTracingBundle\DataCollector\TraceDataCollector;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()

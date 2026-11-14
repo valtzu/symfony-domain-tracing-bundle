@@ -2,6 +2,11 @@
 
 namespace Valtzu\DomainTracingBundle\Tracing;
 
+use Valtzu\DomainTracingBundle\Ai\OperationNamer;
+use Valtzu\DomainTracingBundle\Ai\TraceNarrator;
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
+use Valtzu\DomainTracingBundle\Storage\TraceStore;
+
 /**
  * Follows a trace while it is recorded: builds its spans, names the operations and describes what happened in them.
  * The results are written next to the trace, so that a page can show them while they come. One process describes a

@@ -2,6 +2,9 @@
 
 namespace Valtzu\DomainTracingBundle\Tracing;
 
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
+use Valtzu\DomainTracingBundle\Storage\TraceStore;
+
 /**
  * Reads the decoded records of a trace while they are written: those of the request that started it and those of the requests
  * it made to other services, merged in time order.

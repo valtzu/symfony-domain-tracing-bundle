@@ -15,7 +15,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
-use Valtzu\DomainTracingBundle\Ai\ContextGenerateCommand;
+use Valtzu\DomainTracingBundle\Command\ContextGenerateCommand;
 use Valtzu\DomainTracingBundle\Ai\ContextWriter;
 use Valtzu\DomainTracingBundle\Ai\ProjectSummary;
 

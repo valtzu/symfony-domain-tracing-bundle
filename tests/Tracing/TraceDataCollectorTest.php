@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Valtzu\DomainTracingBundle\Tracing\TraceDataCollector;
 use Valtzu\DomainTracingBundle\Tracing\TraceStore;
+use Valtzu\DomainTracingBundle\Tracing\XdebugSetup;
 
 final class TraceDataCollectorTest extends TestCase
 {
@@ -31,13 +32,31 @@ final class TraceDataCollectorTest extends TestCase
         $this->assertNull($this->collect(null));
     }
 
+    public function testSaysWhyARequestWasNotRecorded()
+    {
+        if (\extension_loaded('xdebug')) {
+            $this->markTestSkipped('Xdebug is loaded.');
+        }
+
+        $collector = $this->collector(null);
+
+        $this->assertSame(['Xdebug is not loaded.'], $collector->getProblems());
+        $this->assertStringContainsString('xdebug.output_dir=/srv/app/var/share/traces', $collector->getXdebugSettings());
+        $this->assertSame([], $this->collector(self::RECORDED)->getProblems());
+    }
+
     private function collect(?string $requestId): ?string
     {
-        $collector = new TraceDataCollector($this->store);
+        return $this->collector($requestId)->getRequestId();
+    }
+
+    private function collector(?string $requestId): TraceDataCollector
+    {
+        $collector = new TraceDataCollector($this->store, new XdebugSetup('/srv/app/var/share/traces'));
         $request = new Request();
         $request->headers->set('X-Request-Id', $requestId);
         $collector->collect($request, new Response());
 
-        return $collector->getRequestId();
+        return $collector;
     }
 }

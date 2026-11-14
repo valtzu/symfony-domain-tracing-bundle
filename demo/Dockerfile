@@ -27,6 +27,5 @@ RUN install-php-extensions xdebug \
     && echo 'zend_extension=xdebug.so' > /usr/local/etc/php/conf.d/xdebug.ini
 
 COPY frankenphp/conf.d/xdebug.dev.ini /usr/local/etc/php/conf.d/zz-xdebug.ini
-COPY frankenphp/xdebug-prepend.php /usr/local/etc/php/xdebug-prepend.php
 
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch"]

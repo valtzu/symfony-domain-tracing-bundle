@@ -37,11 +37,42 @@ Then open the live traces and place an order in the demo shop.
 | Live traces | http://localhost:8100/_tracing/ |
 | Trace of one request | the "Domain traces" panel of the Symfony profiler |
 
+## Install in an application
+
+Requirements: Symfony 8.2, Xdebug for the PHP of the web server, a git repository for the code, and the
+[Claude Code CLI](https://code.claude.com/docs/en/overview) logged in, as `claude` on the `PATH`.
+
+1. Require the bundle as a dev dependency. Symfony Flex enables it in the `dev` and `test` environments, with the
+   web profiler. The bundle needs no configuration, and the empty `config/packages/ai.yaml` of the AI bundle can stay
+   as it is.
+
+   ```shell
+   composer require --dev valtzu/domain-tracing-bundle
+   ```
+
+2. Create the trace directory, and add the Xdebug settings to the `php.ini` of the web server. The command prints
+   them with the paths of the application. Restart the web server after that.
+
+   ```shell
+   mkdir -p var/share/traces
+   bin/console domain-tracing:xdebug-settings
+   ```
+
+3. Start the recorder, and keep it running:
+
+   ```shell
+   bin/console domain-tracing:run
+   ```
+
+4. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
+   the panel tells why. `/_tracing/` shows the requests live.
+
+Set `OTEL_SERVICE_NAME` in the environment of each service to name it in the traces.
+
 ## How it is put together
 
-- The root directory is a Symfony bundle, `DomainTracingBundle`. An application installs it in dev and imports its
-  routes, which serve the live view and its event stream under `/_tracing/`. It also adds a "Domain traces" panel to the
-  profiler.
+- The root directory is a Symfony bundle, `DomainTracingBundle`. In debug mode, it serves the live view and its event
+  stream under `/_tracing/`, and adds a "Domain traces" panel to the profiler.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
   no tracing code. It requires the bundle from the parent directory.
 - The `tracing` container runs `bin/console domain-tracing:run` with the image of the demo:
@@ -51,12 +82,11 @@ Then open the live traces and place an order in the demo shop.
     directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
   - The worker process builds the spans, names the operations (once per method and code version), describes the
     request when someone opens its "Domain traces" panel in the profiler, and removes secrets before anything goes to the AI. It reads the source from the git repositories in
-    `TRACE_GIT_REPOSITORIES`, including uncommitted files.
+    `TRACE_GIT_REPOSITORIES` (the project directory by default), including uncommitted files.
 
-A service needs the Xdebug settings of `demo/frankenphp/conf.d/xdebug.dev.ini` with the prepend file that limits the
-trace and the code coverage to the application and writes the lines that ran next to the trace,
-`XDEBUG_CONFIG=client_host=tracing`, the shared trace directory mounted at `var/share/traces`, and an
-`OTEL_SERVICE_NAME`.
+A service needs the settings of `bin/console domain-tracing:xdebug-settings`. Their prepend file limits the trace and the
+code coverage to the application, and writes the lines that ran next to the trace. In the demo, the services also have
+`XDEBUG_CONFIG=client_host=tracing` and the shared trace directory mounted at `var/share/traces`.
 
 ## Limits
 

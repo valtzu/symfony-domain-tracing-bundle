@@ -98,13 +98,16 @@ final readonly class TraceStore
     }
 
     /**
-     * Removes all the records of the span but the first one, to read its Xdebug trace again.
+     * Removes all the records of the span but the first one, to read its Xdebug trace again. The span gets a new file,
+     * so that the processes that read the old one see that it was replaced.
      */
     public function restart(string $id): void
     {
         $request = $this->request($id);
         if (null !== $request) {
-            file_put_contents($this->path($id), json_encode($request, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n");
+            $temporary = $this->path($id).'.'.bin2hex(random_bytes(4));
+            file_put_contents($temporary, json_encode($request, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n");
+            rename($temporary, $this->path($id));
         }
     }
 
@@ -210,7 +213,9 @@ final readonly class TraceStore
      */
     public function readNarration(string $rootId, int $offset = 0): array
     {
-        return $this->readLines($this->narrationPath($rootId), $offset) ?? ['records' => [], 'offset' => $offset];
+        $read = $this->readLines($this->narrationPath($rootId), $offset);
+
+        return null === $read ? ['records' => [], 'offset' => $offset] : ['records' => $read['records'], 'offset' => $read['offset']];
     }
 
     /**
@@ -281,9 +286,15 @@ final readonly class TraceStore
     /**
      * @return array{records: list<array>, offset: int}|null null when the trace does not exist
      */
-    public function read(string $id, int $offset = 0): ?array
+    /**
+     * @param int|null $file the "file" that the previous read returned
+     *
+     * @return array{records: list<array>, offset: int, file: int, restarted: bool}|null the records from the offset, or
+     *                                                                                  from the start when the span restarted
+     */
+    public function read(string $id, int $offset = 0, ?int $file = null): ?array
     {
-        return self::isValidId($id) ? $this->readLines($this->path($id), $offset) : null;
+        return self::isValidId($id) ? $this->readLines($this->path($id), $offset, $file) : null;
     }
 
     public function newestStartedAfter(float $timestamp): ?string
@@ -317,15 +328,20 @@ final readonly class TraceStore
     }
 
     /**
-     * @return array{records: list<array>, offset: int}|null
+     * @return array{records: list<array>, offset: int, file: int, restarted: bool}|null
      */
-    private function readLines(string $path, int $offset): ?array
+    private function readLines(string $path, int $offset, ?int $file = null): ?array
     {
-        if (!is_file($path)) {
+        if (!is_file($path) || false === $handle = @fopen($path, 'r')) {
             return null;
         }
 
-        $handle = fopen($path, 'r');
+        $stat = fstat($handle);
+        $inode = false === $stat ? 0 : $stat['ino'];
+        $restarted = null !== $file && $file !== $inode;
+        if ($restarted) {
+            $offset = 0;
+        }
         fseek($handle, $offset);
         $records = [];
         while (false !== $line = fgets($handle)) {
@@ -339,7 +355,7 @@ final readonly class TraceStore
         }
         fclose($handle);
 
-        return ['records' => $records, 'offset' => $offset];
+        return ['records' => $records, 'offset' => $offset, 'file' => $inode, 'restarted' => $restarted];
     }
 
     private function append(string $id, array $record): void

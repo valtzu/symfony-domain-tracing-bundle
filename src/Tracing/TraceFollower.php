@@ -16,6 +16,15 @@ final class TraceFollower
 {
     /** @var array<string, int> read offsets by request */
     private array $offsets;
+
+    /** @var array<string, int> the file of each request, which changes when another process restarts the request */
+    private array $files = [];
+
+    /** @var array<string, int> the number of records read by request */
+    private array $read = [];
+
+    /** @var array<string, int> the records to skip by request, because they were read before the request restarted */
+    private array $skip = [];
     private ?string $traceId = null;
 
     /** @var array<string, true> */
@@ -46,8 +55,21 @@ final class TraceFollower
             $knownRequests = \count($this->offsets);
 
             foreach ($this->offsets as $requestId => $offset) {
-                $read = $this->store->read($requestId, $offset);
-                foreach ($read['records'] ?? [] as $record) {
+                $read = $this->store->read($requestId, $offset, $this->files[$requestId] ?? null);
+                if (null === $read) {
+                    continue;
+                }
+                $this->files[$requestId] = $read['file'];
+                // A restarted request gets the same records again, so the ones read before are skipped
+                if ($read['restarted']) {
+                    $this->skip[$requestId] = $this->read[$requestId] ?? 0;
+                }
+                foreach ($read['records'] as $record) {
+                    if (($this->skip[$requestId] ?? 0) > 0) {
+                        $this->skip[$requestId]--;
+                        continue;
+                    }
+                    $this->read[$requestId] = ($this->read[$requestId] ?? 0) + 1;
                     if (array_is_list($record)) {
                         [$function, $line, $depth, $microseconds] = $record;
                         $record = ['type' => 'step', 'fn' => $function, 'line' => $line, 'depth' => $depth, 'at' => $this->startedAt[$requestId] + $microseconds / 1e6];
@@ -63,7 +85,7 @@ final class TraceFollower
                         $this->ended[$requestId] = true;
                     }
                 }
-                $this->offsets[$requestId] = $read['offset'] ?? $offset;
+                $this->offsets[$requestId] = $read['offset'];
             }
             $this->discoverRequests();
         } while (\count($this->offsets) > $knownRequests);

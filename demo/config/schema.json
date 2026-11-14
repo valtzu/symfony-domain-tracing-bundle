@@ -7948,19 +7948,6 @@
                         "$ref": "#/$defs/types/string_null",
                         "default": "%kernel.project_dir%/config/domain_tracing.md",
                         "description": "Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist."
-                    },
-                    "exclude_uris": {
-                        "$ref": "#/$defs/types/array_null",
-                        "items": {
-                            "$ref": "#/$defs/types/scalar"
-                        },
-                        "description": "Regular expressions, without delimiters, matched against the path and the query of the requests not to record. The pages of this bundle and of the profiler are never recorded.",
-                        "examples": [
-                            [
-                                "^/health$",
-                                "[?&]frankenphp_hot_reloading="
-                            ]
-                        ]
                     }
                 },
                 "additionalProperties": false

@@ -22,7 +22,6 @@ use Valtzu\DomainTracingBundle\EventListener\RecordingListener;
 use Valtzu\DomainTracingBundle\HttpClient\TraceparentHttpClient;
 use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
-use Valtzu\DomainTracingBundle\Tracing\ExcludedUris;
 use Valtzu\DomainTracingBundle\Tracing\TraceDescriber;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Xdebug\Recorder;
@@ -42,9 +41,6 @@ return static function (ContainerConfigurator $container): void {
     $services->set('domain_tracing.blob_store', BlobStore::class)
         ->args(['%kernel.project_dir%/var/blobs', '%env(default:kernel.project_dir:TRACE_GIT_REPOSITORIES)%']);
 
-    $services->set('domain_tracing.excluded_uris', ExcludedUris::class)
-        ->args([param('domain_tracing.exclude_uris')]);
-
     $services->set('domain_tracing.secret_redactor', SecretRedactor::class);
 
     $services->set('domain_tracing.xdebug_value', XdebugValue::class)
@@ -54,7 +50,7 @@ return static function (ContainerConfigurator $container): void {
         ->args(['%kernel.project_dir%/var/share/traces']);
 
     $services->set('domain_tracing.recorder', Recorder::class)
-        ->args(['%kernel.project_dir%', service('domain_tracing.excluded_uris'), service('domain_tracing.trace_store')])
+        ->args(['%kernel.project_dir%', service('domain_tracing.trace_store')])
         ->tag('kernel.reset', ['method' => 'reset']);
 
     $services->set('domain_tracing.recording_listener', RecordingListener::class)

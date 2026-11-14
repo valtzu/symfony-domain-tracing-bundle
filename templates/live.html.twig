@@ -39,14 +39,20 @@
 
     while (true) {
         const id = await waitForNextTrace();
+        // A request that runs no application code, such as a 404 for a favicon, has nothing to show
         const panel = traces.insertBefore(document.createElement('section'), traces.firstChild);
+        panel.hidden = true;
         await new Promise(resolve => {
             followTrace(id, panel, {
                 title: null,
                 onRequest: request => after = request.startedAt,
+                onStep: () => panel.hidden = false,
                 onDone: resolve,
             });
         });
+        if (panel.hidden) {
+            panel.remove();
+        }
     }
 </script>
 </body>

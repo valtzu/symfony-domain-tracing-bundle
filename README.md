@@ -69,7 +69,8 @@ Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, a git 
    (`xdebug.trace_format=1`). In another format, the request is not recorded, and the profiler panel tells why.
 
 3. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
-   the panel tells why. `/_tracing/` shows the requests live.
+   the panel tells why. `/_tracing/` shows the requests that run application code, live. The pages of the bundle and
+   of the profiler are never recorded.
 
    A console command is recorded only when it runs with `--profile`, like its profile. Its trace is in the "Domain
    traces" panel of that profile.
@@ -78,17 +79,6 @@ When a request calls other services with Symfony HttpClient, the bundle adds the
 request already has one, from OpenTelemetry for example. A service records its requests in the same trace when it
 has the bundle too and writes its traces into the same directory. Set `OTEL_SERVICE_NAME` in the environment of each
 service to name it; otherwise a service is named after its project directory.
-
-The `exclude_uris` option lists the requests not to record, as regular expressions matched against the path and the
-query. The pages of the bundle and of the profiler are never recorded.
-
-```yaml
-# config/packages/domain_tracing.yaml
-when@dev:
-    domain_tracing:
-        exclude_uris:
-            - '^/health$'
-```
 
 The AI agents name the operations and describe the requests with general instructions, in
 [`config/prompts/`](config/prompts/). To get the words of your business in the traces, describe the application in

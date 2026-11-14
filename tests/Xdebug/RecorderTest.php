@@ -107,10 +107,10 @@ final class RecorderTest extends TestCase
         static::assertDirectoryDoesNotExist($this->traceDirectory);
     }
 
-    public function testDoesNotRecordAnExcludedRequest(): void
+    public function testDoesNotRecordTheProfiler(): void
     {
-        static::assertNull($this->record('/health')['spanId']);
-        static::assertNull($this->record('/health', ['xdebug.start_with_request' => 'yes', 'xdebug.trace_format' => '1', 'xdebug.output_dir' => $this->ownDirectory])['spanId']);
+        static::assertNull($this->record('/_profiler/abc123')['spanId']);
+        static::assertNull($this->record('/_profiler/abc123', ['xdebug.start_with_request' => 'yes', 'xdebug.trace_format' => '1', 'xdebug.output_dir' => $this->ownDirectory])['spanId']);
         static::assertDirectoryDoesNotExist($this->traceDirectory);
         static::assertCount(1, glob($this->ownDirectory.'/trace.*') ?: [], 'The trace of Xdebug is left as it is');
     }

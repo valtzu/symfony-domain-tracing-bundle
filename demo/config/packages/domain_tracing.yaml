@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=../schema.json
-when@dev:
-    domain_tracing:
-        exclude_uris:
-            # FrankenPHP reloads the page with this query when the code changes
-            - '[?&]frankenphp_hot_reloading='

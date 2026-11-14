@@ -7,7 +7,6 @@ namespace Valtzu\DomainTracingBundle\Xdebug;
 
 use Symfony\Contracts\Service\ResetInterface;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
-use Valtzu\DomainTracingBundle\Tracing\ExcludedUris;
 
 /**
  * Records one request at a time: it starts an Xdebug trace of the application, from the PSR-4 autoload section of its
@@ -43,7 +42,6 @@ final class Recorder implements ResetInterface
 
     public function __construct(
         private readonly string $projectDir,
-        private readonly ExcludedUris $excluded,
         private readonly TraceStore $store,
     ) {
     }
@@ -60,7 +58,7 @@ final class Recorder implements ResetInterface
         }
 
         $context = RequestContext::fromServer($server);
-        if (null === $context || 'CLI' !== $context['method'] && null !== $context['uri'] && $this->excluded->matches($context['uri'])) {
+        if (null === $context) {
             return null;
         }
 

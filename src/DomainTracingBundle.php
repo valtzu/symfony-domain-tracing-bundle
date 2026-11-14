@@ -22,11 +22,6 @@ final class DomainTracingBundle extends AbstractBundle
                     ->info('Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist.')
                     ->defaultValue('%kernel.project_dir%/config/domain_tracing.md')
                 ->end()
-                ->arrayNode('exclude_uris')
-                    ->info('Regular expressions, without delimiters, matched against the path and the query of the requests not to record. The pages of this bundle and of the profiler are never recorded.')
-                    ->example(['^/health$', '[?&]frankenphp_hot_reloading='])
-                    ->scalarPrototype()->end()
-                ->end()
             ->end();
     }
 
@@ -49,7 +44,6 @@ final class DomainTracingBundle extends AbstractBundle
             return;
         }
 
-        $configurator->parameters()->set('domain_tracing.exclude_uris', $config['exclude_uris']);
         $configurator->parameters()->set('domain_tracing.context_file', $config['context_file'] ?? null);
         $configurator->import('../config/services.php');
     }

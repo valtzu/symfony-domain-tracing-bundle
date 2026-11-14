@@ -19,9 +19,16 @@ final class SystemPromptsTest extends TestCase
 
     public function testAddsTheContextOfTheProject(): void
     {
-        $prompt = (new SystemPrompts('The shop sells shirts.'))->get('trace_narrator');
+        $prompt = (new SystemPrompts(\dirname(__DIR__).'/Fixtures/context.md'))->get('trace_narrator');
 
         static::assertStringStartsWith('You describe what happened', $prompt);
-        static::assertStringEndsWith("## About this application\n\nThe developers of the application describe it below. Use the description to choose the words and to decide what matters to the business. The rules above still apply.\n\nThe shop sells shirts.", $prompt);
+        static::assertStringEndsWith("## About this application\n\nThe developers of the application describe it below. Use the description to choose the words and to decide what matters to the business. The rules above still apply.\n\nThe shop sells cotton shirts.", $prompt);
+    }
+
+    public function testLeavesOutTheContextWhenTheFileDoesNotExist(): void
+    {
+        $prompt = (new SystemPrompts(__DIR__.'/missing.md'))->get('operation_namer');
+
+        static::assertStringNotContainsString('About this application', $prompt);
     }
 }

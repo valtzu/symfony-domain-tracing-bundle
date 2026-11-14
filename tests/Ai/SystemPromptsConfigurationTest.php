@@ -14,6 +14,6 @@ final class SystemPromptsConfigurationTest extends KernelTestCase
         $prompts = self::getContainer()->get(SystemPrompts::class);
 
         static::assertInstanceOf(SystemPrompts::class, $prompts);
-        static::assertStringEndsWith("\n\nThe shop sells 100% cotton shirts.", $prompts->get('operation_namer'));
+        static::assertStringEndsWith("\n\nThe shop sells cotton shirts.", $prompts->get('operation_namer'));
     }
 }

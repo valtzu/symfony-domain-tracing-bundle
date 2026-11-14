@@ -1477,7 +1477,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     }>,
  * }
  * @psalm-type DomainTracingConfig = array{
- *     context?: string|Param, // Description of the application that the AI agents get with their instructions, such as what it does, who reads the traces and the words of the business
+ *     context_file?: string|Param, // Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist. // Default: "%kernel.project_dir%/config/domain_tracing.md"
  *     exclude_uris?: list<scalar|Param|null>,
  * }
  * @psalm-type ConfigType = array{

@@ -7944,12 +7944,10 @@
             "domain_tracing": {
                 "$ref": "#/$defs/types/object_null",
                 "properties": {
-                    "context": {
+                    "context_file": {
                         "$ref": "#/$defs/types/string_null",
-                        "description": "Description of the application that the AI agents get with their instructions, such as what it does, who reads the traces and the words of the business",
-                        "examples": [
-                            "The application is a web shop. The people who read the traces work in customer support."
-                        ]
+                        "default": "%kernel.project_dir%/config/domain_tracing.md",
+                        "description": "Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist."
                     },
                     "exclude_uris": {
                         "$ref": "#/$defs/types/array_null",

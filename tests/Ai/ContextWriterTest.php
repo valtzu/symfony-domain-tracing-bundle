@@ -71,21 +71,21 @@ final class ContextWriterTest extends TestCase
         static::assertSame(['The shop ', 'sells shirts.'], iterator_to_array((new ContextWriter($agent, $this->project()))->write(), preserve_keys: false));
     }
 
-    public function testCommandWritesTheConfigurationFile(): void
+    public function testCommandWritesTheContextFile(): void
     {
-        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir)));
+        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/domain_tracing.md')));
 
         static::assertSame(0, $tester->execute(['--write' => true]));
-        static::assertSame("when@dev:\n    domain_tracing:\n        context: |\n            The shop sells shirts.\n", file_get_contents($this->projectDir.'/config/packages/domain_tracing.yaml'));
+        static::assertSame("The shop sells shirts.\n", file_get_contents($this->projectDir.'/config/domain_tracing.md'));
     }
 
     public function testCommandWritesNothingWithoutAsking(): void
     {
-        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir)));
+        $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/domain_tracing.md')));
 
         static::assertSame(0, $tester->execute([], ['interactive' => false]));
         static::assertStringContainsString('The shop sells shirts.', $tester->getDisplay());
-        static::assertFileDoesNotExist($this->projectDir.'/config/packages/domain_tracing.yaml');
+        static::assertFileDoesNotExist($this->projectDir.'/config/domain_tracing.md');
     }
 
     private function project(): ProjectSummary

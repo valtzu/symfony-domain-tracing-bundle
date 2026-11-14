@@ -11,7 +11,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Writes a first description of the application for the "domain_tracing.context" option.
+ * Writes a first description of the application for the file of the "domain_tracing.context_file" option.
  */
 final readonly class ContextWriter
 {

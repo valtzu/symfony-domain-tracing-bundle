@@ -79,18 +79,16 @@ when@dev:
 
 The AI agents name the operations and describe the requests with general instructions, in
 [`config/prompts/`](config/prompts/). To get the words of your business in the traces, describe the application in
-`config/packages/domain_tracing.yaml`. The agents get this description after their instructions:
+`config/domain_tracing.md`. The agents get this description after their instructions:
 
-```yaml
-when@dev:
-    domain_tracing:
-        context: |
-            The application is a web shop. The people who read the traces work in customer support.
-            Use the words of the shop: customers, products, prices, discounts, stock and payment.
+```text
+The application is a web shop. The people who read the traces work in customer support.
+Use the words of the shop: customers, products, prices, discounts, stock and payment.
 ```
 
 `bin/console domain-tracing:context:generate` writes a first version of this file. It sends the README, the routes and
-the class names of the application to an AI agent. Read the description before you commit it.
+the class names of the application to an AI agent. Read the description before you commit it. The `context_file`
+option changes the path of the file.
 
 The agents use Claude Code with the `opus` model. To use another platform of the AI bundle, one that can stream the
 answer, configure the agents of the bundle in `config/packages/ai.yaml`:

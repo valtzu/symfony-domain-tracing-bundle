@@ -12,7 +12,4 @@ when@dev:
         agent:
             domain_tracing:
                 platform: claude_code.platform
-                model:
-                    name: opus
-                    options:
-                        tools: []
+                model: opus

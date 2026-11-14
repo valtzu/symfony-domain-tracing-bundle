@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../schema.json
+when@dev:
+    domain_tracing:
+        context: |
+            The application is a web shop. The people who read the traces work in customer support.
+            Use the words of the shop: customers, products, prices, discounts, stock and payment.

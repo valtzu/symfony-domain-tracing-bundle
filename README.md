@@ -69,6 +69,18 @@ Requirements: Symfony 8.2, Xdebug for the PHP of the web server, a git repositor
 
 Set `OTEL_SERVICE_NAME` in the environment of each service to name it in the traces.
 
+The AI agents name the operations and describe the requests with general instructions, in
+[`config/prompts/`](config/prompts/). To get the words of your business in the traces, describe the application in
+`config/packages/domain_tracing.yaml`. The agents get this description after their instructions:
+
+```yaml
+when@dev:
+    domain_tracing:
+        context: |
+            The application is a web shop. The people who read the traces work in customer support.
+            Use the words of the shop: customers, products, prices, discounts, stock and payment.
+```
+
 ## How it is put together
 
 - The root directory is a Symfony bundle, `DomainTracingBundle`. In debug mode, it serves the live view and its event

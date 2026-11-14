@@ -8,6 +8,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Valtzu\DomainTracingBundle\Ai\SystemPrompts;
 
 /**
  * Gives each application method a short business name, such as "Apply discounts". A name is asked once and kept until
@@ -20,6 +21,7 @@ final readonly class OperationNamer
         private AgentInterface $agent,
         #[Autowire(service: 'cache.app')]
         private CacheItemPoolInterface $cache,
+        private SystemPrompts $prompts = new SystemPrompts(),
     ) {
     }
 
@@ -57,7 +59,7 @@ final readonly class OperationNamer
         }
 
         $buffer = '';
-        foreach ($this->agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
+        foreach ($this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('operation_namer')), Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
             if (!$delta instanceof TextDelta) {
                 continue;
             }

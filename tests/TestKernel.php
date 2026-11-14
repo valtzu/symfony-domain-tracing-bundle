@@ -28,5 +28,6 @@ final class TestKernel extends Kernel
     private function configureContainer(ContainerConfigurator $container): void
     {
         $container->extension('framework', ['test' => true, 'secret' => 'test']);
+        $container->extension('domain_tracing', ['context' => 'The shop sells 100% cotton shirts.']);
     }
 }

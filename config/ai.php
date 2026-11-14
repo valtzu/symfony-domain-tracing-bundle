@@ -11,7 +11,6 @@ return static function (ContainerConfigurator $container): void {
                     'name' => 'opus',
                     'options' => ['tools' => []],
                 ],
-                'prompt' => ['file' => __DIR__.'/prompts/operation_namer.md'],
             ],
             'trace_narrator' => [
                 'platform' => 'domain_tracing.platform',
@@ -19,7 +18,6 @@ return static function (ContainerConfigurator $container): void {
                     'name' => 'opus',
                     'options' => ['tools' => []],
                 ],
-                'prompt' => ['file' => __DIR__.'/prompts/trace_narrator.md'],
             ],
         ],
     ]);

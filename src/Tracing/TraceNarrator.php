@@ -7,6 +7,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Valtzu\DomainTracingBundle\Ai\SystemPrompts;
 
 /**
  * Describes what happened inside the operations of a trace, in business terms, as events on their spans. It works on
@@ -17,6 +18,7 @@ final readonly class TraceNarrator
     public function __construct(
         #[Autowire(service: 'ai.agent.trace_narrator')]
         private AgentInterface $agent,
+        private SystemPrompts $prompts = new SystemPrompts(),
     ) {
     }
 
@@ -55,7 +57,7 @@ final readonly class TraceNarrator
         $prompt .= "\n".($traceEnded ? 'The request has finished.' : 'The request is still running. More calls will follow.');
 
         $buffer = '';
-        foreach ($this->agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
+        foreach ($this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('trace_narrator')), Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
             if (!$delta instanceof TextDelta) {
                 continue;
             }

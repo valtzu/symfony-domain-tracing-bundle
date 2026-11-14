@@ -18,6 +18,7 @@ find-overly-wide-return-types = true
 analyze-dead-code = true
 check-throws = true
 check-dead-catch = true
+unchecked-exceptions = ["LogicException", "PHPUnit\\Framework\\Exception", "Psr\\Container\\ContainerExceptionInterface"]
 strict-list-index-checks = true
 strict-array-index-existence = true
 no-boolean-literal-comparison = true

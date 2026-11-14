@@ -12,7 +12,7 @@ return static function (ContainerConfigurator $container): void {
             ->autoconfigure();
 
     $services->load('Valtzu\\DomainTracingBundle\\', '../src/')
-        ->exclude(['../src/DomainTracingBundle.php']);
+        ->exclude(['../src/DomainTracingBundle.php', '../src/DependencyInjection/']);
 
     $services->set(TraceDataCollector::class)
         ->autoconfigure(false)

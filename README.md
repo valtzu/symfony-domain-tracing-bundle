@@ -39,14 +39,17 @@ Then open the live traces and place an order in the demo shop.
 
 ## Install in an application
 
-Requirements: Symfony 8.2, Xdebug for the PHP of the web server, a git repository for the code, and the
+Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, a git repository for the code, and the
 [Claude Code CLI](https://code.claude.com/docs/en/overview) logged in, as `claude` on the `PATH`.
 
 1. Require the bundle as a dev dependency. Symfony Flex enables it in the `dev` and `test` environments, with the
    web profiler. The bundle needs no configuration, and the empty `config/packages/ai.yaml` of the AI bundle can stay
-   as it is.
+   as it is. [Symfony AI](https://symfony.com/doc/current/ai/index.html) has only beta releases yet, so a project
+   that accepts only stable packages, as a new Symfony project does, must allow betas first. With `prefer-stable`, the
+   other packages stay stable.
 
    ```shell
+   composer config minimum-stability beta
    composer require --dev valtzu/domain-tracing-bundle
    ```
 

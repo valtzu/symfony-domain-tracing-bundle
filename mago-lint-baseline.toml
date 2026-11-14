@@ -37,6 +37,12 @@ message = "Missing `declare(strict_types=1);` statement at the beginning of the 
 count = 1
 
 [[issues]]
+file = "src/DependencyInjection/SerializerDescriberPass.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
 file = "src/DomainTracingBundle.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
@@ -752,6 +758,18 @@ count = 2
 
 [[issues]]
 file = "tests/Ai/SecretRedactorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/DependencyInjection/SerializerDescriberPassTest.php"
+code = "assertion-style"
+message = "Inconsistent assertions style."
+count = 2
+
+[[issues]]
+file = "tests/DependencyInjection/SerializerDescriberPassTest.php"
 code = "strict-types"
 message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
 count = 1

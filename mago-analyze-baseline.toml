@@ -134,12 +134,6 @@ count = 1
 
 [[issues]]
 file = "src/DomainTracingBundle.php"
-code = "missing-override-attribute"
-message = 'Missing `#[Override]` attribute on overriding method `Valtzu\DomainTracingBundle\DomainTracingBundle::prependExtension`.'
-count = 1
-
-[[issues]]
-file = "src/DomainTracingBundle.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('exclude_uris')` accessed on `array<array-key, mixed>`."
 count = 1
@@ -2506,6 +2500,18 @@ count = 1
 file = "tests/Ai/SecretRedactorTest.php"
 code = "missing-return-type"
 message = "Function `testRedactsValuesOfSecretEnvironmentVariables` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/DependencyInjection/SerializerDescriberPassTest.php"
+code = "missing-return-type"
+message = "Function `testKeepsTheMetadataOfTheSerializer` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/DependencyInjection/SerializerDescriberPassTest.php"
+code = "missing-return-type"
+message = "Function `testLetsTheDescriberUseItsDefaultWhenTheSerializerIsDisabled` is missing a return type hint."
 count = 1
 
 [[issues]]

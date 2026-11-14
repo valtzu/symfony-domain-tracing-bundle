@@ -6,6 +6,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Valtzu\DomainTracingBundle\DependencyInjection\SerializerDescriberPass;
 
 final class DomainTracingBundle extends AbstractBundle
 {
@@ -26,6 +27,13 @@ final class DomainTracingBundle extends AbstractBundle
             ->end();
     }
 
+    #[\Override]
+    public function build(ContainerBuilder $container): void
+    {
+        $container->addCompilerPass(new SerializerDescriberPass());
+    }
+
+    #[\Override]
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $container->import('../config/ai.php');

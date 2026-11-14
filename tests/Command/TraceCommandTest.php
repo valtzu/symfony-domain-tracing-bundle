@@ -22,6 +22,7 @@ use Valtzu\DomainTracingBundle\Tracing\TraceDescriber;
 use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
 use Valtzu\DomainTracingBundle\Ai\TraceNarrator;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Xdebug\XdebugValue;
 
@@ -40,7 +41,7 @@ final class TraceCommandTest extends TestCase
         $agent = $this->createStub(AgentInterface::class);
         $namer = new OperationNamer($agent, new ArrayAdapter());
         $stream = new TraceStream($this->store, $blobs, $namer, new TraceIngester($this->store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($this->store, $blobs, $namer, new TraceNarrator($agent)));
-        $mcp = new TraceMcpServer($this->store, $stream, new Environment(new ArrayLoader()), true);
+        $mcp = new TraceMcpServer($this->store, $stream, new Environment(new ArrayLoader()), new TracePoller($this->store, $stream, sys_get_temp_dir(), 'test'), true);
         $this->tester = new CommandTester(new Command(null, new TraceCommand($this->store, $stream, true, $mcp)));
     }
 

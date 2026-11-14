@@ -24,6 +24,7 @@ use Mcp\Server\Handler\Request\InitializeHandler;
 use Mcp\Server\Transport\StdioTransport;
 use Twig\Environment;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Tracing\TraceTextFormatter;
 
@@ -39,13 +40,13 @@ final readonly class TraceMcpServer
 {
     public const string APP_URI = 'ui://domain-tracing/trace';
     public const string META_KEY = 'valtzu/domain-tracing';
-    private const int TIMEOUT_SECONDS = 600;
-
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
         private Environment $twig,
+        private TracePoller $poller,
         private bool $describes,
+        private int $timeoutSeconds = 600,
     ) {
     }
 
@@ -93,8 +94,13 @@ final readonly class TraceMcpServer
     public function trace(string $request = 'latest', bool $values = false): CallToolResult
     {
         $startedAt = microtime(true);
-        $stop = static fn (): bool => microtime(true) - $startedAt >= self::TIMEOUT_SECONDS;
-        $id = $this->store->find($request, $stop);
+        $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
+        // The server reads the next message of the host only when the tool call suspends its fiber. Meanwhile, the host
+        // waits for the app of the tool, and the app for its calls.
+        $wait = static function (): void {
+            null === \Fiber::getCurrent() ? usleep(100_000) : \Fiber::suspend();
+        };
+        $id = $this->store->find($request, $stop, $wait);
         if (null === $id) {
             return new CallToolResult([new TextContent(match ($request) {
                 'latest' => 'No request was recorded yet. The web server records the requests when its php.ini has xdebug.mode=trace,coverage.',
@@ -107,7 +113,11 @@ final readonly class TraceMcpServer
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
-        foreach ($this->traces->follow($id, $this->describes, $stop) as [$event, $data]) {
+        if ($this->describes) {
+            // The AI calls would block the server, so another process makes them
+            $this->poller->describeInBackground($id);
+        }
+        foreach ($this->traces->follow($id, $this->describes, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
         }

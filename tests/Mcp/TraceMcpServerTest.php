@@ -20,6 +20,7 @@ use Valtzu\DomainTracingBundle\Mcp\TraceMcpServer;
 use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\TraceDescriber;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
 use Valtzu\DomainTracingBundle\Xdebug\XdebugValue;
@@ -72,7 +73,7 @@ final class TraceMcpServerTest extends KernelTestCase
         $twig = new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'version {{ random() }}']));
 
         try {
-            [$responses, $notifications] = $this->serveWith(new TraceMcpServer($store, $stream, $twig, false), [
+            [$responses, $notifications] = $this->serveWith(new TraceMcpServer($store, $stream, $twig, new TracePoller($store, $stream, $directory, 'test'), false), [
                 self::INITIALIZE,
                 ['method' => 'notifications/initialized'],
                 ['method' => 'tools/list'],
@@ -94,6 +95,31 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertTrue($responses[3]['result']['isError'] ?? false);
     }
 
+    public function testAnswersTheHostWhileTheToolWaits(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'app'])), new TracePoller($store, $stream, $directory, 'test'), false, timeoutSeconds: 1);
+
+        try {
+            [$responses] = $this->serveWith($server, [
+                self::INITIALIZE,
+                ['method' => 'notifications/initialized'],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => ['request' => 'next']]],
+                ['method' => 'tools/list'],
+            ], openSeconds: 2);
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        static::assertSame([0, 3, 2], array_keys($responses), 'The host reads the app while the tool waits for the next request');
+        static::assertSame('No request started.', $responses[2]['result']['content'][0]['text'] ?? null);
+    }
+
     public function testGivesTheTraceAsTextToTheModelAndItsEventsToTheApp(): void
     {
         $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
@@ -102,7 +128,7 @@ final class TraceMcpServerTest extends KernelTestCase
         $agent = $this->createStub(AgentInterface::class);
         $namer = new OperationNamer($agent, new ArrayAdapter());
         $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
-        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), true);
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), false);
         $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
         $store->end('aaaaaaaaaaaaaaaa', microtime(true));
 
@@ -117,7 +143,7 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertStringContainsString('GET /products [shop]', $result->content[0]->text);
         $trace = $result->meta[TraceMcpServer::META_KEY] ?? [];
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
-        static::assertTrue($trace['describe'] ?? null);
+        static::assertFalse($trace['describe'] ?? null);
         static::assertSame(['request', 'span', 'end', 'span', 'done'], array_column($trace['events'] ?? [], 0));
     }
 
@@ -140,20 +166,22 @@ final class TraceMcpServerTest extends KernelTestCase
      *
      * @return array{array<int, array<array-key, mixed>>, list<string>} the responses by request ID, and the methods of the notifications
      */
-    private function serveWith(TraceMcpServer $server, array $messages): array
+    private function serveWith(TraceMcpServer $server, array $messages, int $openSeconds = 0): array
     {
         // The transport waits for input with stream_select(), which needs real streams
+        $inputPath = (string) tempnam(sys_get_temp_dir(), 'domain-tracing-mcp-');
         $outputPath = (string) tempnam(sys_get_temp_dir(), 'domain-tracing-mcp-');
-        $input = tmpfile();
+        foreach ($messages as $id => $message) {
+            file_put_contents($inputPath, json_encode(['jsonrpc' => '2.0'] + (str_starts_with($message['method'], 'notifications/') ? [] : ['id' => $id]) + $message, \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
+        }
+        // The transport stops at the end of the input, so a host that waits for an answer keeps its input open
+        $input = 0 === $openSeconds ? fopen($inputPath, 'r') : popen(\sprintf('cat %s; sleep %d', escapeshellarg($inputPath), $openSeconds), 'r');
         $output = fopen($outputPath, 'w');
         static::assertIsResource($input);
         static::assertIsResource($output);
-        foreach ($messages as $id => $message) {
-            fwrite($input, json_encode(['jsonrpc' => '2.0'] + (str_starts_with($message['method'], 'notifications/') ? [] : ['id' => $id]) + $message, \JSON_THROW_ON_ERROR)."\n");
-        }
-        rewind($input);
 
         $server->run($input, $output);
+        unlink($inputPath);
 
         $responses = [];
         $notifications = [];

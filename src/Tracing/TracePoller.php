@@ -48,7 +48,7 @@ final readonly class TracePoller
         return ['events' => $events, 'cursor' => $cursor, 'done' => 'done' === (end($events)[0] ?? null)];
     }
 
-    private function describeInBackground(string $id): void
+    public function describeInBackground(string $id): void
     {
         if ($this->store->isDescribed($id) || !$this->store->claimDescription($id)) {
             return;

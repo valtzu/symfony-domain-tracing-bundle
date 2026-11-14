@@ -29,10 +29,11 @@ final readonly class TraceStream
     /**
      * @param callable(): bool $stop        tells, between two polls, whether to stop following
      * @param bool             $describeHere false when another process describes the trace, and this one reads what it writes
+     * @param ?callable(): void $wait        waits between two polls
      *
      * @return \Generator<int, array{string, mixed}> events as [type, data]
      */
-    public function follow(string $rootId, bool $describe, callable $stop, bool $describeHere = true): \Generator
+    public function follow(string $rootId, bool $describe, callable $stop, bool $describeHere = true, ?callable $wait = null): \Generator
     {
         $follower = new TraceFollower($this->store, $this->blobs, $rootId);
         $description = $describe && $describeHere ? $this->describer->describe($rootId) : null;
@@ -87,6 +88,8 @@ final readonly class TraceStream
 
             if ($description?->valid()) {
                 $description->next();
+            } elseif (null !== $wait) {
+                $wait();
             } else {
                 usleep(100_000);
             }

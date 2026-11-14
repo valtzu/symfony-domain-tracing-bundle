@@ -297,6 +297,30 @@ final readonly class TraceStore
         return self::isValidId($id) ? $this->readLines($this->path($id), $offset, $file) : null;
     }
 
+    /**
+     * @param string           $request the ID of a request, "latest" for the last one, or "next" to wait for the next one
+     * @param callable(): bool $stop    tells when to stop waiting for the next request
+     */
+    public function find(string $request, callable $stop): ?string
+    {
+        if ('latest' === $request) {
+            return $this->newestStartedAfter(0.0);
+        }
+        if ('next' !== $request) {
+            return $this->has($request) ? $request : null;
+        }
+
+        $since = microtime(true);
+        while (!$stop()) {
+            if (null !== $id = $this->newestStartedAfter($since)) {
+                return $id;
+            }
+            usleep(100_000);
+        }
+
+        return null;
+    }
+
     public function newestStartedAfter(float $timestamp): ?string
     {
         $started = $this->startedAfter($timestamp);

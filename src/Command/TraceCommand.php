@@ -11,6 +11,7 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Valtzu\DomainTracingBundle\Mcp\TraceMcpServer;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Tracing\TraceTextFormatter;
@@ -25,6 +26,7 @@ final readonly class TraceCommand
         private TraceStore $store,
         private TraceStream $traces,
         private bool $describes,
+        private TraceMcpServer $mcp,
     ) {
     }
 
@@ -36,14 +38,23 @@ final readonly class TraceCommand
         bool $describe = false,
         #[Option('Print the arguments and the return values of the operations')]
         bool $values = false,
-        #[Option('Print each event as a line of JSON, as the live view receives it')]
-        bool $json = false,
+        #[Option('"text", "json" to print each event as a line of JSON, as the live view receives it, or "mcp" to serve the traces to AI tools as an MCP server on the standard input and output')]
+        string $format = 'text',
     ): int {
+        if ('mcp' === $format) {
+            $this->mcp->run();
+
+            return Command::SUCCESS;
+        }
+        $json = 'json' === $format;
         $errors = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
         $startedAt = microtime(true);
         $stop = static fn (): bool => microtime(true) - $startedAt >= self::TIMEOUT_SECONDS;
 
-        $id = $this->find($request, $errors, $stop);
+        if ('next' === $request) {
+            $errors->writeln('Waiting for the next request.');
+        }
+        $id = $this->store->find($request, $stop);
         if (null === $id) {
             $errors->writeln(match ($request) {
                 'latest' => 'No request was recorded yet.',
@@ -74,29 +85,5 @@ final readonly class TraceCommand
         }
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * @param callable(): bool $stop
-     */
-    private function find(string $request, OutputInterface $errors, callable $stop): ?string
-    {
-        if ('latest' === $request) {
-            return $this->store->newestStartedAfter(0.0);
-        }
-        if ('next' !== $request) {
-            return $this->store->has($request) ? $request : null;
-        }
-
-        $errors->writeln('Waiting for the next request.');
-        $since = microtime(true);
-        while (!$stop()) {
-            if (null !== $id = $this->store->newestStartedAfter($since)) {
-                return $id;
-            }
-            usleep(100_000);
-        }
-
-        return null;
     }
 }

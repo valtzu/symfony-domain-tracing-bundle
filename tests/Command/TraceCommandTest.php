@@ -14,7 +14,11 @@ use Symfony\Component\Filesystem\Filesystem;
 use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
 use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Ai\OperationNamer;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 use Valtzu\DomainTracingBundle\Command\TraceCommand;
+use Valtzu\DomainTracingBundle\Mcp\TraceMcpServer;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceDescriber;
 use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
 use Valtzu\DomainTracingBundle\Ai\TraceNarrator;
@@ -37,7 +41,8 @@ final class TraceCommandTest extends TestCase
         $agent = $this->createStub(AgentInterface::class);
         $namer = new OperationNamer($agent, new ArrayAdapter());
         $stream = new TraceStream($this->store, $blobs, $namer, new TraceIngester($this->store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($this->store, $blobs, $namer, new TraceNarrator($agent)));
-        $this->tester = new CommandTester(new Command(null, new TraceCommand($this->store, $stream, true)));
+        $mcp = new TraceMcpServer($this->store, $stream, new TracePoller($this->store, $stream, $this->directory, 'test'), new Environment(new ArrayLoader()), true);
+        $this->tester = new CommandTester(new Command(null, new TraceCommand($this->store, $stream, true, $mcp)));
     }
 
     #[\Override]
@@ -96,7 +101,7 @@ final class TraceCommandTest extends TestCase
         $this->store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/']);
         $this->store->end('aaaaaaaaaaaaaaaa', microtime(true));
 
-        $this->tester->execute(['request' => 'aaaaaaaaaaaaaaaa', '--json' => true]);
+        $this->tester->execute(['request' => 'aaaaaaaaaaaaaaaa', '--format' => 'json']);
 
         $events = array_map(static fn (string $line): mixed => json_decode($line, associative: true, flags: \JSON_THROW_ON_ERROR)['event'] ?? null, explode("\n", trim($this->tester->getDisplay())));
         static::assertSame(['request', 'span', 'end', 'span', 'done'], $events);

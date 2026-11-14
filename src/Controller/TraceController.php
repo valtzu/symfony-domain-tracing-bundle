@@ -12,10 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ServerEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\BuiltInServer;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Twig\Environment;
 
@@ -24,14 +24,12 @@ final readonly class TraceController
     private const TIMEOUT_SECONDS = 600;
     private const HEARTBEAT_SECONDS = 15;
     private const POLL_MICROSECONDS = 250_000;
-    private const POLL_SECONDS = 0.3;
 
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
         private Environment $twig,
-        private string $projectDir,
-        private string $environment,
+        private TracePoller $poller,
         private bool $describes,
     ) {
     }
@@ -45,7 +43,7 @@ final readonly class TraceController
         $id = $this->store->rootOf($id);
         $describe = $this->describes && $request->query->getBoolean('describe');
         if ($request->query->has('cursor')) {
-            return $this->pollEvents($id, $describe, $request->query->getString('cursor'));
+            return new JsonResponse($this->poller->events($id, $describe, $request->query->getString('cursor')));
         }
 
         $stream = function () use ($id, $describe) {
@@ -113,38 +111,5 @@ final readonly class TraceController
         };
 
         return new EventStreamResponse($stream);
-    }
-
-    /**
-     * Gives the events of a trace after the first ones that the browser has, for a server that cannot keep a stream
-     * open. Each poll follows the trace again from its start, and another process describes it.
-     */
-    private function pollEvents(string $id, bool $describe, string $cursor): JsonResponse
-    {
-        if ($describe) {
-            $this->describeInBackground($id);
-        }
-
-        $startedAt = microtime(true);
-        $stop = static fn (): bool => microtime(true) - $startedAt >= self::POLL_SECONDS;
-        $all = iterator_to_array($this->traces->follow($id, $describe, $stop, describeHere: false), preserve_keys: false);
-        // When the poll runs out of time, the trace goes on: the next poll gives the events that follow
-        if ($stop() && 'done' === (end($all)[0] ?? null)) {
-            array_pop($all);
-        }
-        [$events, $cursor] = EventCursor::after($all, $cursor);
-        $done = 'done' === (end($events)[0] ?? null);
-
-        return new JsonResponse(['events' => $events, 'cursor' => $cursor, 'done' => $done]);
-    }
-
-    private function describeInBackground(string $id): void
-    {
-        if ($this->store->isDescribed($id) || !$this->store->claimDescription($id)) {
-            return;
-        }
-
-        Process::fromShellCommandline('"${:php}" "${:console}" debug:domain:trace "${:id}" --describe --quiet --env="${:env}" > /dev/null 2>&1 &')
-            ->run(null, ['php' => \PHP_BINARY, 'console' => $this->projectDir.'/bin/console', 'id' => $id, 'env' => $this->environment]);
     }
 }

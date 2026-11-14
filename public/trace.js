@@ -1,5 +1,6 @@
 const SERVICE_COLORS = 4;
-const BASE_URL = new URL('./', import.meta.url);
+// Read when the events come from the server of the page; an MCP app has no URL to start from (about:srcdoc)
+const baseUrl = () => new URL('./', import.meta.url);
 const ROW_ENTER_MILLISECONDS = 250;
 const NAME_ERASE_MILLISECONDS = 300;
 const NAME_WRITE_MILLISECONDS = 450;
@@ -321,16 +322,19 @@ function pulsePhase(index) {
 const POLL_MILLISECONDS = 1000;
 
 /**
- * Asks for the events that follow the cursor at intervals, for a server that cannot keep a stream open. It has the
- * part of the EventSource interface that the pages use.
+ * Asks for the events that follow the cursor at intervals, for a server that cannot keep a stream open, or for an MCP
+ * app, which gets them with a tool call. It has the part of the EventSource interface that the pages use.
  */
 class PollingEventSource {
     #listeners = {};
     #closed = false;
 
-    constructor(url, cursor) {
+    /**
+     * @param {function(string): Promise<{events: Array, cursor: string, done: boolean}>} load the events after a cursor
+     */
+    constructor(load, cursor) {
         this.onerror = null;
-        this.#poll(new URL(url, location.href), cursor);
+        this.#poll(load, String(cursor));
     }
 
     addEventListener(type, listener) {
@@ -341,11 +345,10 @@ class PollingEventSource {
         this.#closed = true;
     }
 
-    async #poll(url, cursor) {
+    async #poll(load, cursor) {
         while (!this.#closed) {
             try {
-                url.searchParams.set('cursor', cursor);
-                const response = await (await fetch(url)).json();
+                const response = await load(cursor);
                 cursor = response.cursor;
                 for (const [type, data] of response.events) {
                     for (const listener of this.#closed ? [] : this.#listeners[type] ?? []) {
@@ -365,7 +368,14 @@ class PollingEventSource {
 }
 
 export function openEvents(url, { poll = false, cursor = 0 } = {}) {
-    return poll ? new PollingEventSource(url, cursor) : new EventSource(url);
+    if (!poll) {
+        return new EventSource(url);
+    }
+    url = new URL(url, location.href);
+    return new PollingEventSource(async cursor => {
+        url.searchParams.set('cursor', cursor);
+        return (await fetch(url)).json();
+    }, cursor);
 }
 
 function spinner(label = '') {
@@ -376,7 +386,7 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { describe = false, poll = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, poll = false, load = null, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
     panel.innerHTML = '<h2></h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     if (title) {
@@ -390,7 +400,9 @@ export function followTrace(id, panel, { describe = false, poll = false, title =
     let steps = 0;
     let label = '';
 
-    const source = openEvents(new URL(`${id}/events${describe ? '?describe=1' : ''}`, BASE_URL), { poll });
+    const source = load
+        ? new PollingEventSource(cursor => load(cursor, describe), 0)
+        : openEvents(new URL(`${id}/events${describe ? '?describe=1' : ''}`, baseUrl()), { poll });
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {

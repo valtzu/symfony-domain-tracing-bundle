@@ -40,11 +40,13 @@
     },
     "suggest": {
         "ext-xdebug": "To record the requests: the bundle needs Xdebug in the trace and coverage modes",
-        "symfony/ai-claude-code-platform": "To describe the traces with the Claude Code CLI"
+        "symfony/ai-claude-code-platform": "To describe the traces with the Claude Code CLI",
+        "mcp/sdk": "To serve the traces to AI tools with debug:domain:trace --format=mcp"
     },
     "require-dev": {
         "carthage-software/mago": "^1.59",
         "escapestudios/symfony2-coding-standard": "^3.18",
+        "mcp/sdk": "^0.9",
         "phpunit/phpunit": "^13.4",
         "squizlabs/php_codesniffer": "^4.0"
     },

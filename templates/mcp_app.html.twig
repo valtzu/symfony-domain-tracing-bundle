@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain trace</title>
+<style>
+    body { margin: 0; background: transparent; }
+    {{ style|raw }}
+</style>
+</head>
+<body>
+<div id="domain-tracing"></div>
+<script type="module">
+{{ script|raw }}
+
+// The MCP Apps protocol (https://github.com/modelcontextprotocol/ext-apps): JSON-RPC with the host over postMessage
+let lastId = 0;
+const pending = new Map();
+const post = message => window.parent.postMessage({ jsonrpc: '2.0', ...message }, '*');
+const request = (method, params) => new Promise((resolve, reject) => {
+    pending.set(++lastId, { resolve, reject });
+    post({ id: lastId, method, params });
+});
+
+let followed = null;
+const follow = result => {
+    const trace = result?.structuredContent;
+    if (!trace?.id || trace.id === followed) {
+        return;
+    }
+    followed = trace.id;
+    followTrace(trace.id, document.getElementById('domain-tracing'), {
+        describe: trace.describe,
+        load: async (cursor, describe) => {
+            const events = await request('tools/call', { name: 'domain_trace_events', arguments: { id: trace.id, cursor, describe } });
+            if (events.isError) {
+                throw new Error(events.content?.[0]?.text ?? 'The events could not be read.');
+            }
+            return events.structuredContent;
+        },
+    });
+};
+
+window.addEventListener('message', ({ data }) => {
+    if (data?.jsonrpc !== '2.0') {
+        return;
+    }
+    if (undefined !== data.id && pending.has(data.id)) {
+        const { resolve, reject } = pending.get(data.id);
+        pending.delete(data.id);
+        data.error ? reject(data.error) : resolve(data.result);
+    } else if ('ui/notifications/tool-result' === data.method) {
+        follow(data.params);
+    }
+});
+
+let size = '';
+new ResizeObserver(() => {
+    const height = Math.ceil(document.documentElement.scrollHeight);
+    if (String(height) !== size) {
+        size = String(height);
+        post({ method: 'ui/notifications/size-changed', params: { height } });
+    }
+}).observe(document.body);
+
+try {
+    // The names of the fields changed while the extension was drafted, so the app sends both
+    const app = { name: 'domain-tracing', version: '1.0.0' };
+    await request('ui/initialize', { protocolVersion: '2026-01-26', appInfo: app, appCapabilities: {}, clientInfo: app, capabilities: {} });
+} catch {
+}
+post({ method: 'ui/notifications/initialized', params: {} });
+</script>
+</body>
+</html>

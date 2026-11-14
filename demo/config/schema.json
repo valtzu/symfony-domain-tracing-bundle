@@ -7947,7 +7947,7 @@
                     "context_file": {
                         "$ref": "#/$defs/types/string_null",
                         "default": "%kernel.project_dir%/config/prompts/domain_tracing_context.md",
-                        "description": "Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist."
+                        "description": "Text file that describes the application to the AI agents, such as what it does, what its engineers look for in the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist."
                     },
                     "agent": {
                         "$ref": "#/$defs/types/scalar",

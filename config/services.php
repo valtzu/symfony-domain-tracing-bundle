@@ -18,9 +18,11 @@ use Valtzu\DomainTracingBundle\Controller\TraceController;
 use Valtzu\DomainTracingBundle\DataCollector\TraceDataCollector;
 use Valtzu\DomainTracingBundle\EventListener\RecordingListener;
 use Valtzu\DomainTracingBundle\HttpClient\TraceparentHttpClient;
+use Valtzu\DomainTracingBundle\Mcp\TraceMcpServer;
 use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\TraceDescriber;
+use Valtzu\DomainTracingBundle\Tracing\TracePoller;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
 use Valtzu\DomainTracingBundle\Xdebug\Recorder;
 use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
@@ -89,17 +91,23 @@ return static function (ContainerConfigurator $container): void {
     $services->set('domain_tracing.trace_stream', TraceStream::class)
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.blob_store'), service('domain_tracing.operation_namer'), service('domain_tracing.trace_ingester'), service('domain_tracing.trace_describer')]);
 
+    $services->set('domain_tracing.trace_poller', TracePoller::class)
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%kernel.project_dir%', '%kernel.environment%']);
+
     $services->set('domain_tracing.trace_controller', TraceController::class)
         ->public()
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), '%kernel.project_dir%', '%kernel.environment%', '%domain_tracing.describe%'])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), service('domain_tracing.trace_poller'), '%domain_tracing.describe%'])
         // The "routing.controllers" resource of the application imports the routes of the tagged controllers
         ->tag('routing.controller');
     // The routes refer to the controller by its class
     $services->alias(TraceController::class, 'domain_tracing.trace_controller')
         ->public();
 
+    $services->set('domain_tracing.mcp_server', TraceMcpServer::class)
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('domain_tracing.trace_poller'), service('twig'), '%domain_tracing.describe%']);
+
     $services->set('domain_tracing.trace_command', TraceCommand::class)
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%domain_tracing.describe%'])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%domain_tracing.describe%', service('domain_tracing.mcp_server')])
         ->tag('console.command');
 
     $services->set('domain_tracing.context_generate_command', ContextGenerateCommand::class)

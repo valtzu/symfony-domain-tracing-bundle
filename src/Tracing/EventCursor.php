@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 
-namespace Valtzu\DomainTracingBundle\Controller;
+namespace Valtzu\DomainTracingBundle\Tracing;
 
 /**
  * Where a browser that polls a trace is. Each poll follows the trace again from its start, and gives the events of

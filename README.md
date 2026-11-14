@@ -188,7 +188,7 @@ bin/console debug:domain:trace 3f2a9c1b7d4e8a60 --describe   # with the events t
 - The argument is the ID of a request, as the profiler shows it, `latest` (the default) or `next`.
 - `--describe` asks the AI to describe the trace, unless it is described already. The events appear when the AI
   writes them, after the operations they are about.
-- `--json` prints each event as a line of JSON, as the live view receives it.
+- `--format=json` prints each event as a line of JSON, as the live view receives it.
 - The values are redacted like the values that the AI gets.
 
 To tell a coding agent about it, add a line like this to the `AGENTS.md` or `CLAUDE.md` of the project:
@@ -197,6 +197,25 @@ To tell a coding agent about it, add a line like this to the `AGENTS.md` or `CLA
 To see what a request did, run `bin/console debug:domain:trace next --values` in the background before you send
 it, then read the output. Add `--describe` for a description in business terms.
 ```
+
+## Traces for AI tools (MCP)
+
+`bin/console debug:domain:trace --format=mcp` serves the traces as an [MCP](https://modelcontextprotocol.io/)
+server on the standard input and output. It needs the MCP SDK:
+
+```shell
+composer require --dev mcp/sdk
+claude mcp add domain-tracing -- php bin/console debug:domain:trace --format=mcp
+```
+
+With the Symfony CLI, use `symfony console` instead of `php bin/console`. With Docker, run it in the container of
+the application, such as `docker compose exec -T app php bin/console debug:domain:trace --format=mcp`.
+
+The `domain_trace` tool gives a trace as text, like the command: the ID of a request, `latest` or `next`, with
+`describe` and `values` options. Hosts that show [MCP apps](https://github.com/modelcontextprotocol/ext-apps),
+such as Claude, show its waterfall too, live. The app gets the events of the trace through the host, with the
+`domain_trace_events` tool, which only the app can call, so it does not need to reach the web server of the
+application.
 
 ## How it is put together
 

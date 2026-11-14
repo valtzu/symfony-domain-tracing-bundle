@@ -39,6 +39,7 @@ final class TraceMcpServerTest extends KernelTestCase
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
         static::assertSame(['domain_trace'], array_keys($tools));
+        static::assertSame(['request', 'values'], array_keys($tools['domain_trace']['inputSchema']['properties'] ?? []), 'Calling the tool means that the caller wants the trace described with AI');
         $appUri = $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null;
         static::assertIsString($appUri);
         static::assertMatchesRegularExpression('{^'.preg_quote(TraceMcpServer::APP_URI).'-[0-9a-f]{12}$}', $appUri, 'A new version of the app gets a new URI, because the hosts keep the app by its URI');
@@ -116,6 +117,7 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertStringContainsString('GET /products [shop]', $result->content[0]->text);
         $trace = $result->meta[TraceMcpServer::META_KEY] ?? [];
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
+        static::assertTrue($trace['describe'] ?? null);
         static::assertSame(['request', 'span', 'end', 'span', 'done'], array_column($trace['events'] ?? [], 0));
     }
 

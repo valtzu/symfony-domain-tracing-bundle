@@ -61,7 +61,7 @@ final readonly class TraceMcpServer
 
         $registry = new Registry();
         $app = $this->app();
-        $tool = function (ClientGateway $client, string $request = 'latest', bool $describe = false, bool $values = false) use ($registry, &$app, &$tool): CallToolResult {
+        $tool = function (ClientGateway $client, string $request = 'latest', bool $values = false) use ($registry, &$app, &$tool): CallToolResult {
             // The hosts keep the app of a tool until the server says that its tools changed
             $latest = $this->app();
             if ($latest !== $app) {
@@ -71,7 +71,7 @@ final readonly class TraceMcpServer
                 $client->notify(new ResourceListChangedNotification());
             }
 
-            return $this->trace($request, $describe, $values);
+            return $this->trace($request, $values);
         };
         $this->register($registry, $app, $tool);
 
@@ -90,7 +90,7 @@ final readonly class TraceMcpServer
             ->run(new StdioTransport($input, $output));
     }
 
-    public function trace(string $request = 'latest', bool $describe = false, bool $values = false): CallToolResult
+    public function trace(string $request = 'latest', bool $values = false): CallToolResult
     {
         $startedAt = microtime(true);
         $stop = static fn (): bool => microtime(true) - $startedAt >= self::TIMEOUT_SECONDS;
@@ -104,18 +104,17 @@ final readonly class TraceMcpServer
         }
 
         $id = $this->store->rootOf($id);
-        $describe = $describe && $this->describes;
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
-        foreach ($this->traces->follow($id, $describe, $stop) as [$event, $data]) {
+        foreach ($this->traces->follow($id, $this->describes, $stop) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
         }
 
         return new CallToolResult(
             [new TextContent(implode("\n", $lines))],
-            meta: [self::META_KEY => ['id' => $id, 'describe' => $describe, 'events' => $events]],
+            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'events' => $events]],
         );
     }
 
@@ -135,11 +134,10 @@ final readonly class TraceMcpServer
                 'type' => 'object',
                 'properties' => [
                     'request' => ['type' => 'string', 'description' => 'The ID of a request, as the web profiler shows it, "latest" for the last request (the default), or "next" to wait for the next one'],
-                    'describe' => ['type' => 'boolean', 'description' => 'Describe what happened with AI, unless it is described already. This takes some time.'],
                     'values' => ['type' => 'boolean', 'description' => 'Include the arguments and the return values of the operations'],
                 ],
             ],
-            'Gives what a request of the application did: its operations with business names, in call order, and, when described, the events that tell what happened and why. Wait for the next request with "next", for example while you reproduce a bug.',
+            'Gives what a request of the application did: its operations with business names, in call order, and the events that tell what happened and why, which AI describes unless they are described already. This takes some time. Wait for the next request with "next", for example while you reproduce a bug.',
             null,
             meta: ['ui' => new UiToolMeta($appUri)],
         ), $tool);

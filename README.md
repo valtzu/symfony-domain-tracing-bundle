@@ -211,8 +211,8 @@ claude mcp add domain-tracing -- php bin/console debug:domain:trace --format=mcp
 With the Symfony CLI, use `symfony console` instead of `php bin/console`. With Docker, run it in the container of
 the application, such as `docker compose exec -T app php bin/console debug:domain:trace --format=mcp`.
 
-The `domain_trace` tool gives a trace as text, like the command: the ID of a request, `latest` or `next`, with
-`describe` and `values` options. Hosts that show [MCP apps](https://github.com/modelcontextprotocol/ext-apps),
+The `domain_trace` tool gives a trace as text, like the command: the ID of a request, `latest` or `next`, with a
+`values` option. It always describes the trace with AI, unless it is described already. Hosts that show [MCP apps](https://github.com/modelcontextprotocol/ext-apps),
 such as Claude, show its waterfall too. The events of the trace are in the result of the tool, so the app does not
 need to reach the web server of the application.
 

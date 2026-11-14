@@ -188,6 +188,7 @@ function createWaterfall(container, describing) {
             pending.append(spinner(), 'Describing what happened…');
         }
 
+        table.classList.toggle('single-service', services.length < 2);
         container.replaceChildren(table);
     }
 

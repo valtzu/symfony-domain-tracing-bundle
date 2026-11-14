@@ -45,7 +45,7 @@ final readonly class TraceController
         $id = $this->store->rootOf($id);
         $describe = $this->describes && $request->query->getBoolean('describe');
         if ($request->query->has('cursor')) {
-            return $this->pollEvents($id, $describe, $request->query->getInt('cursor'));
+            return $this->pollEvents($id, $describe, $request->query->getString('cursor'));
         }
 
         $stream = function () use ($id, $describe) {
@@ -119,7 +119,7 @@ final readonly class TraceController
      * Gives the events of a trace after the first ones that the browser has, for a server that cannot keep a stream
      * open. Each poll follows the trace again from its start, and another process describes it.
      */
-    private function pollEvents(string $id, bool $describe, int $cursor): JsonResponse
+    private function pollEvents(string $id, bool $describe, string $cursor): JsonResponse
     {
         if ($describe) {
             $this->describeInBackground($id);
@@ -132,10 +132,10 @@ final readonly class TraceController
         if ($stop() && 'done' === (end($all)[0] ?? null)) {
             array_pop($all);
         }
-        $events = \array_slice($all, $cursor);
+        [$events, $cursor] = EventCursor::after($all, $cursor);
         $done = 'done' === (end($events)[0] ?? null);
 
-        return new JsonResponse(['events' => $events, 'cursor' => $cursor + \count($events), 'done' => $done]);
+        return new JsonResponse(['events' => $events, 'cursor' => $cursor, 'done' => $done]);
     }
 
     private function describeInBackground(string $id): void

@@ -5,12 +5,22 @@ declare(strict_types=1);
 
 namespace Valtzu\DomainTracingBundle\Mcp;
 
+use Mcp\Capability\Registry;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Extension\Apps\McpApps;
 use Mcp\Schema\Extension\Apps\UiToolMeta;
+use Mcp\Schema\Implementation;
+use Mcp\Schema\Notification\ResourceListChangedNotification;
+use Mcp\Schema\Notification\ToolListChangedNotification;
+use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ServerCapabilities;
+use Mcp\Schema\Tool;
 use Mcp\Server;
+use Mcp\Server\ClientGateway;
+use Mcp\Server\Configuration;
+use Mcp\Server\Handler\Request\InitializeHandler;
 use Mcp\Server\Transport\StdioTransport;
 use Twig\Environment;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
@@ -49,38 +59,33 @@ final readonly class TraceMcpServer
             throw new \LogicException('The MCP server needs the MCP SDK: run "composer require --dev mcp/sdk".');
         }
 
-        // The hosts keep the app by its URI, so a new version of the app gets a new URI
+        $registry = new Registry();
         $app = $this->app();
-        $appUri = self::APP_URI.'-'.substr(hash('xxh128', $app), 0, 12);
+        $tool = function (ClientGateway $client, string $request = 'latest', bool $describe = false, bool $values = false) use ($registry, &$app, &$tool): CallToolResult {
+            // The hosts keep the app of a tool until the server says that its tools changed
+            $latest = $this->app();
+            if ($latest !== $app) {
+                $app = $latest;
+                $this->register($registry, $app, $tool);
+                $client->notify(new ToolListChangedNotification());
+                $client->notify(new ResourceListChangedNotification());
+            }
+
+            return $this->trace($request, $describe, $values);
+        };
+        $this->register($registry, $app, $tool);
+
+        $serverInfo = new Implementation('domain-tracing', '1.0.0');
+        $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
+        $apps = new McpApps();
+        $capabilities = new ServerCapabilities(prompts: false, extensions: [(string) $apps->getId() => $apps->getCapabilities()]);
 
         Server::builder()
-            ->setServerInfo('domain-tracing', '1.0.0')
-            ->setInstructions('The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.')
-            ->enableExtension(new McpApps())
-            ->addTool(
-                $this->trace(...),
-                'domain_trace',
-                'Domain trace',
-                'Gives what a request of the application did: its operations with business names, in call order, and, when described, the events that tell what happened and why. Wait for the next request with "next", for example while you reproduce a bug.',
-                inputSchema: [
-                    'type' => 'object',
-                    'properties' => [
-                        'request' => ['type' => 'string', 'description' => 'The ID of a request, as the web profiler shows it, "latest" for the last request (the default), or "next" to wait for the next one'],
-                        'describe' => ['type' => 'boolean', 'description' => 'Describe what happened with AI, unless it is described already. This takes some time.'],
-                        'values' => ['type' => 'boolean', 'description' => 'Include the arguments and the return values of the operations'],
-                    ],
-                ],
-                meta: ['ui' => new UiToolMeta($appUri)],
-            )
-            ->addResource(
-                static fn (): TextResourceContents => new TextResourceContents($appUri, McpApps::MIME_TYPE, $app),
-                $appUri,
-                'domain-trace',
-                'Domain trace',
-                'The waterfall of a trace',
-                McpApps::MIME_TYPE,
-                meta: ['ui' => McpApps::resourceMarker()],
-            )
+            ->setServerInfo($serverInfo->name, $serverInfo->version)
+            ->setInstructions($instructions)
+            ->enableExtension($apps)
+            ->addRequestHandler(new ListChangedInitializeHandler(new InitializeHandler(new Configuration($serverInfo, $capabilities, instructions: $instructions))))
+            ->setRegistry($registry)
             ->build()
             ->run(new StdioTransport($input, $output));
     }
@@ -112,6 +117,32 @@ final readonly class TraceMcpServer
             [new TextContent(implode("\n", $lines))],
             meta: [self::META_KEY => ['id' => $id, 'describe' => $describe, 'events' => $events]],
         );
+    }
+
+    private function register(Registry $registry, string $app, \Closure $tool): void
+    {
+        // The hosts keep the app by its URI, so a new version of the app gets a new URI
+        $appUri = self::APP_URI.'-'.substr(hash('xxh128', $app), 0, 12);
+
+        $registry->registerResource(
+            new ResourceDefinition($appUri, 'domain-trace', 'Domain trace', 'The waterfall of a trace', McpApps::MIME_TYPE, meta: ['ui' => McpApps::resourceMarker()]),
+            static fn (): TextResourceContents => new TextResourceContents($appUri, McpApps::MIME_TYPE, $app),
+        );
+        $registry->registerTool(new Tool(
+            'domain_trace',
+            'Domain trace',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'request' => ['type' => 'string', 'description' => 'The ID of a request, as the web profiler shows it, "latest" for the last request (the default), or "next" to wait for the next one'],
+                    'describe' => ['type' => 'boolean', 'description' => 'Describe what happened with AI, unless it is described already. This takes some time.'],
+                    'values' => ['type' => 'boolean', 'description' => 'Include the arguments and the return values of the operations'],
+                ],
+            ],
+            'Gives what a request of the application did: its operations with business names, in call order, and, when described, the events that tell what happened and why. Wait for the next request with "next", for example while you reproduce a bug.',
+            null,
+            meta: ['ui' => new UiToolMeta($appUri)],
+        ), $tool);
     }
 
     private function app(): string

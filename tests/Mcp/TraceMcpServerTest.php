@@ -60,6 +60,39 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertStringContainsString("_meta?.['".TraceMcpServer::META_KEY."']", $app['text'] ?? '');
     }
 
+    public function testTellsTheHostWhenTheAppChanges(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $twig = new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'version {{ random() }}']));
+
+        try {
+            [$responses, $notifications] = $this->serveWith(new TraceMcpServer($store, $stream, $twig, false), [
+                self::INITIALIZE,
+                ['method' => 'notifications/initialized'],
+                ['method' => 'tools/list'],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => ['request' => 'ffffffffffffffff']]],
+                ['method' => 'tools/list'],
+            ]);
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        static::assertTrue($responses[0]['result']['capabilities']['tools']['listChanged'] ?? false);
+        static::assertTrue($responses[0]['result']['capabilities']['resources']['listChanged'] ?? false);
+        static::assertSame(['notifications/tools/list_changed', 'notifications/resources/list_changed'], $notifications);
+        $before = $responses[2]['result']['tools'][0]['_meta']['ui']['resourceUri'] ?? null;
+        $after = $responses[4]['result']['tools'][0]['_meta']['ui']['resourceUri'] ?? null;
+        static::assertIsString($before);
+        static::assertIsString($after);
+        static::assertNotSame($before, $after);
+        static::assertTrue($responses[3]['result']['isError'] ?? false);
+    }
+
     public function testGivesTheTraceAsTextToTheModelAndItsEventsToTheApp(): void
     {
         $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
@@ -93,6 +126,20 @@ final class TraceMcpServerTest extends KernelTestCase
      */
     private function serve(array $messages): array
     {
+        self::getContainer()->set('test.platform', MockPlatformFactory::createPlatform(static fn (): string => ''));
+        $server = self::getContainer()->get('domain_tracing.mcp_server');
+        static::assertInstanceOf(TraceMcpServer::class, $server);
+
+        return $this->serveWith($server, $messages)[0];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $messages
+     *
+     * @return array{array<int, array<array-key, mixed>>, list<string>} the responses by request ID, and the methods of the notifications
+     */
+    private function serveWith(TraceMcpServer $server, array $messages): array
+    {
         // The transport waits for input with stream_select(), which needs real streams
         $outputPath = (string) tempnam(sys_get_temp_dir(), 'domain-tracing-mcp-');
         $input = tmpfile();
@@ -104,21 +151,21 @@ final class TraceMcpServerTest extends KernelTestCase
         }
         rewind($input);
 
-        self::getContainer()->set('test.platform', MockPlatformFactory::createPlatform(static fn (): string => ''));
-        $server = self::getContainer()->get('domain_tracing.mcp_server');
-        static::assertInstanceOf(TraceMcpServer::class, $server);
         $server->run($input, $output);
 
         $responses = [];
+        $notifications = [];
         $lines = explode("\n", trim((string) file_get_contents($outputPath)));
         unlink($outputPath);
         foreach ($lines as $line) {
-            $response = json_decode($line, true, flags: \JSON_THROW_ON_ERROR);
-            if (\is_array($response) && isset($response['id'])) {
-                $responses[(int) $response['id']] = $response;
+            $message = json_decode($line, true, flags: \JSON_THROW_ON_ERROR);
+            if (\is_array($message) && isset($message['id'])) {
+                $responses[(int) $message['id']] = $message;
+            } elseif (\is_array($message) && \is_string($message['method'] ?? null)) {
+                $notifications[] = $message['method'];
             }
         }
 
-        return $responses;
+        return [$responses, $notifications];
     }
 }

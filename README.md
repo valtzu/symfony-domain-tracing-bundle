@@ -119,14 +119,14 @@ ai:
 
 ## Traces in the terminal
 
-`bin/console domain-tracing:trace` prints a trace while it is recorded, one line per operation, indented under its
+`bin/console debug:domain:trace` prints a trace while it is recorded, one line per operation, indented under its
 caller. Coding agents can read it, too: run it in the background, send the request, and read the output while it
 comes.
 
 ```shell
-bin/console domain-tracing:trace next                   # waits for the next request
-bin/console domain-tracing:trace latest --values        # with the arguments and the return values
-bin/console domain-tracing:trace 3f2a9c1b7d4e8a60 --describe   # with the events that the AI writes
+bin/console debug:domain:trace next                   # waits for the next request
+bin/console debug:domain:trace latest --values        # with the arguments and the return values
+bin/console debug:domain:trace 3f2a9c1b7d4e8a60 --describe   # with the events that the AI writes
 ```
 
 ```text
@@ -150,7 +150,7 @@ bin/console domain-tracing:trace 3f2a9c1b7d4e8a60 --describe   # with the events
 To tell a coding agent about it, add a line like this to the `AGENTS.md` or `CLAUDE.md` of the project:
 
 ```markdown
-To see what a request did, run `bin/console domain-tracing:trace next --values` in the background before you send
+To see what a request did, run `bin/console debug:domain:trace next --values` in the background before you send
 it, then read the output. Add `--describe` for a description in business terms.
 ```
 

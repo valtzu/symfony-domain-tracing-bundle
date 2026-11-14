@@ -9,7 +9,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand('domain-tracing:trace', 'Print a trace while it is recorded: its operations, and the events that the AI writes')]
+#[AsCommand('debug:domain:trace', 'Print a trace while it is recorded: its operations, and the events that the AI writes')]
 final readonly class TraceCommand
 {
     private const int TIMEOUT_SECONDS = 600;

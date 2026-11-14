@@ -1,11 +1,13 @@
-.trace-panel {
+.trace-panel, .trace-theme {
     --trace-bg: #ffffff; --trace-text: #1d1d1b; --trace-muted: #6b6b66; --trace-line: #e2e2dd; --trace-bad: #b3261e;
     --trace-track: #f1f1ee; --trace-service-0: #2f6f8f; --trace-service-1: #8a5a00; --trace-service-2: #5b4a9e; --trace-service-3: #2f7d4a;
+}
+.trace-panel {
     background: var(--trace-bg); color: var(--trace-text); border: 1px solid var(--trace-line); border-radius: 8px;
     padding: 16px; font: 15px/1.5 system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-    .trace-panel {
+    .trace-panel, .trace-theme {
         --trace-bg: #20201e; --trace-text: #ecece8; --trace-muted: #9a9a94; --trace-line: #34342f; --trace-bad: #f08a80;
         --trace-track: #2a2a27; --trace-service-0: #6fb3d6; --trace-service-1: #e0a64a; --trace-service-2: #a99be6; --trace-service-3: #7cc49a;
     }

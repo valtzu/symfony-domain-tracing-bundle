@@ -10,9 +10,10 @@ use Valtzu\DomainTracingBundle\Storage\TraceStore;
 
 /**
  * Records one request at a time: it starts an Xdebug trace of the application, from the PSR-4 autoload section of its
- * composer.json, into the trace store, with the code coverage, and writes the request record. When the request ends,
- * it writes the lines that ran and how the request ended, stops the trace, and writes the index of the application
- * code when this version of the code has none yet.
+ * composer.json, into the trace store, with the code coverage. It writes the request record when the request calls an
+ * entrypoint of the application, such as a controller, and discards the trace of a request that calls none. When the
+ * request ends, it writes the lines that ran and how the request ended, stops the trace, and writes the index of the
+ * application code when this version of the code has none yet.
  *
  * The trace starts when the kernel handles the request, not with the PHP process, so that a worker process that handles
  * many requests records each of them, and so that the requests that are not recorded cost nothing. Only xdebug.mode
@@ -34,7 +35,7 @@ final class Recorder implements ResetInterface
         'xdebug.var_display_max_data' => '256',
     ];
 
-    /** @var array{traceFile: string, spanId: string, codeIndex: string, ownTrace: bool, ownCoverage: bool, settings: array<string, string|false>}|null */
+    /** @var array{traceFile: string, spanId: string, codeIndex: string, ownTrace: bool, ownCoverage: bool, settings: array<string, string|false>, request: array, published: bool}|null */
     private ?array $current = null;
     private ?array $exception = null;
     private ?float $respondedAt = null;
@@ -99,9 +100,9 @@ final class Recorder implements ResetInterface
 
         $codeIndex = CodeIndex::build($this->projectDir, false, $this->entrypoints)['fingerprint'];
         $markedAt = TraceClock::mark();
-        $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt, 'receivedAt' => is_numeric($server['REQUEST_TIME_FLOAT'] ?? null) ? (float) $server['REQUEST_TIME_FLOAT'] : null]);
+        $request = $context + ['startedAt' => microtime(true), 'traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt, 'receivedAt' => is_numeric($server['REQUEST_TIME_FLOAT'] ?? null) ? (float) $server['REQUEST_TIME_FLOAT'] : null];
         $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
-        $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings];
+        $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings, 'request' => $request, 'published' => false];
         $this->exception = null;
         $this->respondedAt = null;
         $_SERVER['DOMAIN_TRACING_TRACEPARENT'] = \sprintf('00-%s-%s-01', $context['traceId'], $context['spanId']);
@@ -118,6 +119,18 @@ final class Recorder implements ResetInterface
         }
 
         return $context['spanId'];
+    }
+
+    /**
+     * Publishes the record of the request when the framework calls one of the entrypoints next, such as the controller
+     * of the request, so that it can be followed while the request runs.
+     */
+    public function willCall(string $class): void
+    {
+        if (null !== $this->current && !$this->current['published'] && \in_array(ltrim($class, '\\'), $this->entrypoints, true)) {
+            $this->store->start($this->current['spanId'], $this->current['request']);
+            $this->current['published'] = true;
+        }
     }
 
     /**
@@ -172,6 +185,17 @@ final class Recorder implements ResetInterface
             xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_FILTER_NONE, []);
         }
         self::restore($current['settings']);
+
+        if (!$current['published']) {
+            if (!$this->tracedAnEntrypoint($current['traceFile'])) {
+                if ($current['ownTrace']) {
+                    @unlink($current['traceFile']);
+                }
+
+                return;
+            }
+            $this->store->start($current['spanId'], $current['request']);
+        }
 
         if (null !== $coverage) {
             file_put_contents($this->store->linesPath($current['spanId']), json_encode(array_map(array_keys(...), $coverage)));
@@ -238,5 +262,30 @@ final class Recorder implements ResetInterface
         }
 
         return $paths;
+    }
+
+    /**
+     * Requests that only the framework or other packages handled, such as the assets in the dev server of AssetMapper,
+     * are not recorded. The trace has the calls of the application only.
+     */
+    private function tracedAnEntrypoint(string $traceFile): bool
+    {
+        if (!$this->entrypoints || false === $handle = @fopen('compress.zlib://'.$traceFile, 'r')) {
+            return false;
+        }
+        $entrypoints = array_flip($this->entrypoints);
+        try {
+            while (false !== $line = fgets($handle)) {
+                $fields = explode("\t", $line, 7);
+                $function = [];
+                if ('0' === ($fields[2] ?? null) && 1 === preg_match('/^(.+?)(?:->|::)(.+)$/', $fields[5] ?? '', $function) && isset($entrypoints[$function[1]]) && '__construct' !== $function[2]) {
+                    return true;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return false;
     }
 }

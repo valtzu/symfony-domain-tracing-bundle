@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace Valtzu\DomainTracingBundle\EventListener;
 
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -31,6 +32,23 @@ final readonly class RecordingListener
         $spanId = $this->recorder->start($event->getRequest()->server->all());
         if (null !== $spanId) {
             $event->getRequest()->server->set('DOMAIN_TRACING_SPAN_ID', $spanId);
+        }
+    }
+
+    public function onController(ControllerEvent $event): void
+    {
+        if (!$event->isMainRequest()) {
+            return;
+        }
+        $controller = $event->getController();
+        $class = match (true) {
+            \is_array($controller) => \is_object($controller[0]) ? $controller[0]::class : $controller[0],
+            $controller instanceof \Closure => null,
+            \is_object($controller) => get_class($controller),
+            default => null,
+        };
+        if (null !== $class) {
+            $this->recorder->willCall($class);
         }
     }
 

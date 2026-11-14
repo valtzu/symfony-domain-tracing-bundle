@@ -7,7 +7,7 @@ namespace Valtzu\DomainTracingBundle\Storage;
 
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs, in the trace
- * directory of the bundle: a "request" record, which the recorder writes when the request starts, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
+ * directory of the bundle: a "request" record, which the recorder writes when the request calls an entrypoint of the application, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
  * is the array [function, line, call depth, microseconds since the request started], because it is the most frequent
  * record. Readers can follow the file while it is written. A trace index file lists the spans of each trace, in the
  * order they started.
@@ -65,7 +65,7 @@ final readonly class TraceStore
         $this->createDirectory();
 
         file_put_contents($this->path($id), '');
-        $this->append($id, ['type' => 'request', 'startedAt' => microtime(true)] + $request);
+        $this->append($id, ['type' => 'request'] + $request + ['startedAt' => microtime(true)]);
         file_put_contents($this->tracePath($request['traceId']), $id."\n", \FILE_APPEND);
     }
 

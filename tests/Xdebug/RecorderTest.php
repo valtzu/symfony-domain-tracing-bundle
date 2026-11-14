@@ -143,6 +143,32 @@ final class RecorderTest extends TestCase
         static::assertNull($this->record('/greet?name=Ada')['spanId']);
     }
 
+    public function testDoesNotRecordTheRequestsThatCallNoEntrypoint(): void
+    {
+        $result = $this->record('/assets/app.js', option: 'no-entrypoint');
+
+        static::assertIsString($result['spanId']);
+        static::assertFalse($result['traceFile'], 'The trace stops with the request');
+        static::assertSame([], glob($this->traceDirectory.'/*') ?: [], 'Neither the record nor the trace of Xdebug is kept');
+    }
+
+    public function testWritesTheRecordWhenTheRequestEndsAfterItCalledAnEntrypoint(): void
+    {
+        $result = $this->record('/greet?name=Ada');
+
+        static::assertFalse($result['recordedBeforeTheEnd']);
+        static::assertSame('/greet?name=Ada', $this->request($result['spanId'])['uri']);
+    }
+
+    public function testWritesTheRecordBeforeTheControllerIsCalled(): void
+    {
+        $result = $this->record('/greet?name=Ada', option: 'controller');
+
+        static::assertTrue($result['recordedBeforeTheEnd']);
+        $request = $this->request($result['spanId']);
+        static::assertLessThan($request['at'], $request['startedAt'], 'The request starts when it is recorded, not when its record is written');
+    }
+
     public function testDoesNotRecordTheProfiler(): void
     {
         static::assertNull($this->record('/_profiler/abc123')['spanId']);
@@ -161,7 +187,7 @@ final class RecorderTest extends TestCase
     /**
      * @param array<string, string> $settings Xdebug settings besides xdebug.mode
      *
-     * @return array{spanId: ?string, traceparent: ?string, collectReturn: string, traceFile: string|false, coverage: bool, error: ?string}
+     * @return array{spanId: ?string, recordedBeforeTheEnd: bool, traceparent: ?string, collectReturn: string, traceFile: string|false, coverage: bool, error: ?string}
      */
     private function record(string $uri, array $settings = [], ?string $option = null): array
     {

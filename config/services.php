@@ -57,6 +57,7 @@ return static function (ContainerConfigurator $container): void {
     $services->set('domain_tracing.recording_listener', RecordingListener::class)
         ->args([service('domain_tracing.recorder')])
         ->tag('kernel.event_listener', ['event' => KernelEvents::REQUEST, 'method' => 'onRequest', 'priority' => 4096])
+        ->tag('kernel.event_listener', ['event' => KernelEvents::CONTROLLER, 'method' => 'onController', 'priority' => -4096])
         ->tag('kernel.event_listener', ['event' => KernelEvents::EXCEPTION, 'method' => 'onException', 'priority' => 4096])
         ->tag('kernel.event_listener', ['event' => KernelEvents::RESPONSE, 'method' => 'onResponse', 'priority' => -4096])
         ->tag('kernel.event_listener', ['event' => KernelEvents::TERMINATE, 'method' => 'onTerminate', 'priority' => -4096])

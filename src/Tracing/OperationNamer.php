@@ -32,23 +32,22 @@ final readonly class OperationNamer
     /**
      * @param list<array{service: string, function: string, code: string}> $operations
      *
-     * @return array<string, string> names by function, including the cached ones
+     * @return \Generator<string, string> names by function, the cached ones first
      */
-    public function name(array $operations): array
+    public function name(array $operations): \Generator
     {
-        $names = [];
         $missing = [];
         foreach ($operations as $operation) {
             $name = $this->cachedName($operation['service'], $operation['function'], $operation['code']);
             if (null === $name) {
                 $missing[] = $operation;
             } else {
-                $names[$operation['function']] = $name;
+                yield $operation['function'] => $name;
             }
         }
 
         if (!$missing) {
-            return $names;
+            return;
         }
 
         $prompt = "Name these operations:\n\n";
@@ -67,10 +66,8 @@ final readonly class OperationNamer
             $name = mb_substr(trim($named['name']), 0, 60);
             $item = $this->cache->getItem(self::key($operation['service'], $operation['function'], $operation['code']));
             $this->cache->save($item->set($name));
-            $names[$operation['function']] = $name;
+            yield $operation['function'] => $name;
         }
-
-        return $names;
     }
 
     private static function key(string $service, string $function, string $code): string

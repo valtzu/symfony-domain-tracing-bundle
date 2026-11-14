@@ -108,6 +108,20 @@ final class RecorderTest extends TestCase
         static::assertDirectoryDoesNotExist($this->traceDirectory);
     }
 
+    public function testKeepsTheIndexOfTheCodeFromExpiringWhileItIsUsed(): void
+    {
+        $this->record('/greet?name=Ada');
+        [$index] = glob($this->traceDirectory.'/codeindex-*.json') ?: [null];
+        static::assertIsString($index);
+        touch($index, time() - 3 * 86_400);
+
+        $this->record('/greet?name=Ada');
+
+        clearstatcache();
+        static::assertGreaterThan(time() - 60, filemtime($index), 'The traces older than 2 days are removed');
+        static::assertSame([$index], glob($this->traceDirectory.'/codeindex-*'), 'No temporary file is left');
+    }
+
     public function testDoesNotRecordWhenTheTraceDirectoryIsNotWritable(): void
     {
         mkdir($this->traceDirectory, 0555, recursive: true);

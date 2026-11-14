@@ -9,6 +9,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Valtzu\DomainTracingBundle\DependencyInjection\EntrypointPass;
 use Valtzu\DomainTracingBundle\DependencyInjection\MissingAgentPass;
 use Valtzu\DomainTracingBundle\DependencyInjection\SerializerDescriberPass;
 
@@ -35,6 +36,7 @@ final class DomainTracingBundle extends AbstractBundle
     {
         $container->addCompilerPass(new SerializerDescriberPass());
         $container->addCompilerPass(new MissingAgentPass());
+        $container->addCompilerPass(new EntrypointPass());
     }
 
     public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void

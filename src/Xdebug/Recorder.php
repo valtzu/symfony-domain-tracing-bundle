@@ -40,9 +40,13 @@ final class Recorder implements ResetInterface
     private ?float $respondedAt = null;
     private bool $shutdownRegistered = false;
 
+    /**
+     * @param list<string> $entrypoints the classes that the framework calls first, see EntrypointPass
+     */
     public function __construct(
         private readonly string $projectDir,
         private readonly TraceStore $store,
+        private readonly array $entrypoints = [],
     ) {
     }
 
@@ -93,7 +97,7 @@ final class Recorder implements ResetInterface
             return null;
         }
 
-        $codeIndex = CodeIndex::build($this->projectDir, false)['fingerprint'];
+        $codeIndex = CodeIndex::build($this->projectDir, false, $this->entrypoints)['fingerprint'];
         $markedAt = TraceClock::mark();
         $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt, 'receivedAt' => is_numeric($server['REQUEST_TIME_FLOAT'] ?? null) ? (float) $server['REQUEST_TIME_FLOAT'] : null]);
         $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
@@ -165,9 +169,13 @@ final class Recorder implements ResetInterface
         self::restore($current['settings']);
 
         $indexPath = $this->store->directory().'/codeindex-'.$current['codeIndex'].'.json';
-        if (!is_file($indexPath)) {
-            $temporary = $indexPath.'.'.(int) getmypid();
-            file_put_contents($temporary, json_encode(CodeIndex::build($this->projectDir, true), \JSON_UNESCAPED_SLASHES));
+        if (is_file($indexPath)) {
+            // The traces expire by the time they were last written, and an index is written once per version of the code
+            @touch($indexPath);
+        } else {
+            // The threads of a FrankenPHP worker share a process ID
+            $temporary = $indexPath.'.'.bin2hex(random_bytes(4));
+            file_put_contents($temporary, json_encode(CodeIndex::build($this->projectDir, true, $this->entrypoints), \JSON_UNESCAPED_SLASHES));
             rename($temporary, $indexPath);
         }
     }

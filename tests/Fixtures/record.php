@@ -14,7 +14,7 @@ require __DIR__.'/project/src/Greeter.php';
 
 /** @var list<string> $argv */
 [, $traceDirectory, $uri] = $argv;
-$recorder = new Recorder(__DIR__.'/project', new TraceStore($traceDirectory));
+$recorder = new Recorder(__DIR__.'/project', new TraceStore($traceDirectory), ['Acme\Shop\Greeter']);
 // The time between the start of the script and the start of the recording, as in a worker process
 usleep(300_000);
 $spanId = $recorder->start(['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $uri, 'SCRIPT_FILENAME' => __DIR__.'/project/public/index.php', 'REQUEST_TIME_FLOAT' => $_SERVER['REQUEST_TIME_FLOAT']]);

@@ -26,28 +26,38 @@ use Valtzu\DomainTracingBundle\Xdebug\XdebugValue;
 
 final class TraceMcpServerTest extends KernelTestCase
 {
+    private const array INITIALIZE = ['method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18', 'capabilities' => ['extensions' => ['io.modelcontextprotocol/ui' => ['mimeTypes' => ['text/html;profile=mcp-app']]]], 'clientInfo' => ['name' => 'test', 'version' => '1']]];
+
     public function testServesTheTraceToolWithItsApp(): void
     {
         $responses = $this->serve([
-            ['method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18', 'capabilities' => ['extensions' => ['io.modelcontextprotocol/ui' => ['mimeTypes' => ['text/html;profile=mcp-app']]]], 'clientInfo' => ['name' => 'test', 'version' => '1']]],
+            self::INITIALIZE,
             ['method' => 'notifications/initialized'],
             ['method' => 'tools/list'],
-            ['method' => 'resources/read', 'params' => ['uri' => TraceMcpServer::APP_URI]],
             ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => ['request' => 'ffffffffffffffff']]],
         ]);
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
-        static::assertSame(TraceMcpServer::APP_URI, $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null);
         static::assertSame(['domain_trace'], array_keys($tools));
+        $appUri = $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null;
+        static::assertIsString($appUri);
+        static::assertMatchesRegularExpression('{^'.preg_quote(TraceMcpServer::APP_URI).'-[0-9a-f]{12}$}', $appUri, 'A new version of the app gets a new URI, because the hosts keep the app by its URI');
 
-        $app = $responses[3]['result']['contents'][0] ?? [];
+        static::assertTrue($responses[3]['result']['isError'] ?? false);
+        static::assertSame('No request "ffffffffffffffff" was recorded.', $responses[3]['result']['content'][0]['text'] ?? null);
+
+        $responses = $this->serve([
+            self::INITIALIZE,
+            ['method' => 'notifications/initialized'],
+            ['method' => 'resources/read', 'params' => ['uri' => $appUri]],
+        ]);
+
+        $app = $responses[2]['result']['contents'][0] ?? [];
+        static::assertSame($appUri, $app['uri'] ?? null);
         static::assertSame('text/html;profile=mcp-app', $app['mimeType'] ?? null);
         static::assertStringContainsString('function followTrace', $app['text'] ?? '');
         static::assertStringContainsString('ui/initialize', $app['text'] ?? '');
         static::assertStringContainsString("_meta?.['".TraceMcpServer::META_KEY."']", $app['text'] ?? '');
-
-        static::assertTrue($responses[4]['result']['isError'] ?? false);
-        static::assertSame('No request "ffffffffffffffff" was recorded.', $responses[4]['result']['content'][0]['text'] ?? null);
     }
 
     public function testGivesTheTraceAsTextToTheModelAndItsEventsToTheApp(): void

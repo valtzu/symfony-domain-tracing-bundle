@@ -49,6 +49,10 @@ final readonly class TraceMcpServer
             throw new \LogicException('The MCP server needs the MCP SDK: run "composer require --dev mcp/sdk".');
         }
 
+        // The hosts keep the app by its URI, so a new version of the app gets a new URI
+        $app = $this->app();
+        $appUri = self::APP_URI.'-'.substr(hash('xxh128', $app), 0, 12);
+
         Server::builder()
             ->setServerInfo('domain-tracing', '1.0.0')
             ->setInstructions('The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.')
@@ -66,11 +70,11 @@ final readonly class TraceMcpServer
                         'values' => ['type' => 'boolean', 'description' => 'Include the arguments and the return values of the operations'],
                     ],
                 ],
-                meta: ['ui' => new UiToolMeta(self::APP_URI)],
+                meta: ['ui' => new UiToolMeta($appUri)],
             )
             ->addResource(
-                fn (): TextResourceContents => new TextResourceContents(self::APP_URI, McpApps::MIME_TYPE, $this->app()),
-                self::APP_URI,
+                static fn (): TextResourceContents => new TextResourceContents($appUri, McpApps::MIME_TYPE, $app),
+                $appUri,
                 'domain-trace',
                 'Domain trace',
                 'The waterfall of a trace',

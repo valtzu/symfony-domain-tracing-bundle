@@ -43,7 +43,7 @@ final class TraceIngester
             $span = &$this->spans[$id];
             $traceFile = $span['request']['traceFile'] ?? '';
             if (null === $span['reader'] && null !== $codeIndex = $this->store->codeIndex($span['request']['codeIndex'] ?? '')) {
-                $span['reader'] = new XdebugTraceReader($traceFile, $id, $span['request']['startedAt'], $codeIndex, $this->store, $this->values);
+                $span['reader'] = new XdebugTraceReader($traceFile, $id, $span['request']['startedAt'], $codeIndex, $this->store, $this->values, \is_float($markedAt = $span['request']['markedAt'] ?? null) ? $markedAt : null);
             }
 
             if ($span['reader']?->read()) {

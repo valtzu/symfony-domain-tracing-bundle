@@ -9,6 +9,11 @@ use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
+use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
+use Valtzu\DomainTracingBundle\Storage\TraceStore;
+use Valtzu\DomainTracingBundle\Xdebug\TraceClock;
+use Valtzu\DomainTracingBundle\Xdebug\TraceIngester;
+use Valtzu\DomainTracingBundle\Xdebug\XdebugValue;
 
 #[RequiresPhpExtension('xdebug')]
 final class RecorderTest extends TestCase
@@ -46,12 +51,26 @@ final class RecorderTest extends TestCase
         $trace = (string) file_get_contents('compress.zlib://'.$request['traceFile']);
         static::assertStringContainsString('Acme\Shop\Greeter->greet', $trace);
         static::assertStringContainsString("\tR\t\t\t'Hello Ada'", $trace, 'The return values are in the trace');
-        static::assertStringNotContainsString('Valtzu\DomainTracingBundle', $trace, 'Only the application is traced');
+        static::assertStringContainsString(TraceClock::MARK, $trace, 'The clock of the trace is traced');
+        static::assertStringNotContainsString('Valtzu\DomainTracingBundle', str_replace(TraceClock::MARK, '', $trace), 'Only the application and the clock of the trace are traced');
 
         $outcome = json_decode((string) file_get_contents($this->traceDirectory.'/'.$result['spanId'].'.outcome.json'), true);
         static::assertSame([500, 'RuntimeException', 'Greeting failed'], [$outcome['status'], $outcome['exception']['class'], $outcome['exception']['message']]);
         static::assertArrayHasKey(realpath(\dirname(__DIR__).'/Fixtures/project/src/Greeter.php'), json_decode((string) file_get_contents($this->traceDirectory.'/'.$result['spanId'].'.lines.json'), true));
         static::assertFileExists($this->traceDirectory.'/codeindex-'.$request['codeIndex'].'.json');
+    }
+
+    public function testStampsTheStepsFromTheStartOfTheRecordingAndNotOfTheScript(): void
+    {
+        $spanId = $this->record('/greet?name=Ada')['spanId'];
+        static::assertIsString($spanId);
+
+        $store = new TraceStore($this->traceDirectory);
+        (new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])))->poll([$spanId]);
+        $steps = array_values(array_filter($store->read($spanId)['records'] ?? [], array_is_list(...)));
+
+        static::assertCount(1, $steps, 'Greeter->greet is the only step');
+        static::assertLessThan(50_000, $steps[0][3], 'The step is stamped in microseconds since the request started, without the 300 ms before the recording');
     }
 
     public function testRecordsTheRequestInTheTraceThatXdebugStartedInFormat1(): void

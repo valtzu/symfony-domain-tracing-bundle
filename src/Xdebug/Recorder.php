@@ -77,7 +77,7 @@ final class Recorder implements ResetInterface
 
         if (!$traced) {
             $this->store->createDirectory();
-            xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, array_keys($autoload));
+            xdebug_set_filter(\XDEBUG_FILTER_TRACING, \XDEBUG_NAMESPACE_INCLUDE, [...array_keys($autoload), TraceClock::class]);
             $traceFile = xdebug_start_trace($this->store->directory().'/trace.'.$context['spanId'], \XDEBUG_TRACE_COMPUTERIZED);
         } else {
             $traceFile = $runningTrace;
@@ -89,7 +89,8 @@ final class Recorder implements ResetInterface
         }
 
         $codeIndex = CodeIndex::build($this->projectDir, false)['fingerprint'];
-        $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex]);
+        $markedAt = TraceClock::mark();
+        $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt]);
         $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
         $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings];
         $this->exception = null;

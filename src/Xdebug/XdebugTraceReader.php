@@ -46,6 +46,7 @@ final class XdebugTraceReader
         private readonly array $codeIndex,
         private readonly TraceStore $store,
         private readonly XdebugValue $values,
+        private readonly ?float $markedAt = null,
     ) {
         foreach ($codeIndex['files'] as $path => $file) {
             $this->classes[$file['class']] = ['path' => $path, 'file' => $file];
@@ -118,6 +119,12 @@ final class XdebugTraceReader
         $this->flushExit();
         [$depth, $number, , $time, , $function] = $fields;
         $this->lastTime = (float) $time;
+        // Xdebug writes the time since the start of the script, which can be long before the start of the trace
+        if (TraceClock::MARK === $function && null !== $this->markedAt) {
+            $this->traceStartedAt = $this->markedAt - (float) $time;
+
+            return;
+        }
 
         [$class, $method] = preg_split('/->|::/', $function, 2) + [1 => null];
         $definition = $this->classes[$class] ?? null;

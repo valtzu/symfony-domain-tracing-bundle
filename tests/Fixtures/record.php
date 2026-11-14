@@ -15,6 +15,8 @@ require __DIR__.'/project/src/Greeter.php';
 
 [, $traceDirectory, $uri] = $argv;
 $recorder = new Recorder(__DIR__.'/project', new ExcludedUris(['^/health$']), new TraceStore($traceDirectory));
+// The time between the start of the script and the start of the recording, as in a worker process
+usleep(300_000);
 $spanId = $recorder->start(['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $uri, 'SCRIPT_FILENAME' => __DIR__.'/project/public/index.php']);
 $greeting = (new Acme\Shop\Greeter())->greet('Ada');
 $recorder->recordException(new RuntimeException('Greeting failed'));

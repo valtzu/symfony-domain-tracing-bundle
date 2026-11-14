@@ -1,21 +1,45 @@
 {
     "name": "valtzu/domain-tracing-bundle",
     "description": "Business-level traces of PHP requests, recorded with Xdebug and described with Symfony AI",
+    "keywords": [
+        "symfony",
+        "bundle",
+        "tracing",
+        "xdebug",
+        "ai",
+        "profiler",
+        "observability"
+    ],
     "type": "symfony-bundle",
     "license": "MIT",
     "minimum-stability": "beta",
     "prefer-stable": true,
     "require": {
         "php": ">=8.4",
+        "ext-tokenizer": "*",
+        "ext-zlib": "*",
+        "psr/cache": "^3.0",
         "symfony/ai-agent": "^1.0@beta",
         "symfony/ai-bundle": "^1.0@beta",
+        "symfony/ai-platform": "^1.0@beta",
+        "symfony/config": "^8.1",
         "symfony/console": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/finder": "^8.1",
         "symfony/framework-bundle": "^8.1",
+        "symfony/http-client": "^8.1",
+        "symfony/http-client-contracts": "^3.4",
+        "symfony/http-foundation": "^8.1",
+        "symfony/http-kernel": "^8.1",
         "symfony/process": "^8.1",
+        "symfony/routing": "^8.1",
+        "symfony/service-contracts": "^3.7",
         "symfony/twig-bundle": "^8.1",
-        "symfony/web-profiler-bundle": "^8.1"
+        "symfony/web-profiler-bundle": "^8.1",
+        "twig/twig": "^3.27"
     },
     "suggest": {
+        "ext-xdebug": "To record the requests: the bundle needs Xdebug in the trace and coverage modes",
         "symfony/ai-claude-code-platform": "To describe the traces with the Claude Code CLI"
     },
     "require-dev": {

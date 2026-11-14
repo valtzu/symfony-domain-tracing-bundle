@@ -17,6 +17,8 @@ function createWaterfall(container, describing) {
     let latest = 0;
     let recordingEnded = false;
     let frame = null;
+    let pendingShown = false;
+    let pendingChangedAt = 0;
     const shownAt = new Map();
 
     const serviceColor = service => {
@@ -74,11 +76,11 @@ function createWaterfall(container, describing) {
     const rename = (element, span) => {
         const named = namedAt.get(span.function);
         const age = performance.now() - named;
-        if (!(shownAt.get(span.id) < named) || age >= NAME_ERASE_MILLISECONDS + NAME_WRITE_MILLISECONDS || reducedMotion.matches) {
+        const name = names.get(span.function);
+        if (name === span.name || !(shownAt.get(span.id) < named) || age >=NAME_ERASE_MILLISECONDS + NAME_WRITE_MILLISECONDS || reducedMotion.matches) {
             return;
         }
 
-        const name = names.get(span.function);
         const erasing = age < NAME_ERASE_MILLISECONDS;
         element.textContent = erasing
             ? span.name.slice(0, Math.ceil(span.name.length * (1 - age / NAME_ERASE_MILLISECONDS)))
@@ -197,10 +199,23 @@ function createWaterfall(container, describing) {
             }
         }
 
-        if (describing && recordingEnded) {
-            const pending = table.appendChild(document.createElement('p'));
-            pending.className = 'waterfall-pending';
-            pending.append(spinner(), 'Describing what happened…');
+        const pending = describing && recordingEnded;
+        if (pending !== pendingShown) {
+            pendingShown = pending;
+            pendingChangedAt = performance.now();
+        }
+        const pendingAge = performance.now() - pendingChangedAt;
+        if (pending || pendingAge < ROW_ENTER_MILLISECONDS) {
+            const element = table.appendChild(document.createElement('p'));
+            element.className = 'waterfall-pending';
+            element.append(spinner(), 'Describing what happened…');
+            if (pendingAge < ROW_ENTER_MILLISECONDS) {
+                element.classList.add(pending ? 'waterfall-enter' : 'waterfall-leave');
+                element.style.animationDelay = `-${pendingAge}ms`;
+            }
+            if (!pending) {
+                setTimeout(update, ROW_ENTER_MILLISECONDS - pendingAge);
+            }
         }
 
         table.classList.toggle('single-service', services.length < 2);
@@ -257,9 +272,14 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { describe = false, onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
-    panel.innerHTML = '<h2>What happened</h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
+    panel.innerHTML = '<h2></h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
+    if (title) {
+        panel.querySelector('h2').textContent = title;
+    } else {
+        panel.querySelector('h2').remove();
+    }
     panel.querySelector('.trace-status').prepend(spinner());
     const status = panel.querySelector('.trace-status-text');
     const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'), describe);

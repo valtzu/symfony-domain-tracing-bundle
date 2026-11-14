@@ -12,6 +12,7 @@
     main { max-width: 960px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
     h1 { margin: 0; font-size: 22px; }
     .hint { color: var(--muted); margin: 0; }
+    #traces { display: grid; gap: 16px; }
 </style>
 </head>
 <body>
@@ -41,6 +42,7 @@
         const panel = traces.insertBefore(document.createElement('section'), traces.firstChild);
         await new Promise(resolve => {
             followTrace(id, panel, {
+                title: null,
                 onRequest: request => after = request.startedAt,
                 onDone: resolve,
             });

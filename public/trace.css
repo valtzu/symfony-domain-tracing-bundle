@@ -17,7 +17,9 @@
 
 .waterfall { margin-top: 12px; font-size: 13px; overflow-x: auto; overflow-y: hidden; interpolate-size: allow-keywords; }
 .waterfall-enter { overflow: hidden; animation: waterfall-enter 250ms ease-out both; }
-@keyframes waterfall-enter { from { height: 0; min-height: 0; opacity: 0; } }
+@keyframes waterfall-enter { from { height: 0; min-height: 0; margin-top: 0; opacity: 0; } }
+.waterfall-leave { overflow: hidden; animation: waterfall-leave 250ms ease-in both; }
+@keyframes waterfall-leave { to { height: 0; min-height: 0; margin-top: 0; opacity: 0; } }
 .waterfall-axis, .waterfall-row { display: grid; grid-template-columns: minmax(180px, 34%) 1fr; gap: 8px; align-items: center; min-width: 560px; }
 .waterfall-axis { color: var(--trace-muted); font-size: 11px; height: 18px; border-bottom: 1px solid var(--trace-line); }
 .waterfall-ticks { position: relative; height: 100%; }
@@ -69,5 +71,5 @@
     .trace-spinner { animation-duration: 3s; }
     .waterfall-name.naming { animation: none; opacity: .6; }
     .waterfall-row.running .waterfall-bar { animation: none; }
-    .waterfall-enter { animation: none; }
+    .waterfall-enter, .waterfall-leave { animation: none; }
 }

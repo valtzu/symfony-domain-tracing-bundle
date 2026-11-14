@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Valtzu\DomainTracingBundle\DataCollector\TraceDataCollector;
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Xdebug\XdebugSetup;
 
@@ -55,7 +56,7 @@ final class TraceDataCollectorTest extends TestCase
 
     private function collector(?string $requestId): TraceDataCollector
     {
-        $collector = new TraceDataCollector($this->store, new XdebugSetup('/srv/app/var/share/traces'), true);
+        $collector = new TraceDataCollector($this->store, new BlobStore(sys_get_temp_dir().'/domain-tracing-blobs-'.bin2hex(random_bytes(4)), null), new XdebugSetup('/srv/app/var/share/traces'), true);
         $request = new Request();
         $request->server->set('DOMAIN_TRACING_SPAN_ID', $requestId);
         $collector->collect($request, new Response());

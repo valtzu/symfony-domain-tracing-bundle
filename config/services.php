@@ -107,7 +107,7 @@ return static function (ContainerConfigurator $container): void {
         ->tag('console.command');
 
     $services->set('domain_tracing.cache_clearer', TraceCacheClearer::class)
-        ->args([service('domain_tracing.trace_store')])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.blob_store')])
         ->tag('kernel.cache_clearer');
 
     $services->set('domain_tracing.traceparent_http_client', TraceparentHttpClient::class)
@@ -115,7 +115,7 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('.inner')]);
 
     $services->set('domain_tracing.data_collector', TraceDataCollector::class)
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.xdebug_setup'), '%domain_tracing.describe%'])
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.blob_store'), service('domain_tracing.xdebug_setup'), '%domain_tracing.describe%'])
         // right after the "request" collector, which has priority 335
         ->tag('data_collector', ['id' => 'domain_traces', 'template' => '@DomainTracing/collector.html.twig', 'priority' => 334]);
 };

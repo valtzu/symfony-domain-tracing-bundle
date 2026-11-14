@@ -45,6 +45,9 @@ final class BlobStore
         }
 
         if (is_file($path = $this->directory.'/'.$id) && false !== $contents = file_get_contents($path)) {
+            // The blobs expire by the time they were last read
+            @touch($path);
+
             return $this->blobs[$id] = $contents;
         }
 
@@ -73,11 +76,32 @@ final class BlobStore
 
         $id = self::id($contents);
         if (!is_file($path = $this->directory.'/'.$id)) {
-            file_put_contents($path.'.tmp', $contents);
-            rename($path.'.tmp', $path);
+            // Another process can write the same blob meanwhile
+            $temporary = $path.'.'.bin2hex(random_bytes(4));
+            file_put_contents($temporary, $contents);
+            rename($temporary, $path);
         }
 
         return $id;
+    }
+
+    /**
+     * Removes the blobs that were not written or read since the given time, as the traces expire.
+     */
+    public function removeOlderThan(int $timestamp): void
+    {
+        foreach (glob($this->directory.'/*') ?: [] as $path) {
+            if ((int) @filemtime($path) < $timestamp) {
+                @unlink($path);
+            }
+        }
+    }
+
+    public function clear(): void
+    {
+        foreach (glob($this->directory.'/*') ?: [] as $path) {
+            @unlink($path);
+        }
     }
 
     private function scanWorkingTrees(): void

@@ -8,6 +8,7 @@ namespace Valtzu\DomainTracingBundle\DataCollector;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Valtzu\DomainTracingBundle\Storage\BlobStore;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\BuiltInServer;
 use Valtzu\DomainTracingBundle\Xdebug\XdebugSetup;
@@ -23,6 +24,7 @@ final class TraceDataCollector extends AbstractDataCollector
 
     public function __construct(
         private readonly TraceStore $store,
+        private readonly BlobStore $blobs,
         private readonly XdebugSetup $xdebug,
         private readonly bool $describes,
     ) {
@@ -42,6 +44,7 @@ final class TraceDataCollector extends AbstractDataCollector
 
         if (1 === mt_rand(1, self::EXPIRY_CHANCE)) {
             $this->store->removeOlderThan(time() - self::EXPIRY_SECONDS);
+            $this->blobs->removeOlderThan(time() - self::EXPIRY_SECONDS);
         }
     }
 

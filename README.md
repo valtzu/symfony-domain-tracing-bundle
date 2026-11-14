@@ -207,12 +207,13 @@ In the demo, both services write their traces into the same `traces` volume, mou
 ## Limits
 
 - Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment of
-  the demo, with the web profiler enabled, in three runs:
+  the demo, with the web profiler enabled and no page open that follows the traces, in six runs that alternate
+  between the two settings:
 
   | | `GET /` (shop) | `POST /` (shop and payments) |
   |---|---|---|
-  | No Xdebug | 7.1–7.9 ms | 16–19 ms |
-  | Recorded | 24–29 ms | 53–65 ms |
+  | `XDEBUG_MODE=off` | 8.9–16 ms | 19–42 ms |
+  | Recorded | 36–59 ms | 83–119 ms |
 
   The time goes to the Xdebug trace and code coverage.
 

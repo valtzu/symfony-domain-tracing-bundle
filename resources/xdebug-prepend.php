@@ -5,6 +5,12 @@
 // nearest composer.json. When the request ends, it writes the lines that ran next to the trace file, and the index of
 // the application code when this version of the code has none yet.
 (static function (): void {
+    // The router of the Symfony CLI server includes the auto_prepend_file again
+    if (\defined('DOMAIN_TRACING_PREPENDED')) {
+        return;
+    }
+    \define('DOMAIN_TRACING_PREPENDED', true);
+
     $modes = \function_exists('xdebug_info') ? xdebug_info('mode') : [];
     if (!\in_array('trace', $modes, true) || !$traceFile = xdebug_get_tracefile_name()) {
         return;

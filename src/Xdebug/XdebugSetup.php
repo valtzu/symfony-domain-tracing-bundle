@@ -46,9 +46,6 @@ final readonly class XdebugSetup
         if ($missing = array_diff(self::MODES, $modes)) {
             $problems[] = \sprintf('xdebug.mode is "%s", and it must also contain %s.', implode(',', $modes), implode(' and ', $missing));
         }
-        if ('yes' === ini_get('xdebug.start_with_request')) {
-            $problems[] = 'xdebug.start_with_request is "yes", so Xdebug traces the whole request itself. Remove the setting: the bundle starts the trace.';
-        }
         if ('1' !== ini_get('xdebug.trace_format')) {
             $problems[] = 'xdebug.trace_format must be 1.';
         }

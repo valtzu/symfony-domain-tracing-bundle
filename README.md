@@ -166,7 +166,8 @@ it, then read the output. Add `--describe` for a description in business terms.
   next to the trace file. When the request ends, it writes the lines that ran, the response status and the exception
   that the request did not handle, stops the trace, and writes an index of the application code once per version of
   the code. A trace refers to code by git blob ID and line. The bundle needs no `auto_prepend_file`, and the
-  requests that are not recorded are not traced.
+  requests that are not recorded are not traced. With `xdebug.start_with_request=yes`, the bundle stops the trace
+  that Xdebug starts with the request and removes its file, and starts its own trace for a recorded request.
 - The event stream of the live view and of the profiler panel reads the trace files while Xdebug writes them, from
   the first method of the entrypoint on. One stream reads each trace file, and another one takes over when it stops.
 - The stream of the profiler panel also builds the spans, names the operations (once per method and code version),

@@ -640,7 +640,7 @@ count = 1
 file = "src/Xdebug/Recorder.php"
 code = "no-debug-symbols"
 message = "Do not commit debug functions."
-count = 12
+count = 14
 
 [[issues]]
 file = "src/Xdebug/Recorder.php"

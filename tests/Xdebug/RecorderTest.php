@@ -2,6 +2,7 @@
 
 namespace Valtzu\DomainTracingBundle\Tests\Xdebug;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -25,9 +26,19 @@ final class RecorderTest extends TestCase
         (new Filesystem())->remove($this->directory);
     }
 
-    public function testRecordsTheRequestWithoutAPrependFile(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function startWithRequest(): iterable
     {
-        $result = $this->record('/greet?name=Ada');
+        yield 'Xdebug does not start the trace' => ['no'];
+        yield 'Xdebug starts the trace with the request' => ['yes'];
+    }
+
+    #[DataProvider('startWithRequest')]
+    public function testRecordsTheRequestWithoutAPrependFile(string $startWithRequest): void
+    {
+        $result = $this->record('/greet?name=Ada', $startWithRequest);
 
         static::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $result['spanId']);
         static::assertNull($result['traceparent'], 'The trace context of the request is cleared when it ends');
@@ -43,23 +54,25 @@ final class RecorderTest extends TestCase
         static::assertSame([500, 'RuntimeException', 'Greeting failed'], [$outcome['status'], $outcome['exception']['class'], $outcome['exception']['message']]);
         static::assertArrayHasKey(realpath(\dirname(__DIR__).'/Fixtures/project/src/Greeter.php'), json_decode((string) file_get_contents($request['traceFile'].'.lines.json'), true));
         static::assertFileExists($this->directory.'/codeindex-'.$request['codeIndex'].'.json');
+        static::assertSame([$request['traceFile']], glob($this->directory.'/trace.*.xt*[!n]'), 'The trace that Xdebug started with the request is removed');
     }
 
-    public function testDoesNotRecordAnExcludedRequest(): void
+    #[DataProvider('startWithRequest')]
+    public function testDoesNotRecordAnExcludedRequest(string $startWithRequest): void
     {
-        static::assertNull($this->record('/health')['spanId']);
+        static::assertNull($this->record('/health', $startWithRequest)['spanId']);
         static::assertSame([], glob($this->directory.'/*'));
     }
 
     /**
      * @return array{spanId: ?string, traceparent: ?string}
      */
-    private function record(string $uri): array
+    private function record(string $uri, string $startWithRequest): array
     {
         $process = new Process([
             \PHP_BINARY,
             '-d', 'xdebug.mode=trace,coverage',
-            '-d', 'xdebug.start_with_request=no',
+            '-d', 'xdebug.start_with_request='.$startWithRequest,
             '-d', 'xdebug.trace_format=1',
             '-d', 'xdebug.collect_return=1',
             '-d', 'xdebug.output_dir='.$this->directory,

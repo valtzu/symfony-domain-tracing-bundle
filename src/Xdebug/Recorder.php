@@ -40,7 +40,11 @@ final class Recorder implements ResetInterface
      */
     public function start(array $server): ?string
     {
-        if (null !== $this->current || !\function_exists('xdebug_info') || !\in_array('trace', xdebug_info('mode'), true) || false !== xdebug_get_tracefile_name()) {
+        if (null !== $this->current || !\function_exists('xdebug_info') || !\in_array('trace', xdebug_info('mode'), true)) {
+            return null;
+        }
+        self::discardTheTraceOfXdebug();
+        if (false !== xdebug_get_tracefile_name()) {
             return null;
         }
 
@@ -135,6 +139,21 @@ final class Recorder implements ResetInterface
     public function reset(): void
     {
         $this->stop(null);
+    }
+
+    /**
+     * With xdebug.start_with_request=yes, Xdebug traces the whole request, from the first line of the front controller
+     * and without a filter. The bundle replaces that trace with its own, or stops it when the request is not recorded.
+     */
+    private static function discardTheTraceOfXdebug(): void
+    {
+        if (!\in_array(ini_get('xdebug.start_with_request'), ['yes', '1'], strict: true) || !\is_string($traceFile = xdebug_get_tracefile_name())) {
+            return;
+        }
+        xdebug_stop_trace();
+        if (is_file($traceFile)) {
+            unlink($traceFile);
+        }
     }
 
     /**

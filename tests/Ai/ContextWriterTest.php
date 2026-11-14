@@ -76,6 +76,7 @@ final class ContextWriterTest extends TestCase
         $tester = new CommandTester(new Command(null, new ContextGenerateCommand(new ContextWriter($this->agentAnswering(['The shop sells shirts.']), $this->project()), $this->projectDir.'/config/domain_tracing.md')));
 
         static::assertSame(0, $tester->execute(['--write' => true]));
+        static::assertStringEndsWith("\n".$this->projectDir."/config/domain_tracing.md\n", $tester->getDisplay());
         static::assertSame("The shop sells shirts.\n", file_get_contents($this->projectDir.'/config/domain_tracing.md'));
     }
 
@@ -85,6 +86,7 @@ final class ContextWriterTest extends TestCase
 
         static::assertSame(0, $tester->execute([], ['interactive' => false]));
         static::assertStringContainsString('The shop sells shirts.', $tester->getDisplay());
+        static::assertStringEndsWith("\n".$this->projectDir."/config/domain_tracing.md\n", $tester->getDisplay());
         static::assertFileDoesNotExist($this->projectDir.'/config/domain_tracing.md');
     }
 

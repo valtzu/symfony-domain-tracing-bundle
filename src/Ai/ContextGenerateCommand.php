@@ -45,7 +45,8 @@ final readonly class ContextGenerateCommand
 
         $question = \sprintf(is_file($this->contextFile) ? 'Replace %s?' : 'Write %s?', $this->contextFile);
         if (!$write && !($input->isInteractive() && $io->confirm($question, !is_file($this->contextFile)))) {
-            $io->note(\sprintf('Not written. Run the command with --write, or copy the description into %s.', $this->contextFile));
+            $io->note('Not written. Run the command with --write, or copy the description into this file:');
+            $io->writeln($this->contextFile);
 
             return Command::SUCCESS;
         }
@@ -54,7 +55,8 @@ final readonly class ContextGenerateCommand
             mkdir(\dirname($this->contextFile), recursive: true);
         }
         file_put_contents($this->contextFile, $context."\n");
-        $io->success(\sprintf('Wrote %s. Read the description, change what is wrong, and commit it.', $this->contextFile));
+        $io->success('Wrote the description. Read it, change what is wrong, and commit it.');
+        $io->writeln($this->contextFile);
 
         return Command::SUCCESS;
     }

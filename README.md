@@ -1,4 +1,4 @@
-# symfony-domain-tracing-bundle
+# Domain Tracing Bundle
 
 Business-level traces of PHP requests, without instrumenting the code.
 

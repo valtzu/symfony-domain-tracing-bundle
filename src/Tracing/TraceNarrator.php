@@ -16,7 +16,7 @@ use Valtzu\DomainTracingBundle\Ai\SystemPrompts;
 final readonly class TraceNarrator
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.trace_narrator')]
+        #[Autowire(service: 'ai.agent.domain_tracing_trace_narrator')]
         private AgentInterface $agent,
         private SystemPrompts $prompts = new SystemPrompts(),
     ) {

@@ -5,14 +5,21 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 return static function (ContainerConfigurator $container): void {
     $container->extension('ai', [
         'agent' => [
-            'operation_namer' => [
+            'domain_tracing_operation_namer' => [
                 'platform' => 'domain_tracing.platform',
                 'model' => [
                     'name' => 'opus',
                     'options' => ['tools' => []],
                 ],
             ],
-            'trace_narrator' => [
+            'domain_tracing_trace_narrator' => [
+                'platform' => 'domain_tracing.platform',
+                'model' => [
+                    'name' => 'opus',
+                    'options' => ['tools' => []],
+                ],
+            ],
+            'domain_tracing_context_writer' => [
                 'platform' => 'domain_tracing.platform',
                 'model' => [
                     'name' => 'opus',
@@ -20,5 +27,5 @@ return static function (ContainerConfigurator $container): void {
                 ],
             ],
         ],
-    ]);
+    ], prepend: true);
 };

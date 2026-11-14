@@ -29,5 +29,11 @@ final class TestKernel extends Kernel
     {
         $container->extension('framework', ['test' => true, 'secret' => 'test']);
         $container->extension('domain_tracing', ['context' => 'The shop sells 100% cotton shirts.']);
+
+        if ('agent_override' === $this->environment) {
+            $container->services()->set('test.platform')->synthetic()->public();
+            $agent = ['platform' => 'test.platform', 'model' => 'other-model'];
+            $container->extension('ai', ['agent' => ['domain_tracing_operation_namer' => $agent, 'project_agent' => $agent]]);
+        }
     }
 }

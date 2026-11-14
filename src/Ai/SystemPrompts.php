@@ -20,16 +20,22 @@ final readonly class SystemPrompts
 
     public function get(string $name): string
     {
+        $prompt = $this->read($name);
+        if (null === $this->context) {
+            return $prompt;
+        }
+
+        return $prompt."\n## About this application\n\nThe developers of the application describe it below. Use the description to choose the words and to decide what matters to the business. The rules above still apply.\n\n".$this->context;
+    }
+
+    public function read(string $name): string
+    {
         $file = \dirname(__DIR__, levels: 2).'/config/prompts/'.$name.'.md';
         $prompt = file_get_contents($file);
         if (false === $prompt) {
             throw new \LogicException(\sprintf('Cannot read the prompt "%s".', $file));
         }
 
-        if (null === $this->context) {
-            return $prompt;
-        }
-
-        return $prompt."\n## About this application\n\nThe developers of the application describe it below. Use the description to choose the words and to decide what matters to the business. The rules above still apply.\n\n".$this->context;
+        return $prompt;
     }
 }

@@ -48,7 +48,7 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
             return 'ok';
         }));
 
-        self::getContainer()->get('ai.agent.trace_narrator')->call(new MessageBag(Message::ofUser(
+        self::getContainer()->get('ai.agent.domain_tracing_trace_narrator')->call(new MessageBag(Message::ofUser(
             "\$client = new Client('live-key-1234567890');\n\$password = 'hunter2!';",
         )))->getContent();
 

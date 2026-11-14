@@ -464,12 +464,6 @@ count = 1
 
 [[issues]]
 file = "src/Tracing/TraceNarrator.php"
-code = "no-boolean-flag-parameter"
-message = "Avoid boolean flag parameters."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceNarrator.php"
 code = "no-isset"
 message = "Use of the `isset` construct."
 count = 1

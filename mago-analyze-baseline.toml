@@ -283,12 +283,6 @@ message = 'Potentially unhandled exception `Psr\Cache\InvalidArgumentException` 
 count = 1
 
 [[issues]]
-file = "src/Tracing/OperationNamer.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Symfony\AI\Agent\Exception\ExceptionInterface` in `Valtzu\DomainTracingBundle\Tracing\OperationNamer::name`.'
-count = 1
-
-[[issues]]
 file = "src/Tracing/SpanBuilder.php"
 code = "imprecise-type"
 message = "Type `array` in parameter `$record` is imprecise, equivalent to `array<array-key, mixed>`."
@@ -1597,12 +1591,6 @@ message = "Possibly undefined array key `string('span')` accessed on `array<arra
 count = 1
 
 [[issues]]
-file = "src/Tracing/TraceNarrator.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Symfony\AI\Agent\Exception\ExceptionInterface` in `Valtzu\DomainTracingBundle\Tracing\TraceNarrator::narrate`.'
-count = 1
-
-[[issues]]
 file = "src/Tracing/TraceStore.php"
 code = "falsable-return-statement"
 message = '''Function `Valtzu\DomainTracingBundle\Tracing\TraceStore::spansOf` is declared to return `list<string>` but possibly returns 'false' (inferred as `array<int, string>|false`).'''
@@ -2587,54 +2575,6 @@ message = "Function `testGivesTheCachedNamesBeforeAskingForTheOthers` is missing
 count = 1
 
 [[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Event\NoPreviousThrowableException` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::agentAnswering`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Event\NoPreviousThrowableException` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::execution`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Event\NoPreviousThrowableException` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::testGivesEachNameAsSoonAsItsLineOfTheAnswerArrives`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Event\NoPreviousThrowableException` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::testGivesTheCachedNamesBeforeAskingForTheOthers`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Exception` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::agentAnswering`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Exception` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::execution`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Exception` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::testGivesEachNameAsSoonAsItsLineOfTheAnswerArrives`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/OperationNamerTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Exception` in `Valtzu\DomainTracingBundle\Tests\Tracing\OperationNamerTest::testGivesTheCachedNamesBeforeAskingForTheOthers`.'
-count = 1
-
-[[issues]]
 file = "tests/Tracing/RequestContextTest.php"
 code = "missing-return-type"
 message = "Function `testIgnoresAnInvalidTraceparent` is missing a return type hint."
@@ -2779,18 +2719,6 @@ message = 'Argument #2 of method `PHPUnit\Framework\Assert::assertStringContains
 count = 1
 
 [[issues]]
-file = "tests/Tracing/TraceDataCollectorTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Random\RandomException` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceDataCollectorTest::setUp`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceDataCollectorTest.php"
-code = "uninitialized-property"
-message = 'Property `$store` is not initialized in the constructor of class `Valtzu\DomainTracingBundle\Tests\Tracing\TraceDataCollectorTest`.'
-count = 1
-
-[[issues]]
 file = "tests/Tracing/TraceFileTest.php"
 code = "missing-override-attribute"
 message = 'Missing `#[Override]` attribute on overriding method `Valtzu\DomainTracingBundle\Tests\Tracing\TraceFileTest::setUp`.'
@@ -2819,18 +2747,6 @@ file = "tests/Tracing/TraceFileTest.php"
 code = "possibly-false-argument"
 message = "Argument #1 of function `deflate_add` is possibly `false`, but parameter type `DeflateContext` does not accept it."
 count = 2
-
-[[issues]]
-file = "tests/Tracing/TraceFileTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Random\RandomException` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceFileTest::setUp`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceFileTest.php"
-code = "uninitialized-property"
-message = 'Property `$path` is not initialized in the constructor of class `Valtzu\DomainTracingBundle\Tests\Tracing\TraceFileTest`.'
-count = 1
 
 [[issues]]
 file = "tests/Tracing/TraceNarratorTest.php"
@@ -2872,18 +2788,6 @@ count = 1
 file = "tests/Tracing/TraceNarratorTest.php"
 code = "missing-return-type"
 message = "Function `testLeavesHowTheRequestEndedToTheOutcome` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceNarratorTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Event\NoPreviousThrowableException` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceNarratorTest::narrate`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceNarratorTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Exception` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceNarratorTest::narrate`.'
 count = 1
 
 [[issues]]
@@ -2977,24 +2881,6 @@ message = "Possibly undefined array key `string('traceId')` accessed on `array<a
 count = 1
 
 [[issues]]
-file = "tests/Tracing/TraceStoreTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Random\RandomException` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceStoreTest::setUp`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceStoreTest.php"
-code = "uninitialized-property"
-message = 'Property `$directory` is not initialized in the constructor of class `Valtzu\DomainTracingBundle\Tests\Tracing\TraceStoreTest`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceStoreTest.php"
-code = "uninitialized-property"
-message = 'Property `$store` is not initialized in the constructor of class `Valtzu\DomainTracingBundle\Tests\Tracing\TraceStoreTest`.'
-count = 1
-
-[[issues]]
 file = "tests/Tracing/TraceparentHttpClientTest.php"
 code = "imprecise-type"
 message = "Type `array` in parameter `$headers` is imprecise, equivalent to `array<array-key, mixed>`."
@@ -3064,12 +2950,6 @@ count = 1
 file = "tests/Tracing/TraceparentHttpClientTest.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('headers')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceparentHttpClientTest.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceparentHttpClientTest::sentHeaders`.'
 count = 1
 
 [[issues]]

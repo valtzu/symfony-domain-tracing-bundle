@@ -89,6 +89,22 @@ when@dev:
             Use the words of the shop: customers, products, prices, discounts, stock and payment.
 ```
 
+`bin/console domain-tracing:context:generate` writes a first version of this file. It sends the README, the routes and
+the class names of the application to an AI agent. Read the description before you commit it.
+
+The agents use Claude Code with the `opus` model. To use another platform of the AI bundle, one that can stream the
+answer, configure the agents of the bundle in `config/packages/ai.yaml`:
+
+```yaml
+ai:
+    agent:
+        domain_tracing_operation_namer: &domain_tracing_agent
+            platform: ai.platform.anthropic
+            model: claude-sonnet-5-5
+        domain_tracing_trace_narrator: *domain_tracing_agent
+        domain_tracing_context_writer: *domain_tracing_agent
+```
+
 ## How it is put together
 
 - The root directory is a Symfony bundle, `DomainTracingBundle`. In debug mode, it serves the live view and its event

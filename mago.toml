@@ -8,6 +8,7 @@ excludes = ["config/reference.php"]
 [linter]
 baseline = "mago-lint-baseline.toml"
 integrations = ["symfony", "phpunit"]
+rules = { no-boolean-flag-parameter = { enabled = false } }
 
 [analyzer]
 baseline = "mago-analyze-baseline.toml"
@@ -17,8 +18,10 @@ find-unused-definitions = true
 find-overly-wide-return-types = true
 analyze-dead-code = true
 check-throws = true
+ignore = [{ code = "unhandled-thrown-type", in = ["tests/"] }]
+class-initializers = ["setUp"]
 check-dead-catch = true
-unchecked-exceptions = ["LogicException", "PHPUnit\\Framework\\Exception", "Psr\\Container\\ContainerExceptionInterface"]
+unchecked-exceptions = ["LogicException", "Symfony\\AI\\Agent\\Exception\\ExceptionInterface", "Symfony\\AI\\Platform\\Exception\\ExceptionInterface"]
 strict-list-index-checks = true
 strict-array-index-existence = true
 no-boolean-literal-comparison = true

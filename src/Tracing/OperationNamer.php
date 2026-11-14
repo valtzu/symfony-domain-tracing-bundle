@@ -17,7 +17,7 @@ use Valtzu\DomainTracingBundle\Ai\SystemPrompts;
 final readonly class OperationNamer
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.operation_namer')]
+        #[Autowire(service: 'ai.agent.domain_tracing_operation_namer')]
         private AgentInterface $agent,
         #[Autowire(service: 'cache.app')]
         private CacheItemPoolInterface $cache,

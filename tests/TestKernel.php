@@ -5,6 +5,8 @@ namespace Valtzu\DomainTracingBundle\Tests;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Bundle\TwigBundle\TwigBundle;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel;
 use Valtzu\DomainTracingBundle\DomainTracingBundle;
@@ -16,8 +18,17 @@ final class TestKernel extends Kernel
     public function registerBundles(): iterable
     {
         yield new FrameworkBundle();
+        yield new TwigBundle();
         yield new AiBundle();
         yield new DomainTracingBundle();
+    }
+
+    /**
+     * The container before it is compiled, which keeps how each service is defined.
+     */
+    public function containerBuilder(): ContainerBuilder
+    {
+        return $this->buildContainer();
     }
 
     public function getProjectDir(): string

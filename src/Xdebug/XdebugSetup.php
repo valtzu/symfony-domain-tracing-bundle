@@ -2,8 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-
 /**
  * The Xdebug settings that a request needs to be recorded, and what is wrong with them in the current request. The
  * bundle writes its traces into its own directory, and does not use xdebug.output_dir.
@@ -13,7 +11,6 @@ final readonly class XdebugSetup
     private const MODES = ['trace', 'coverage'];
 
     public function __construct(
-        #[Autowire('%kernel.project_dir%/var/share/traces')]
         private string $traceDirectory,
     ) {
     }

@@ -368,12 +368,6 @@ count = 1
 
 [[issues]]
 file = "src/Controller/TraceController.php"
-code = "missing-constructor"
-message = 'Class `Valtzu\DomainTracingBundle\Controller\TraceController` has typed properties without default values but no constructor to initialize them.'
-count = 1
-
-[[issues]]
-file = "src/Controller/TraceController.php"
 code = "missing-return-type"
 message = "Function `closure` is missing a return type hint."
 count = 1

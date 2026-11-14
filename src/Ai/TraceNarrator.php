@@ -6,7 +6,6 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Describes what happened inside the operations of a trace, in business terms, as events on their spans. It works on
@@ -15,7 +14,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class TraceNarrator
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.domain_tracing_trace_narrator')]
         private AgentInterface $agent,
         private SystemPrompts $prompts = new SystemPrompts(),
     ) {

@@ -2,7 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\Storage;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Process;
 
 /**
@@ -21,9 +20,7 @@ final class BlobStore
     private readonly array $repositories;
 
     public function __construct(
-        #[Autowire('%kernel.project_dir%/var/blobs')]
         private readonly string $directory,
-        #[Autowire('%env(default:kernel.project_dir:TRACE_GIT_REPOSITORIES)%')]
         ?string $repositories,
     ) {
         $this->repositories = array_values(array_filter(array_map(trim(...), explode(',', (string) $repositories))));

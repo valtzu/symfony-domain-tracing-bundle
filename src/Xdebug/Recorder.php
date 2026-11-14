@@ -2,7 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\ResetInterface;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\ExcludedUris;
@@ -39,7 +38,6 @@ final class Recorder implements ResetInterface
     private bool $shutdownRegistered = false;
 
     public function __construct(
-        #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
         private readonly ExcludedUris $excluded,
         private readonly TraceStore $store,

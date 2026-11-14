@@ -2,39 +2,43 @@
 
 namespace Valtzu\DomainTracingBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\TraceStream;
+use Twig\Environment;
 
-final class TraceController extends AbstractController
+final readonly class TraceController
 {
     private const TIMEOUT_SECONDS = 600;
 
+    public function __construct(
+        private TraceStore $store,
+        private TraceStream $traces,
+        private Environment $twig,
+    ) {
+    }
+
     #[Route('/_tracing/{id}/events', name: 'domain_tracing_events', methods: ['GET'])]
-    public function events(
-        string $id,
-        Request $request,
-        TraceStore $store,
-        TraceStream $traces,
-    ): Response {
+    public function events(string $id, Request $request): Response
+    {
         if (!TraceStore::isValidId($id)) {
-            throw $this->createNotFoundException();
+            throw new NotFoundHttpException();
         }
-        $id = $store->rootOf($id);
+        $id = $this->store->rootOf($id);
         $describe = $request->query->getBoolean('describe');
 
-        $stream = function () use ($id, $describe, $traces) {
+        $stream = function () use ($id, $describe) {
             // The stream reads the traces and waits for the AI, for longer than a page usually takes
             set_time_limit(0);
             $startedAt = microtime(true);
             $stop = static fn (): bool => connection_aborted() || microtime(true) - $startedAt >= self::TIMEOUT_SECONDS;
-            foreach ($traces->follow($id, $describe, $stop) as [$event, $data]) {
+            foreach ($this->traces->follow($id, $describe, $stop) as [$event, $data]) {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
             }
@@ -50,7 +54,7 @@ final class TraceController extends AbstractController
     #[Route('/_tracing/', name: 'domain_tracing_live', methods: ['GET'])]
     public function live(): Response
     {
-        return $this->render('@DomainTracing/live.html.twig', ['now' => microtime(true)]);
+        return new Response($this->twig->render('@DomainTracing/live.html.twig', ['now' => microtime(true)]));
     }
 
     #[Route('/_tracing/{file}', name: 'domain_tracing_asset', requirements: ['file' => 'trace\.(js|css)'], methods: ['GET'])]
@@ -63,8 +67,8 @@ final class TraceController extends AbstractController
     }
 
     #[Route('/_tracing/newest', name: 'domain_tracing_newest', methods: ['GET'])]
-    public function newest(Request $request, TraceStore $store): JsonResponse
+    public function newest(Request $request): JsonResponse
     {
-        return new JsonResponse(['id' => $store->newestStartedAfter($request->query->get('after', 0.0) + 0.0)]);
+        return new JsonResponse(['id' => $this->store->newestStartedAfter($request->query->get('after', 0.0) + 0.0)]);
     }
 }

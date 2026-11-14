@@ -8,7 +8,6 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Writes a first description of the application for the file of the "domain_tracing.context_file" option.
@@ -16,7 +15,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class ContextWriter
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.domain_tracing_context_writer')]
         private AgentInterface $agent,
         private ProjectSummary $project,
         private SystemPrompts $prompts = new SystemPrompts(),

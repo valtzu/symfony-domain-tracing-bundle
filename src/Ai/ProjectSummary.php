@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Valtzu\DomainTracingBundle\Ai;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -20,7 +19,6 @@ final readonly class ProjectSummary
 
     public function __construct(
         private RouterInterface $router,
-        #[Autowire('%kernel.project_dir%')]
         private string $projectDir,
     ) {
     }

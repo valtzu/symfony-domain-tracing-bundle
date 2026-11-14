@@ -9,7 +9,6 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Valtzu\DomainTracingBundle\Ai\ContextWriter;
 
 #[AsCommand('domain-tracing:context:generate', 'Describe the application with AI, in the file of the "domain_tracing.context_file" option')]
@@ -17,7 +16,6 @@ final readonly class ContextGenerateCommand
 {
     public function __construct(
         private ContextWriter $writer,
-        #[Autowire(param: 'domain_tracing.context_file')]
         private string $contextFile,
     ) {
     }

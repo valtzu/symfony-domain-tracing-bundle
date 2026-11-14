@@ -7,7 +7,6 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Gives each application method a short business name, such as "Apply discounts". A name is asked once and kept until
@@ -16,9 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class OperationNamer
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.domain_tracing_operation_namer')]
         private AgentInterface $agent,
-        #[Autowire(service: 'cache.app')]
         private CacheItemPoolInterface $cache,
         private SystemPrompts $prompts = new SystemPrompts(),
     ) {

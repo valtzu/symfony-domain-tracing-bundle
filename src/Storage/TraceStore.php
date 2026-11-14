@@ -2,8 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\Storage;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs, in the trace
  * directory of the bundle: a "request" record, which the recorder writes when the request starts, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
@@ -14,7 +12,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class TraceStore
 {
     public function __construct(
-        #[Autowire('%kernel.project_dir%/var/share/traces')]
         private string $directory,
     ) {
     }

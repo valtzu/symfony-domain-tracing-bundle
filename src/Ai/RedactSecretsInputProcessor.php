@@ -2,7 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\Ai;
 
-use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -16,9 +15,6 @@ use Symfony\AI\Platform\Message\UserMessage;
  * Removes secrets from every message that the agents of the bundle send. It runs after the other input processors, and it refuses
  * messages it cannot check, such as files or tool results, instead of sending them unchecked.
  */
-#[AsInputProcessor(agent: 'ai.agent.domain_tracing_operation_namer', priority: -1000)]
-#[AsInputProcessor(agent: 'ai.agent.domain_tracing_trace_narrator', priority: -1000)]
-#[AsInputProcessor(agent: 'ai.agent.domain_tracing_context_writer', priority: -1000)]
 final readonly class RedactSecretsInputProcessor implements InputProcessorInterface
 {
     public function __construct(

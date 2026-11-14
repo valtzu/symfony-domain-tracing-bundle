@@ -6,6 +6,7 @@ includes = ["vendor", "resources"]
 excludes = ["config/reference.php"]
 
 [linter]
+excludes = ["config/services.php"]
 baseline = "mago-lint-baseline.toml"
 integrations = ["symfony", "phpunit"]
 rules = { no-boolean-flag-parameter = { enabled = false } }
@@ -21,7 +22,7 @@ check-throws = true
 ignore = [{ code = "unhandled-thrown-type", in = ["tests/"] }]
 class-initializers = ["setUp"]
 check-dead-catch = true
-unchecked-exceptions = ["LogicException", "Symfony\\AI\\Agent\\Exception\\ExceptionInterface", "Symfony\\AI\\Platform\\Exception\\ExceptionInterface"]
+unchecked-exceptions = ["LogicException", "Twig\\Error\\Error", "Symfony\\AI\\Agent\\Exception\\ExceptionInterface", "Symfony\\AI\\Platform\\Exception\\ExceptionInterface"]
 strict-list-index-checks = true
 strict-array-index-existence = true
 no-boolean-literal-comparison = true

@@ -2,8 +2,6 @@
 
 namespace Valtzu\DomainTracingBundle\HttpClient;
 
-use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpClient\DecoratorTrait;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -12,7 +10,6 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * Passes the trace context of the recorded request on to the services that it calls, so that their requests join its
  * trace. A traceparent header that the application or its OpenTelemetry instrumentation already set is kept.
  */
-#[AsDecorator('http_client.transport', onInvalid: ContainerInterface::IGNORE_ON_INVALID_REFERENCE)]
 final class TraceparentHttpClient implements HttpClientInterface
 {
     use DecoratorTrait;

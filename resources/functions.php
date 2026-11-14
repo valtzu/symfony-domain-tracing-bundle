@@ -4,8 +4,9 @@ namespace Valtzu\DomainTracingBundle\Prepend;
 
 /**
  * The W3C Trace Context (https://www.w3.org/TR/trace-context/) of the current request, which is one span: it joins
- * the trace of the caller when a traceparent header arrives. Without OTEL_SERVICE_NAME, the service is named after the
- * project directory, the parent of the directory of the entry script (public/index.php or bin/console).
+ * the trace of the caller when a traceparent header arrives. A console command is recorded only with --profile, like
+ * its profile. Without OTEL_SERVICE_NAME, the service is named after the project directory, the parent of the
+ * directory of the entry script (public/index.php or bin/console).
  *
  * Loaded by the prepend file before the autoloader, so it uses no class.
  *
@@ -13,9 +14,18 @@ namespace Valtzu\DomainTracingBundle\Prepend;
  */
 function request_context(array $server): ?array
 {
+    $method = $server['REQUEST_METHOD'] ?? null;
     $uri = $server['REQUEST_URI'] ?? null;
     if (null !== $uri && preg_match('{^/_(tracing|profiler|wdt)(/|\?|$)}', $uri)) {
         return null;
+    }
+    if (null === $method && \is_array($argv = $server['argv'] ?? null)) {
+        // A console command has a profile, and so a trace, only with --profile
+        if (!\in_array('--profile', $argv, true)) {
+            return null;
+        }
+        $binary = isset($server['SYMFONY_CLI_BINARY_NAME']) ? $server['SYMFONY_CLI_BINARY_NAME'].' console' : $argv[0];
+        [$method, $uri] = ['CLI', implode(' ', [$binary, ...\array_slice($argv, 1)])];
     }
 
     $parent = preg_match('/^00-([0-9a-f]{32})-([0-9a-f]{16})-[0-9a-f]{2}$/', $server['HTTP_TRACEPARENT'] ?? '', $match) ? $match : null;
@@ -27,7 +37,7 @@ function request_context(array $server): ?array
         'spanId' => bin2hex(random_bytes(8)),
         'parentSpanId' => $parent[2] ?? null,
         'service' => $server['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: ('' === $project || '.' === $project ? null : $project)),
-        'method' => $server['REQUEST_METHOD'] ?? null,
+        'method' => $method,
         'uri' => $uri,
     ];
 }

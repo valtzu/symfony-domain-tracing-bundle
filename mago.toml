@@ -2,7 +2,7 @@ php-version = "8.4"
 
 [source]
 paths = ["src", "tests", "config"]
-includes = ["vendor"]
+includes = ["vendor", "resources"]
 excludes = ["config/reference.php"]
 
 [linter]

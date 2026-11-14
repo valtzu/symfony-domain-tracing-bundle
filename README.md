@@ -61,8 +61,19 @@ Requirements: Symfony 8.1 or later, Xdebug for the PHP of the web server, a git 
    bin/console domain-tracing:xdebug-settings
    ```
 
+   With the [Symfony CLI](https://symfony.com/download), write them into the `php.ini` of the project directory
+   instead, which `symfony serve` and `symfony console` read:
+
+   ```shell
+   mkdir -p var/share/traces
+   symfony console domain-tracing:xdebug-settings > php.ini
+   ```
+
 3. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
    the panel tells why. `/_tracing/` shows the requests live.
+
+   A console command is recorded only when it runs with `--profile`, like its profile. Its trace is in the "Domain
+   traces" panel of that profile.
 
 When a request calls other services with Symfony HttpClient, the bundle adds the `traceparent` header, unless the
 request already has one, from OpenTelemetry for example. A service records its requests in the same trace when it

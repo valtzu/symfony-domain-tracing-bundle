@@ -249,19 +249,21 @@ export function followTrace(id, panel, { describe = false, onRequest = () => {},
     const status = panel.querySelector('.trace-status-text');
     const waterfall = createWaterfall(panel.querySelector('.trace-waterfall'), describe);
     let steps = 0;
+    let label = '';
 
     const source = new EventSource(new URL(`${id}/events${describe ? '?describe=1' : ''}`, BASE_URL));
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {
-        status.textContent = `${request.method} ${request.uri}: recording…`;
+        label = `${request.method} ${request.uri}`;
+        status.textContent = `${label}: recording…`;
         console.groupCollapsed(`${request.method} ${request.uri}: calls of application methods`);
         onRequest(request);
     });
     on('span', span => waterfall.span(span));
     on('step', step => {
         steps++;
-        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls recorded…`);
+        status.textContent = `${label}: ${steps} calls recorded…`;
         console.log(`%c[${step.service}] ${step.file}:${step.line}%c ${step.code}`, 'color: gray', '', step.function);
         waterfall.step(step);
         onStep(step);
@@ -269,7 +271,7 @@ export function followTrace(id, panel, { describe = false, onRequest = () => {},
     on('end', () => {
         console.groupEnd();
         waterfall.recordingEnded();
-        status.textContent = status.textContent.replace(/:.*/, `: ${steps} calls.${describe ? ' Describing…' : ''}`);
+        status.textContent = `${label}: ${steps} calls.${describe ? ' Describing…' : ''}`;
     });
     on('name', record => waterfall.name(record.function, record.name));
     on('event', event => waterfall.event(event));

@@ -34,7 +34,7 @@ final class RequestContextTest extends TestCase
 
     public function testIgnoresAnInvalidTraceparent()
     {
-        $context = request_context(['HTTP_TRACEPARENT' => '00-not-a-trace-01', 'SCRIPT_FILENAME' => 'bin/console']);
+        $context = request_context(['HTTP_TRACEPARENT' => '00-not-a-trace-01', 'REQUEST_METHOD' => 'GET', 'SCRIPT_FILENAME' => 'index.php']);
 
         $this->assertNull($context['parentSpanId']);
         $this->assertNull($context['service']);
@@ -46,5 +46,21 @@ final class RequestContextTest extends TestCase
         $this->assertNull(request_context(['REQUEST_URI' => '/_profiler/a5c9e1?panel=domain_traces']));
         $this->assertNull(request_context(['REQUEST_URI' => '/_wdt/a5c9e1']));
         $this->assertNotNull(request_context(['REQUEST_URI' => '/_tracing_report']));
+    }
+
+    public function testRecordsAConsoleCommandOnlyWhenItIsProfiled()
+    {
+        $this->assertNull(request_context(['argv' => ['bin/console', 'app:import'], 'SCRIPT_FILENAME' => '/srv/greetings/bin/console']));
+
+        $context = request_context(['argv' => ['bin/console', 'app:import', '--profile'], 'SCRIPT_FILENAME' => '/srv/greetings/bin/console']);
+
+        $this->assertSame(['CLI', 'bin/console app:import --profile', 'greetings'], [$context['method'], $context['uri'], $context['service']]);
+    }
+
+    public function testNamesTheCommandLikeTheProfilerDoes()
+    {
+        $context = request_context(['argv' => ['/srv/greetings/bin/console', 'app:import', '--profile'], 'SYMFONY_CLI_BINARY_NAME' => 'symfony']);
+
+        $this->assertSame('symfony console app:import --profile', $context['uri']);
     }
 }

@@ -223,18 +223,6 @@ message = "Assigning `mixed` type to a variable may lead to unexpected behavior.
 count = 1
 
 [[issues]]
-file = "src/Tracing/ExcludedRequestListener.php"
-code = "non-existent-function"
-message = 'Could not find definition for function `Valtzu\DomainTracingBundle\Prepend\discard_trace` (also tried as `discard_trace` in a broader scope).'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ExcludedRequestListener.php"
-code = "non-existent-use-import"
-message = 'Imported function `Valtzu\DomainTracingBundle\Prepend\discard_trace` does not exist.'
-count = 1
-
-[[issues]]
 file = "src/Tracing/OperationNamer.php"
 code = "generic-object-iteration"
 message = "Iterating over a generic `object`. This will iterate its public properties."
@@ -2817,7 +2805,19 @@ count = 1
 [[issues]]
 file = "tests/Tracing/RequestContextTest.php"
 code = "missing-return-type"
+message = "Function `testNamesTheCommandLikeTheProfilerDoes` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
 message = "Function `testNeverRecordsThePagesOfTheBundleAndOfTheProfiler` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
+message = "Function `testRecordsAConsoleCommandOnlyWhenItIsProfiled` is missing a return type hint."
 count = 1
 
 [[issues]]
@@ -2828,33 +2828,15 @@ count = 1
 
 [[issues]]
 file = "tests/Tracing/RequestContextTest.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertMatchesRegularExpression`: expected `string`, but found `mixed`.'
+code = "possibly-null-argument"
+message = 'Argument #2 of method `PHPUnit\Framework\Assert::assertMatchesRegularExpression` is possibly `null`, but parameter type `string` does not accept it.'
 count = 2
 
 [[issues]]
 file = "tests/Tracing/RequestContextTest.php"
-code = "mixed-array-access"
-message = "Unsafe array access on type `mixed`."
-count = 5
-
-[[issues]]
-file = "tests/Tracing/RequestContextTest.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
-
-[[issues]]
-file = "tests/Tracing/RequestContextTest.php"
-code = "non-existent-function"
-message = 'Could not find definition for function `Valtzu\DomainTracingBundle\Prepend\request_context` (also tried as `request_context` in a broader scope).'
-count = 7
-
-[[issues]]
-file = "tests/Tracing/RequestContextTest.php"
-code = "non-existent-use-import"
-message = 'Imported function `Valtzu\DomainTracingBundle\Prepend\request_context` does not exist.'
-count = 1
+code = "possibly-null-array-access"
+message = "Cannot perform array access on possibly `null` value."
+count = 9
 
 [[issues]]
 file = "tests/Tracing/SpanBuilderTest.php"

@@ -27,14 +27,15 @@ final readonly class TraceStream
     }
 
     /**
-     * @param callable(): bool $stop tells, between two polls, whether to stop following
+     * @param callable(): bool $stop        tells, between two polls, whether to stop following
+     * @param bool             $describeHere false when another process describes the trace, and this one reads what it writes
      *
      * @return \Generator<int, array{string, mixed}> events as [type, data]
      */
-    public function follow(string $rootId, bool $describe, callable $stop): \Generator
+    public function follow(string $rootId, bool $describe, callable $stop, bool $describeHere = true): \Generator
     {
         $follower = new TraceFollower($this->store, $this->blobs, $rootId);
-        $description = $describe ? $this->describer->describe($rootId) : null;
+        $description = $describe && $describeHere ? $this->describer->describe($rootId) : null;
         $builder = new SpanBuilder();
         $names = [];
         $narrationOffset = 0;

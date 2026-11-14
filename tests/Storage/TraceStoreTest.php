@@ -45,6 +45,19 @@ final class TraceStoreTest extends TestCase
         $this->assertSame($second, $this->store->newestStartedAfter($after));
     }
 
+    public function testGivesTheClaimOfADescriptionOnce()
+    {
+        $this->assertTrue($this->store->claimDescription(self::ROOT));
+        $this->assertFalse($this->store->claimDescription(self::ROOT));
+
+        touch($this->directory.'/'.self::ROOT.'.narration', time() - 120);
+        $this->assertTrue($this->store->claimDescription(self::ROOT), 'A claim that no process took up expires');
+
+        $this->store->addNarration(self::ROOT, ['type' => 'start']);
+        touch($this->directory.'/'.self::ROOT.'.narration', time() - 120);
+        $this->assertFalse($this->store->claimDescription(self::ROOT));
+    }
+
     public function testKeepsTheRequestWhenItRestarts()
     {
         $this->store->addStep(self::ROOT, 0, 12, 1, 100);

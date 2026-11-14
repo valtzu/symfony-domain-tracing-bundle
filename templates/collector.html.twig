@@ -21,7 +21,7 @@
         <div id="domain-tracing"></div>
         <script type="module">
             import { followTrace } from {{ path('domain_tracing_asset', {file: 'trace.js'})|json_encode|raw }};
-            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('domain-tracing'), { describe: true });
+            followTrace({{ collector.requestId|json_encode|raw }}, document.getElementById('domain-tracing'), { describe: true, poll: {{ collector.shouldPoll ? 'true' : 'false' }} });
         </script>
     {% else %}
         <h2>Domain traces</h2>

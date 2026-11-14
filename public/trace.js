@@ -264,6 +264,56 @@ function pulsePhase(index) {
     return phase < 0 ? phase + NAMING_PULSE_MS : phase;
 }
 
+const POLL_MILLISECONDS = 1000;
+
+/**
+ * Asks for the events that follow the cursor at intervals, for a server that cannot keep a stream open. It has the
+ * part of the EventSource interface that the pages use.
+ */
+class PollingEventSource {
+    #listeners = {};
+    #closed = false;
+
+    constructor(url, cursor) {
+        this.onerror = null;
+        this.#poll(new URL(url, location.href), cursor);
+    }
+
+    addEventListener(type, listener) {
+        (this.#listeners[type] ??= []).push(listener);
+    }
+
+    close() {
+        this.#closed = true;
+    }
+
+    async #poll(url, cursor) {
+        while (!this.#closed) {
+            try {
+                url.searchParams.set('cursor', cursor);
+                const response = await (await fetch(url)).json();
+                cursor = response.cursor;
+                for (const [type, data] of response.events) {
+                    for (const listener of this.#closed ? [] : this.#listeners[type] ?? []) {
+                        listener({ data: JSON.stringify(data) });
+                    }
+                }
+                if (response.done) {
+                    this.close();
+                }
+            } catch (error) {
+                // Like an EventSource, it tries again unless the error handler closes it
+                this.onerror?.(error);
+            }
+            await new Promise(resolve => setTimeout(resolve, POLL_MILLISECONDS));
+        }
+    }
+}
+
+export function openEvents(url, { poll = false, cursor = 0 } = {}) {
+    return poll ? new PollingEventSource(url, cursor) : new EventSource(url);
+}
+
 function spinner(label = '') {
     const element = document.createElement('span');
     element.className = 'trace-spinner';
@@ -272,7 +322,7 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { describe = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, poll = false, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
     panel.innerHTML = '<h2></h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     if (title) {
@@ -286,7 +336,7 @@ export function followTrace(id, panel, { describe = false, title = 'What happene
     let steps = 0;
     let label = '';
 
-    const source = new EventSource(new URL(`${id}/events${describe ? '?describe=1' : ''}`, BASE_URL));
+    const source = openEvents(new URL(`${id}/events${describe ? '?describe=1' : ''}`, BASE_URL), { poll });
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {

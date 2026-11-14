@@ -26,12 +26,14 @@
     <div id="traces"></div>
 </main>
 <script type="module">
-    import { followTrace } from {{ path('domain_tracing_asset', {file: 'trace.js'})|json_encode|raw }};
+    import { followTrace, openEvents } from {{ path('domain_tracing_asset', {file: 'trace.js'})|json_encode|raw }};
 
+    const poll = {{ poll ? 'true' : 'false' }};
     const traces = document.getElementById('traces');
     const started = [];
     let wake = () => {};
-    new EventSource(`{{ path('domain_tracing_started') }}?after={{ now|json_encode|raw }}`).addEventListener('trace', message => {
+    const now = {{ now|json_encode|raw }};
+    openEvents(`{{ path('domain_tracing_started') }}?after=${now}`, { poll, cursor: now }).addEventListener('trace', message => {
         started.push(JSON.parse(message.data).id);
         wake();
     });
@@ -56,6 +58,7 @@
     function follow(id, panel, describe, onEnd = () => {}) {
         followTrace(id, panel, {
             describe,
+            poll,
             title: null,
             onStep: () => panel.hidden = false,
             onEnd,

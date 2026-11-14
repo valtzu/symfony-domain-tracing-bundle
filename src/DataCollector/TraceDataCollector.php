@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
+use Valtzu\DomainTracingBundle\Tracing\BuiltInServer;
 use Valtzu\DomainTracingBundle\Xdebug\XdebugSetup;
 
 /**
@@ -34,6 +35,7 @@ final class TraceDataCollector extends AbstractDataCollector
             'id' => $recorded ? $id : null,
             'problems' => $recorded ? [] : $this->xdebug->problems(),
             'settings' => $recorded ? null : $this->xdebug->settings(),
+            'poll' => BuiltInServer::hasOneWorker(),
         ];
 
         if (1 === mt_rand(1, self::EXPIRY_CHANCE)) {
@@ -57,6 +59,11 @@ final class TraceDataCollector extends AbstractDataCollector
     public function getProblems(): array
     {
         return $this->data['problems'] ?? [];
+    }
+
+    public function shouldPoll(): bool
+    {
+        return $this->data['poll'] ?? false;
     }
 
     public function getXdebugSettings(): ?string

@@ -14,6 +14,8 @@ namespace Valtzu\DomainTracingBundle\Storage;
  */
 final readonly class TraceStore
 {
+    private const int CLAIM_SECONDS = 60;
+
     public function __construct(
         private string $directory,
     ) {
@@ -251,6 +253,23 @@ final readonly class TraceStore
         $path = $this->narrationPath($rootId);
 
         return is_file($path) && str_contains((string) file_get_contents($path, offset: max(0, (int) filesize($path) - 200)), '{"type":"end"');
+    }
+
+    /**
+     * Claims the description of a trace for a process that is about to start, so that the trace is described once.
+     * A claim that no process took up within a minute expires.
+     *
+     * @return bool whether the caller got the claim
+     */
+    public function claimDescription(string $rootId): bool
+    {
+        $path = $this->narrationPath($rootId);
+        clearstatcache(true, $path);
+        if (is_file($path) && (0 < (int) filesize($path) || time() - (int) filemtime($path) < self::CLAIM_SECONDS)) {
+            return false;
+        }
+
+        return touch($path);
     }
 
     public function clearNarration(string $rootId): void

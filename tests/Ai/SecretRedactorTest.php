@@ -26,6 +26,24 @@ final class SecretRedactorTest extends TestCase
         );
     }
 
+    public function testRedactsTheValuesOfEnvironmentVariablesNamedLikeKeys()
+    {
+        $redactor = new SecretRedactor([
+            'STRIPE_KEY' => 'pk_9f8e7d6c5b4a',
+            'JWT_PASSPHRASE' => 'correct-horse-battery',
+            'MONKEY' => 'banana-split',
+        ]);
+
+        $this->assertSame('[STRIPE_KEY redacted] [JWT_PASSPHRASE redacted] banana-split', $redactor->redact('pk_9f8e7d6c5b4a correct-horse-battery banana-split'));
+    }
+
+    public function testRedactsTheSecretsOfTheVault()
+    {
+        $redactor = new SecretRedactor([], ['MAILER_DSN' => 'smtp://user:abc@mail.example']);
+
+        $this->assertSame('sent with [MAILER_DSN redacted]', $redactor->redact('sent with smtp://user:abc@mail.example'));
+    }
+
     #[DataProvider('provideSecrets')]
     public function testRedactsSecrets(string $text, string $expected)
     {
@@ -35,6 +53,12 @@ final class SecretRedactorTest extends TestCase
     public static function provideSecrets(): iterable
     {
         yield 'assignment' => ['$apiKey = \'abc123secret\';', '$apiKey = \'[redacted]\';'];
+        yield 'argument by name' => ['login called with {"user":"alice","password":"hunter2pass"}', 'login called with {"user":"alice","password":"[redacted]"}'];
+        yield 'passphrase' => ['"jwtPassphrase":"long enough"', '"jwtPassphrase":"[redacted]"'];
+        yield 'header' => ['x-api-key: 0123abcd4567', 'x-api-key: [redacted]'];
+        yield 'header in a list' => ['["X-Auth-Token: 0123abcd4567"]', '["X-Auth-Token: [redacted]"]'];
+        yield 'hexadecimal key' => ["'3f786850e387550fdab836ed7e6dc881de23001b'", "'[redacted]'"];
+        yield 'not a key' => ['"sortKey":"name"', '"sortKey":"name"'];
         yield 'array item' => ["'password' => \"correct horse\",", "'password' => \"[redacted]\","];
         yield 'constant' => ['private const STRIPE_SECRET_KEY = \'whatever-value\';', 'private const STRIPE_SECRET_KEY = \'[redacted]\';'];
         yield 'named argument' => ['new Client(authToken: \'s3cr3t-value\')', 'new Client(authToken: \'[redacted]\')'];

@@ -5,16 +5,19 @@ declare(strict_types=1);
 
 namespace Valtzu\DomainTracingBundle\Ai;
 
+use Symfony\Bundle\FrameworkBundle\Secrets\AbstractVault;
+
 /**
- * Replaces secrets in text before it leaves the application: the values of secret environment variables, credentials
- * in URLs and query strings, string literals assigned to secret-like names, well-known token formats and long random
- * looking string literals.
+ * Replaces secrets in text before it leaves the application: the values of secret environment variables and of the
+ * secrets vault, credentials in URLs, headers and query strings, string literals assigned to secret-like names,
+ * well-known token formats and long random looking string literals. It finds the usual secrets, not all: a secret with
+ * no secret-like name and no known format, such as a short password passed to a function, stays.
  */
 final class SecretRedactor
 {
     public const PLACEHOLDER = '[redacted]';
 
-    private const SECRET_NAME = '[A-Za-z0-9_]*(?:secret|passw(?:or)?d|pwd|token|api_?key|apikey|private_?key|credential|auth|dsn|salt|signature|cookie|session)[A-Za-z0-9_]*';
+    private const SECRET_NAME = '[A-Za-z0-9_]*(?:secret|passw(?:or)?d|passphrase|pwd|token|api_?key|apikey|private_?key|credential|auth|dsn|salt|signature|cookie|session)[A-Za-z0-9_]*';
     private const MIN_SECRET_VALUE_LENGTH = 6;
 
     /** @var array<string, string> */
@@ -27,10 +30,14 @@ final class SecretRedactor
         '/\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+\/=-]{8,}/' => '$1 '.self::PLACEHOLDER,
         // Well-known token formats: Anthropic and OpenAI, GitHub, AWS access keys, Slack, Stripe, JWT
         '/\b(?:sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,}|[rs]k_(?:live|test)_[A-Za-z0-9]{10,}|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,})\b/' => self::PLACEHOLDER,
+        // Secret headers: X-Api-Key: ..., X-Auth-Token: ...
+        '/\b((?:x-)?(?:api[_-]?key|auth[_-]?token|access[_-]?token)\s*:\s*)[^\s"\',;]+/i' => '$1'.self::PLACEHOLDER,
         // Secret-like query string parameters
         '/([?&;]'.self::SECRET_NAME.'=)[^&\s#]+/i' => '$1'.self::PLACEHOLDER,
         // String literals assigned to secret-like names: $apiKey = '...', 'password' => '...', TOKEN: "..."
         '/(\b'.self::SECRET_NAME.'[\'"]?\s*(?:=>|=|:)\s*)([\'"])(?:(?!\2).)+\2/i' => '$1$2'.self::PLACEHOLDER.'$2',
+        // Long hexadecimal string literals, such as hard-coded keys
+        '/([\'"])[0-9a-fA-F]{32,}\1/' => '$1'.self::PLACEHOLDER.'$1',
         // Long random looking string literals, such as hard-coded keys
         '/([\'"])(?=[A-Za-z0-9+\/_=-]*[0-9])(?=[A-Za-z0-9+\/_=-]*[a-z])(?=[A-Za-z0-9+\/_=-]*[A-Z])[A-Za-z0-9+\/_=-]{24,}\1/' => '$1'.self::PLACEHOLDER.'$1',
     ];
@@ -39,14 +46,19 @@ final class SecretRedactor
     private array $knownSecrets = [];
 
     /**
-     * @param array<mixed>|null $environment defaults to the environment variables of the process
+     * @param array<mixed>|null                  $environment defaults to the environment variables of the process
+     * @param AbstractVault|array<mixed>|null $vault       the secrets vault of the application, whose values are all secret
      */
-    public function __construct(?array $environment = null)
+    public function __construct(?array $environment = null, AbstractVault|array|null $vault = null)
     {
         foreach ($environment ?? $_SERVER + $_ENV + getenv() as $name => $value) {
-            if (\is_string($name) && \is_string($value) && \strlen($value) >= self::MIN_SECRET_VALUE_LENGTH && preg_match('/^'.self::SECRET_NAME.'$/i', $name)) {
-                $this->knownSecrets[$value] = '['.$name.' redacted]';
+            // Such as STRIPE_KEY or APP_KEY
+            if (\is_string($name) && (preg_match('/^'.self::SECRET_NAME.'$/i', $name) || preg_match('/(?:^|_)KEY$/i', $name))) {
+                $this->addSecret($name, $value);
             }
+        }
+        foreach ($vault instanceof AbstractVault ? self::reveal($vault) : $vault ?? [] as $name => $value) {
+            $this->addSecret($name, $value);
         }
         uksort($this->knownSecrets, static fn (string $a, string $b) => \strlen($b) <=> \strlen($a));
     }
@@ -62,5 +74,25 @@ final class SecretRedactor
 
         return preg_replace(array_keys(self::PATTERNS), array_values(self::PATTERNS), $text)
             ?? throw new \RuntimeException(\sprintf('Secret redaction failed: %s', preg_last_error_msg()));
+    }
+
+    private function addSecret(mixed $name, mixed $value): void
+    {
+        if (\is_string($name) && \is_string($value) && \strlen($value) >= self::MIN_SECRET_VALUE_LENGTH) {
+            $this->knownSecrets[$value] = '['.$name.' redacted]';
+        }
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private static function reveal(AbstractVault $vault): array
+    {
+        try {
+            return $vault->list(true);
+        } catch (\Throwable) {
+            // A vault that cannot be decrypted, such as without its key
+            return [];
+        }
     }
 }

@@ -200,13 +200,16 @@ it, then read the output. Add `--describe` for a description in business terms.
 - The event stream of the live view and of the profiler panel reads the trace files while Xdebug writes them, from
   the first method of the entrypoint on. One stream reads each trace file, and another one takes over when it stops.
 - The stream of the profiler panel also builds the spans, names the operations (once per method and code version),
-  describes the request, and removes secrets before anything goes to the AI. It reads the source from the git
+  describes the request, and removes the usual secrets before anything goes to the AI. It reads the source from the git
   repositories in `TRACE_GIT_REPOSITORIES` (the project directory by default), including uncommitted files.
 
 In the demo, both services write their traces into the same `traces` volume, mounted at `var/share/traces`.
 
 ## Limits
 
+- Secret redaction finds the values of secret-like environment variables and of the secrets vault, credentials in
+  URLs, headers and query strings, values with secret-like names, and well-known or random-looking tokens. A secret
+  without any of these, such as a short password in a variable named `$value`, goes to the AI.
 - Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment of
   the demo, with the web profiler enabled and no page open that follows the traces, in six runs that alternate
   between the two settings:

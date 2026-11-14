@@ -39,7 +39,8 @@ return static function (ContainerConfigurator $container): void {
     $services->set('domain_tracing.blob_store', BlobStore::class)
         ->args(['%kernel.project_dir%/var/blobs', '%env(default:kernel.project_dir:TRACE_GIT_REPOSITORIES)%']);
 
-    $services->set('domain_tracing.secret_redactor', SecretRedactor::class);
+    $services->set('domain_tracing.secret_redactor', SecretRedactor::class)
+        ->args([null, service('secrets.vault')->nullOnInvalid()]);
 
     $services->set('domain_tracing.xdebug_value', XdebugValue::class)
         ->args([service('domain_tracing.secret_redactor')]);

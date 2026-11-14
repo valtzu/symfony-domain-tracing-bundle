@@ -50,6 +50,7 @@ final class TraceDecoder
 
     private function addFunction(string $request, array $record): array
     {
+        /** @var array{path: string|null, lines: list<string>} $file */
         $file = $this->files[$request][$record['file']] ?? ['path' => null, 'lines' => []];
         $this->functions[$request][$record['fn']] = $record + ['path' => $file['path']];
 

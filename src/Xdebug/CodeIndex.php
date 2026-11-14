@@ -16,6 +16,7 @@ final class CodeIndex
      */
     public static function build(string $root, bool $full): array
     {
+        /** @var array{autoload?: array{psr-4?: array<string, string|list<string>>}} $composer */
         $composer = json_decode((string) @file_get_contents($root.'/composer.json'), true) ?: [];
 
         $files = [];
@@ -25,6 +26,7 @@ final class CodeIndex
                     continue;
                 }
                 foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
+                    /** @var \SplFileInfo $file */
                     if ('php' === $file->getExtension()) {
                         $class = $prefix.strtr(substr($file->getPathname(), \strlen($directory) + 1, -4), '/', '\\');
                         $files[$file->getPathname()] = ['class' => $class, 'modified' => $file->getMTime()];
@@ -33,14 +35,14 @@ final class CodeIndex
             }
         }
         ksort($files);
-        $fingerprint = md5(json_encode($files));
+        $fingerprint = md5(json_encode($files, \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_THROW_ON_ERROR));
 
         if (!$full) {
             return ['fingerprint' => $fingerprint];
         }
 
         foreach ($files as $path => &$file) {
-            $source = file_get_contents($path);
+            $source = (string) file_get_contents($path);
             $file['blob'] = sha1('blob '.\strlen($source)."\0".$source);
             $file['methods'] = [];
             $file['entrypoint'] = false;
@@ -51,7 +53,7 @@ final class CodeIndex
                 $next = $i;
                 while (($nextToken = $tokens[++$next] ?? null) && ($nextToken->isIgnorable() || '&' === $nextToken->text)) {
                 }
-                if ($token->is(\T_FN) || $token->is(\T_FUNCTION) && '(' === $nextToken?->text) {
+                if ($token->is(\T_FN) || $token->is(\T_FUNCTION) && '(' === ($nextToken ?? null)?->text) {
                     $file['closureLines'][$token->line] = $token->line;
                 }
             }
@@ -65,7 +67,7 @@ final class CodeIndex
             foreach ($class->getMethods() as $method) {
                 if ($method->getFileName() === $path) {
                     $file['methods'][$method->getName()] = [$method->getStartLine(), $method->getEndLine(), array_map(static fn ($parameter) => $parameter->getName(), $method->getParameters())];
-                    $file['entrypoint'] = $file['entrypoint'] || $method->getAttributes('Symfony\Component\Routing\Attribute\Route');
+                    $file['entrypoint'] = $file['entrypoint'] || [] !== $method->getAttributes('Symfony\Component\Routing\Attribute\Route');
                 }
             }
         }

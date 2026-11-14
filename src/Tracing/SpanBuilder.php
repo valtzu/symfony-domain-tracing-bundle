@@ -23,16 +23,16 @@ final class SpanBuilder
     /** @var array<string, array> spans by ID */
     private array $spans = [];
 
-    /** @var array<string, list<string>> open method spans by request, innermost last */
+    /** @var array<array-key, list<string>> open method spans by request, innermost last */
     private array $stacks = [];
 
-    /** @var array<string, string> request span ID by request */
+    /** @var array<array-key, string> request span ID by request */
     private array $requestSpans = [];
 
-    /** @var array<string, string> request by request span ID */
+    /** @var array<array-key, string> request by request span ID */
     private array $requestsBySpanId = [];
 
-    /** @var array<string, array> function records by function */
+    /** @var array<array-key, array> function records by function */
     private array $functions = [];
 
     private int $sequence = 0;
@@ -42,7 +42,8 @@ final class SpanBuilder
      */
     public function add(array $record): array
     {
-        return match ($record['type']) {
+        /** @var list<array{0: 'open'|'close', 1: array}> $changes */
+        $changes = match ($record['type']) {
             'request' => $this->openRequest($record),
             'function' => $this->describeFunction($record),
             'step' => $this->step($record),
@@ -53,6 +54,8 @@ final class SpanBuilder
             'end' => $this->closeRequest($record['request'], $record['at']),
             default => [],
         };
+
+        return $changes;
     }
 
     public function span(string $id): ?array
@@ -93,14 +96,15 @@ final class SpanBuilder
      */
     public static function humanize(string $function): string
     {
-        [$class, $method] = preg_split('/->|::/', $function, 2) + [1 => ''];
-        $words = static fn (string $name) => strtolower(trim(preg_replace('/(?<=[a-z0-9])(?=[A-Z])|_/', ' ', $name)));
+        [$class, $method] = (preg_split('/->|::/', $function, 2) ?: []) + ['', ''];
+        $words = static fn (string $name) => strtolower(trim((string) preg_replace('/(?<=[a-z0-9])(?=[A-Z])|_/', ' ', $name)));
 
-        return ucfirst($words(substr(strrchr('\\'.$class, '\\'), 1))).': '.$words($method);
+        return ucfirst($words(substr((string) strrchr('\\'.$class, '\\'), 1))).': '.$words($method);
     }
 
     private function openRequest(array $record): array
     {
+        /** @var array{parentSpanId: string|null, spanId: string, traceId: string, request: string, service?: string|null, method: string, uri: string, at: float} $record */
         $parentSpanId = $record['parentSpanId'];
         if (null !== $parentSpanId && null !== $callerRequest = $this->requestsBySpanId[$parentSpanId] ?? null) {
             $parentSpanId = $this->currentSpanOf($callerRequest);
@@ -147,7 +151,7 @@ final class SpanBuilder
         while ($stack) {
             $top = $this->spans[end($stack)];
             if ($top['depth'] > $record['depth'] || $top['depth'] === $record['depth'] && $top['function'] !== $record['function']) {
-                $changes[] = $this->close(array_pop($stack), $record['at']);
+                $changes[] = $this->close((string) array_pop($stack), $record['at']);
                 continue;
             }
             if ($top['depth'] === $record['depth']) {
@@ -227,10 +231,10 @@ final class SpanBuilder
     {
         $changes = [];
         $stack = &$this->stacks[$record['request']];
-        if ($stack && \array_key_exists('return', $record) && $this->spans[end($stack)]['depth'] === $record['depth']) {
-            $this->spans[end($stack)]['returnValue'] = $record['return'];
+        if ([] !== $stack && \array_key_exists('return', $record) && $this->spans[end($stack)]['depth'] === $record['depth']) {
+            $this->spans[(string) end($stack)]['returnValue'] = $record['return'];
         }
-        while ($stack && $this->spans[end($stack)]['depth'] >= $record['depth']) {
+        while ([] !== $stack && $this->spans[end($stack)]['depth'] >= $record['depth']) {
             $changes[] = $this->close(array_pop($stack), $record['at']);
         }
 

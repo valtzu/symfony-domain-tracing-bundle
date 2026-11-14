@@ -17,6 +17,7 @@ final class SecretRedactor
     private const SECRET_NAME = '[A-Za-z0-9_]*(?:secret|passw(?:or)?d|pwd|token|api_?key|apikey|private_?key|credential|auth|dsn|salt|signature|cookie|session)[A-Za-z0-9_]*';
     private const MIN_SECRET_VALUE_LENGTH = 6;
 
+    /** @var array<string, string> */
     private const PATTERNS = [
         // Private keys in PEM format
         '/-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/s' => self::PLACEHOLDER,
@@ -38,7 +39,7 @@ final class SecretRedactor
     private array $knownSecrets = [];
 
     /**
-     * @param array<string, mixed>|null $environment defaults to the environment variables of the process
+     * @param array<mixed>|null $environment defaults to the environment variables of the process
      */
     public function __construct(?array $environment = null)
     {

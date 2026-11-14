@@ -49,7 +49,7 @@ final class Recorder implements ResetInterface
     }
 
     /**
-     * @param array<string, mixed> $server the server parameters of the request, or $_SERVER for a console command
+     * @param array<mixed> $server the server parameters of the request, or $_SERVER for a console command
      *
      * @return string|null the span ID of the request, or null when it is not recorded
      */
@@ -105,7 +105,7 @@ final class Recorder implements ResetInterface
 
         // Ends the record when the request does not reach its end, such as after exit() or a fatal error
         if (!$this->shutdownRegistered) {
-            register_shutdown_function(fn () => $this->stop(http_response_code() ?: null));
+            register_shutdown_function(fn () => $this->stop(\is_int($code = http_response_code()) ? $code : null));
             $this->shutdownRegistered = true;
         }
 
@@ -162,7 +162,7 @@ final class Recorder implements ResetInterface
 
         $indexPath = $this->store->directory().'/codeindex-'.$current['codeIndex'].'.json';
         if (!is_file($indexPath)) {
-            $temporary = $indexPath.'.'.getmypid();
+            $temporary = $indexPath.'.'.(int) getmypid();
             file_put_contents($temporary, json_encode(CodeIndex::build($this->projectDir, true), \JSON_UNESCAPED_SLASHES));
             rename($temporary, $indexPath);
         }

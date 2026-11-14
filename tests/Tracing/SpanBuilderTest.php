@@ -34,7 +34,7 @@ final class SpanBuilderTest extends TestCase
 
         $tree = array_map(static fn (array $span) => [
             $span['name'],
-            null === $span['parentId'] ? null : $builder->span($span['parentId'])['name'],
+            null === $span['parentId'] ? null : $builder->span($span['parentId'])['name'] ?? null,
             $span['start'],
             $span['end'],
         ], array_values($builder->spans()));

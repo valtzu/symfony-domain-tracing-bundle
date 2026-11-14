@@ -40,8 +40,10 @@ final class TraceStoreTest extends TestCase
         $this->store->restart(self::ROOT);
 
         $this->assertFalse($this->store->hasEnded(self::ROOT));
-        $this->assertSame(['request'], array_column($this->store->read(self::ROOT)['records'], 'type'));
-        $this->assertSame(self::TRACE, $this->store->request(self::ROOT)['traceId']);
+        $this->assertNotNull($trace = $this->store->read(self::ROOT));
+        $this->assertSame(['request'], array_column($trace['records'], 'type'));
+        $this->assertNotNull($request = $this->store->request(self::ROOT));
+        $this->assertSame(self::TRACE, $request['traceId']);
     }
 
     public function testGivesALockToOneHolderAtATime()
@@ -78,14 +80,14 @@ final class TraceStoreTest extends TestCase
         file_put_contents($this->directory.'/trace.1794671096.0728f2.xt.gz.lines.json', '[]');
         file_put_contents($this->directory.'/codeindex-6151f083bbd6339185fa5352b12567f4.json', '{}');
         file_put_contents($this->directory.'/notes.txt', '');
-        foreach (glob($this->directory.'/*') as $path) {
+        foreach (glob($this->directory.'/*') ?: [] as $path) {
             touch($path, time() - 3 * 86400);
         }
         touch($this->directory.'/'.self::CHILD.'.jsonl');
 
         $this->store->removeOlderThan(time() - 2 * 86400);
 
-        $this->assertSame([self::CHILD.'.jsonl', 'notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
+        $this->assertSame([self::CHILD.'.jsonl', 'notes.txt'], array_map(basename(...), glob($this->directory.'/*') ?: []));
     }
 
     public function testRemovesAllTheTraces()
@@ -95,6 +97,6 @@ final class TraceStoreTest extends TestCase
 
         $this->store->clear();
 
-        $this->assertSame(['notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
+        $this->assertSame(['notes.txt'], array_map(basename(...), glob($this->directory.'/*') ?: []));
     }
 }

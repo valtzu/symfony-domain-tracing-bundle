@@ -87,7 +87,7 @@ final readonly class TraceStore
             return false;
         }
         $handle = fopen($this->path($id), 'r');
-        fseek($handle, max(0, filesize($this->path($id)) - 256));
+        fseek($handle, max(0, (int) filesize($this->path($id)) - 256));
         $tail = (string) stream_get_contents($handle);
         fclose($handle);
 
@@ -101,7 +101,7 @@ final readonly class TraceStore
     {
         $request = $this->request($id);
         if (null !== $request) {
-            file_put_contents($this->path($id), json_encode($request, \JSON_UNESCAPED_SLASHES)."\n");
+            file_put_contents($this->path($id), json_encode($request, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR)."\n");
         }
     }
 
@@ -147,12 +147,12 @@ final readonly class TraceStore
             return [];
         }
 
-        return file($path, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
+        return array_values(file($path, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES) ?: []);
     }
 
     public function addStep(string $id, int $function, int $line, int $depth, int $microseconds): void
     {
-        file_put_contents($this->path($id), json_encode([$function, $line, $depth, $microseconds])."\n", \FILE_APPEND);
+        file_put_contents($this->path($id), json_encode([$function, $line, $depth, $microseconds], \JSON_THROW_ON_ERROR)."\n", \FILE_APPEND);
     }
 
     /**
@@ -250,7 +250,7 @@ final readonly class TraceStore
     {
         $path = $this->narrationPath($rootId);
 
-        return is_file($path) && str_contains((string) file_get_contents($path, offset: max(0, filesize($path) - 200)), '{"type":"end"');
+        return is_file($path) && str_contains((string) file_get_contents($path, offset: max(0, (int) filesize($path) - 200)), '{"type":"end"');
     }
 
     public function clearNarration(string $rootId): void
@@ -270,7 +270,7 @@ final readonly class TraceStore
     {
         $newest = null;
         foreach (glob($this->directory.'/*.jsonl') ?: [] as $path) {
-            if (filemtime($path) < floor($timestamp)) {
+            if ((int) filemtime($path) < floor($timestamp)) {
                 continue;
             }
 
@@ -285,6 +285,9 @@ final readonly class TraceStore
         return $newest[0] ?? null;
     }
 
+    /**
+     * @return array{records: list<array>, offset: int}|null
+     */
     private function readLines(string $path, int $offset): ?array
     {
         if (!is_file($path)) {
@@ -298,7 +301,9 @@ final readonly class TraceStore
             if (!str_ends_with($line, "\n")) {
                 break;
             }
-            $records[] = json_decode($line, true, flags: \JSON_THROW_ON_ERROR);
+            /** @var array $record */
+            $record = json_decode($line, true, flags: \JSON_THROW_ON_ERROR);
+            $records[] = $record;
             $offset += \strlen($line);
         }
         fclose($handle);

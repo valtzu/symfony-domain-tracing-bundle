@@ -26,6 +26,7 @@ final class TraceNarratorTest extends TestCase
 
     public function testLeavesHowTheRequestEndedToTheOutcome()
     {
+        /** @var list<array{span: string, at: float, text: string, error: bool}> $events */
         $events = iterator_to_array($this->narrate(
             '{"line": 1, "when": "return", "text": "Greeting is \"Hello\""}',
             '{"line": 0, "when": "return", "text": "Greeting page shown"}',

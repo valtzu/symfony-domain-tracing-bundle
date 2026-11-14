@@ -8,5 +8,4 @@
 /tests export-ignore
 /.github export-ignore
 /mago.toml export-ignore
-/mago-*-baseline.toml export-ignore
 /phpcs.xml.dist export-ignore

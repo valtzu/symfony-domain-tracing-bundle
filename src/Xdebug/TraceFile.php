@@ -18,7 +18,7 @@ final class TraceFile
         private readonly string $path,
     ) {
         if (str_ends_with($path, '.gz')) {
-            $this->inflate = inflate_init(\ZLIB_ENCODING_GZIP);
+            $this->inflate = inflate_init(\ZLIB_ENCODING_GZIP) ?: throw new \RuntimeException('Cannot read the gzip compressed trace file.');
         }
     }
 

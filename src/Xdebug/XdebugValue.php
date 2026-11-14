@@ -15,11 +15,11 @@ use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
  */
 final class XdebugValue
 {
-    private string $text;
-    private int $position;
+    private string $text = '';
+    private int $position = 0;
 
     /** @var list<string> */
-    private array $applicationNamespaces;
+    private array $applicationNamespaces = [];
 
     public function __construct(
         private readonly SecretRedactor $redactor,
@@ -55,10 +55,10 @@ final class XdebugValue
             str_starts_with($rest, '[') => $this->array(),
             str_starts_with($rest, 'class ') => $this->object(),
             str_starts_with($rest, 'enum ') => $this->enum(),
-            str_starts_with($rest, '...') => $this->expect('...') ?? '…',
-            str_starts_with($rest, 'NULL') => $this->expect('NULL') ?? null,
-            str_starts_with($rest, 'TRUE') => null === $this->expect('TRUE'),
-            str_starts_with($rest, 'FALSE') => null !== $this->expect('FALSE'),
+            str_starts_with($rest, '...') && $this->consume('...') => '…',
+            str_starts_with($rest, 'NULL') && $this->consume('NULL') => null,
+            str_starts_with($rest, 'TRUE') && $this->consume('TRUE') => true,
+            str_starts_with($rest, 'FALSE') && $this->consume('FALSE') => false,
             1 === preg_match('/\G-?\d+(\.\d+)?(E[+-]?\d+)?/i', $this->text, $match, 0, $this->position) => $this->number($match[0]),
             default => throw new \UnexpectedValueException(),
         };
@@ -77,8 +77,11 @@ final class XdebugValue
     private function number(string $number): int|float
     {
         $this->position += \strlen($number);
+        if (!is_numeric($number)) {
+            throw new \UnexpectedValueException();
+        }
 
-        return is_numeric($number) && !preg_match('/[.e]/i', $number) ? (int) $number : (float) $number;
+        return !preg_match('/[.e]/i', $number) ? (int) $number : (float) $number;
     }
 
     private function array(): array|string
@@ -107,6 +110,7 @@ final class XdebugValue
 
         $properties = [];
         $truncated = false;
+        $match = [];
         while (!$this->consume('}')) {
             if ($this->consume('...')) {
                 $truncated = true;
@@ -120,9 +124,9 @@ final class XdebugValue
             $this->consume(';');
         }
 
-        $insideApplication = !$this->applicationNamespaces || array_filter($this->applicationNamespaces, static fn (string $namespace) => str_starts_with($class, $namespace));
+        $insideApplication = !$this->applicationNamespaces || [] !== array_filter($this->applicationNamespaces, static fn (string $namespace) => str_starts_with($class, $namespace));
         $holdsScalars = array_filter($properties, static fn ($value) => null === $value || \is_scalar($value) && !str_starts_with((string) $value, '['));
-        if ($truncated || !$insideApplication || $properties && !$holdsScalars) {
+        if ($truncated || !$insideApplication || [] !== $properties && [] === $holdsScalars) {
             return '['.$class.']';
         }
 

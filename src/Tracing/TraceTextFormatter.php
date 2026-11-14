@@ -13,13 +13,13 @@ final class TraceTextFormatter
 {
     private const int MAX_VALUE_LENGTH = 1000;
 
-    /** @var array<string, int> nesting level by span ID */
+    /** @var array<array-key, int> nesting level by span ID */
     private array $levels = [];
 
-    /** @var array<string, true> request spans whose action is printed */
+    /** @var array<array-key, true> request spans whose action is printed */
     private array $actions = [];
 
-    /** @var array<string, true> spans whose arguments are printed */
+    /** @var array<array-key, true> spans whose arguments are printed */
     private array $arguments = [];
     private ?float $startedAt = null;
 
@@ -98,12 +98,12 @@ final class TraceTextFormatter
     {
         $time = null === $at || null === $this->startedAt ? str_repeat(' ', times: 9) : \sprintf('%+8.3fs', $at - $this->startedAt);
 
-        return $time.' '.str_repeat('  ', $level).$text;
+        return $time.' '.str_repeat('  ', max(0, $level)).$text;
     }
 
     private static function value(mixed $value): string
     {
-        $json = json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $json = (string) json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_PARTIAL_OUTPUT_ON_ERROR);
 
         return mb_strlen($json) > self::MAX_VALUE_LENGTH ? mb_substr($json, start: 0, length: self::MAX_VALUE_LENGTH).'…' : $json;
     }

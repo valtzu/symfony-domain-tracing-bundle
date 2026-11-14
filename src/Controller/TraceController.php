@@ -72,6 +72,6 @@ final readonly class TraceController
     #[Route('/_tracing/newest', name: 'domain_tracing_newest', methods: ['GET'])]
     public function newest(Request $request): JsonResponse
     {
-        return new JsonResponse(['id' => $this->store->newestStartedAfter($request->query->get('after', 0.0) + 0.0)]);
+        return new JsonResponse(['id' => $this->store->newestStartedAfter(is_numeric($after = $request->query->get('after')) ? (float) $after : 0.0)]);
     }
 }

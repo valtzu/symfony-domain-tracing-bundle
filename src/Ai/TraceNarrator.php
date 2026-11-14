@@ -32,7 +32,7 @@ final readonly class TraceNarrator
      */
     public function narrate(array $steps, array $spans, ?string $rootSpanId, array $eventsSoFar, bool $traceEnded, array $code = []): iterable
     {
-        $json = static fn (mixed $value) => json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+        $json = static fn (mixed $value) => (string) json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE);
 
         $prompt = "Events so far:\n".($eventsSoFar ? implode("\n", $eventsSoFar) : '(none yet)')."\n\nNew calls:\n".($steps ? '' : "(none)\n");
         foreach ($steps as $index => $step) {
@@ -58,7 +58,9 @@ final readonly class TraceNarrator
         $prompt .= "\n".($traceEnded ? "The request has finished.\n".self::outcomes($spans) : 'The request is still running. More calls will follow.');
 
         $buffer = '';
-        foreach ($this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('trace_narrator')), Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
+        /** @var iterable<mixed> $deltas */
+        $deltas = $this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('trace_narrator')), Message::ofUser($prompt)), ['stream' => true])->getContent();
+        foreach ($deltas as $delta) {
             if (!$delta instanceof TextDelta) {
                 continue;
             }
@@ -82,7 +84,7 @@ final readonly class TraceNarrator
                 continue;
             }
             $request = \sprintf('[%s] %s %s', $span['service'], $span['method'], parse_url($span['uri'], \PHP_URL_PATH));
-            $failed = isset($span['exception']) || ($span['status'] ?? 0) >= 400;
+            $failed = isset($span['exception']) || $span['status'] >= 400;
             $outcomes .= $failed ? $request.' failed' : $request.' succeeded';
             $outcomes .= isset($span['status']) ? ' with status '.$span['status'] : '';
             if (isset($span['exception'])) {
@@ -97,7 +99,7 @@ final readonly class TraceNarrator
 
     private static function exception(array $exception): string
     {
-        return $exception['class'].': '.json_encode($exception['message'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+        return $exception['class'].': '.json_encode($exception['message'], \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -114,13 +116,14 @@ final readonly class TraceNarrator
         }
         if (true === ($event['outcome'] ?? false)) {
             $at = null === $rootSpanId ? null : $spans[$rootSpanId]['end'] ?? $steps[array_key_last($steps) ?? -1]['at'] ?? null;
-            if (null !== $rootSpanId && null !== $at) {
+            if (null !== $rootSpanId && is_numeric($at)) {
                 yield ['span' => $rootSpanId, 'at' => (float) $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];
             }
 
             return;
         }
 
+        /** @var array{span: string, at: float}|null $step */
         $step = $steps[$event['line'] ?? -1] ?? null;
         $atEnd = 'return' === ($event['when'] ?? null);
         // The outcome already says how the request ended, at the same place
@@ -128,6 +131,7 @@ final readonly class TraceNarrator
             return;
         }
         $spanId = $step['span'];
+        /** @var float $at */
         $at = $atEnd ? $spans[$spanId]['end'] ?? $step['at'] : $step['at'];
 
         yield ['span' => $spanId, 'at' => $at, 'text' => trim($event['text']), 'error' => true === ($event['error'] ?? false)];

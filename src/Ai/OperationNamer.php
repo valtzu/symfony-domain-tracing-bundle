@@ -58,7 +58,9 @@ final readonly class OperationNamer
         }
 
         $buffer = '';
-        foreach ($this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('operation_namer')), Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
+        /** @var iterable<mixed> $deltas */
+        $deltas = $this->agent->call(new MessageBag(Message::forSystem($this->prompts->get('operation_namer')), Message::ofUser($prompt)), ['stream' => true])->getContent();
+        foreach ($deltas as $delta) {
             if (!$delta instanceof TextDelta) {
                 continue;
             }

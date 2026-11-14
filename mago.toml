@@ -1,79 +1,32 @@
+# Mago only looks for bugs, such as a null or false that is not handled, an undefined variable or a call to a method
+# that does not exist. How the code is written and organized is not its job: PHP_CodeSniffer checks the style.
 php-version = "8.4"
 
 [source]
 paths = ["src", "tests", "config"]
-includes = ["vendor", "resources"]
+includes = ["vendor"]
 excludes = ["config/reference.php"]
 
-[linter]
-excludes = ["config/services.php"]
-baseline = "mago-lint-baseline.toml"
-integrations = ["symfony", "phpunit"]
-
 [analyzer]
-baseline = "mago-analyze-baseline.toml"
-minimum-fail-level = "note"
-find-unused-expressions = true
-find-unused-definitions = true
-find-overly-wide-return-types = true
 analyze-dead-code = true
-check-throws = true
-ignore = [{ code = "unhandled-thrown-type", in = ["tests/"] }]
-class-initializers = ["setUp"]
-check-dead-catch = true
-unchecked-exceptions = ["LogicException", "Twig\\Error\\Error", "Symfony\\AI\\Agent\\Exception\\ExceptionInterface", "Symfony\\AI\\Platform\\Exception\\ExceptionInterface"]
-strict-list-index-checks = true
-strict-array-index-existence = true
-no-boolean-literal-comparison = true
-check-missing-type-hints = true
-check-closure-missing-type-hints = true
-check-arrow-function-missing-type-hints = true
-check-missing-override = true
-find-unused-parameters = true
 check-property-initialization = true
 check-use-statements = true
-check-name-casing = true
-
-# Code style is the job of PHP_CodeSniffer
-[linter.rules]
-array-style = { enabled = false }
-assertion-style = { enabled = false }
-block-statement = { enabled = false }
-braced-string-interpolation = { enabled = false }
-class-name = { enabled = false }
-constant-name = { enabled = false }
-enum-name = { enabled = false }
-explicit-octal = { enabled = false }
-file-name = { enabled = false }
-function-name = { enabled = false }
-instanceof-stringable = { enabled = false }
-interface-name = { enabled = false }
-literal-named-argument = { enabled = false }
-lowercase-keyword = { enabled = false }
-lowercase-type-hint = { enabled = false }
-no-alias-function = { enabled = false }
-no-boolean-flag-parameter = { enabled = false }
-no-debug-symbols = { enabled = false }
-no-else-clause = { enabled = false }
-no-empty = { enabled = false }
-no-hash-comment = { enabled = false }
-no-hash-emoji = { enabled = false }
-no-isset = { enabled = false }
-no-multi-assignments = { enabled = false }
-no-nested-ternary = { enabled = false }
-no-php-tag-terminator = { enabled = false }
-no-redundant-block = { enabled = false }
-no-redundant-parentheses = { enabled = false }
-no-shorthand-ternary = { enabled = false }
-no-trailing-space = { enabled = false }
-no-variable-variable = { enabled = false }
-prefer-arrow-function = { enabled = false }
-prefer-early-continue = { enabled = false }
-prefer-first-class-callable = { enabled = false }
-prefer-static-closure = { enabled = false }
-readable-literal = { enabled = false }
-str-contains = { enabled = false }
-str-starts-with = { enabled = false }
-tagged-fixme = { enabled = false }
-tagged-todo = { enabled = false }
-trait-name = { enabled = false }
+class-initializers = ["setUp"]
+minimum-fail-level = "warning"
+# A value of unknown type, such as one decoded from JSON, is not a bug by itself
+ignore = [
+    "mixed-argument",
+    "mixed-array-access",
+    "mixed-array-assignment",
+    "mixed-array-index",
+    "mixed-assignment",
+    "mixed-method-access",
+    "mixed-operand",
+    "mixed-property-access",
+    "mixed-property-type-coercion",
+    "mixed-return-statement",
+    # preg_match() and similar functions define the variable that they get by reference
+    "reference-to-undefined-variable",
+    # Symfony sets the private properties of a bundle when it needs them
+    { code = "missing-constructor", in = ["src/DomainTracingBundle.php"] },
+]

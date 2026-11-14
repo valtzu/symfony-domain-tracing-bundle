@@ -8,9 +8,12 @@ namespace Valtzu\DomainTracingBundle\Tests\Ai;
 use Valtzu\DomainTracingBundle\Ai\RedactSecretsInputProcessor;
 use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
 use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -28,8 +31,10 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
 
         $messages = $input->getMessageBag()->getMessages();
         $this->assertSame('Explain the trace.', $messages[0]->getContent());
+        $this->assertInstanceOf(UserMessage::class, $messages[1]);
         $this->assertSame('$token = \'[redacted]\';', $messages[1]->asText());
-        $this->assertSame('The key is [redacted].', $messages[2]->getContent()[0]->getText());
+        $this->assertInstanceOf(AssistantMessage::class, $messages[2]);
+        $this->assertSame('The key is [redacted].', $messages[2]->asText());
     }
 
     public function testRefusesContentItCannotCheck()
@@ -51,10 +56,13 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
             return 'ok';
         }));
 
-        self::getContainer()->get('ai.agent.domain_tracing_trace_narrator')->call(new MessageBag(Message::ofUser(
+        $agent = self::getContainer()->get('ai.agent.domain_tracing_trace_narrator');
+        $this->assertInstanceOf(AgentInterface::class, $agent);
+        $agent->call(new MessageBag(Message::ofUser(
             "\$client = new Client('live-key-1234567890');\n\$password = 'hunter2!';",
         )))->getContent();
 
+        $this->assertIsString($sent);
         $this->assertStringNotContainsString('live-key-1234567890', $sent);
         $this->assertStringNotContainsString('hunter2!', $sent);
         $this->assertStringContainsString('[TEST_API_KEY redacted]', $sent);

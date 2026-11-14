@@ -37,6 +37,7 @@ final class OperationNamerTest extends TestCase
         $this->assertFalse($asked);
         $names->next();
         $this->assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
+        /** @var bool $asked */
         $this->assertTrue($asked);
     }
 

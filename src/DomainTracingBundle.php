@@ -37,20 +37,20 @@ final class DomainTracingBundle extends AbstractBundle
     }
 
     #[\Override]
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function prependExtension(ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->import('../config/ai.php');
+        $configurator->import('../config/ai.php');
     }
 
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
         // The routes and the profiler panel show the code and the data of the requests
-        if (!$builder->getParameter('kernel.debug')) {
+        if (!$container->getParameter('kernel.debug')) {
             return;
         }
 
-        $container->parameters()->set('domain_tracing.exclude_uris', $config['exclude_uris']);
-        $container->parameters()->set('domain_tracing.context_file', $config['context_file'] ?? null);
-        $container->import('../config/services.php');
+        $configurator->parameters()->set('domain_tracing.exclude_uris', $config['exclude_uris']);
+        $configurator->parameters()->set('domain_tracing.context_file', $config['context_file'] ?? null);
+        $configurator->import('../config/services.php');
     }
 }

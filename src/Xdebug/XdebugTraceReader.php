@@ -25,7 +25,7 @@ final class XdebugTraceReader
     private bool $recording = false;
     private bool $ended = false;
 
-    /** @var array<string, array{path: string, file: array}> application classes by name */
+    /** @var array<string, array{path: string, file: array{class: string, blob: string, entrypoint: bool, methods: array<string, array{int, int, list<string>}>}}> application classes by name */
     private array $classes = [];
 
     /** @var array<string, int> */
@@ -48,7 +48,9 @@ final class XdebugTraceReader
         private readonly XdebugValue $values,
         private readonly ?float $markedAt = null,
     ) {
-        foreach ($codeIndex['files'] as $path => $file) {
+        /** @var array<string, array{class: string, blob: string, entrypoint: bool, methods: array<string, array{int, int, list<string>}>}> $files */
+        $files = $codeIndex['files'];
+        foreach ($files as $path => $file) {
             $this->classes[$file['class']] = ['path' => $path, 'file' => $file];
         }
     }
@@ -86,7 +88,9 @@ final class XdebugTraceReader
     private function readLine(string $line): void
     {
         if (str_starts_with($line, 'TRACE START')) {
-            $this->traceStartedAt = (float) \DateTimeImmutable::createFromFormat('Y-m-d H:i:s.u', substr($line, 13, 26), new \DateTimeZone('UTC'))->format('U.u');
+            if (false !== $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s.u', substr($line, 13, 26), new \DateTimeZone('UTC'))) {
+                $this->traceStartedAt = $start->getTimestamp() + $start->getMicrosecond() / 1e6;
+            }
 
             return;
         }
@@ -118,17 +122,17 @@ final class XdebugTraceReader
     {
         $this->flushExit();
         [$depth, $number, , $time, , $function] = $fields;
-        $this->lastTime = (float) $time;
+        $this->lastTime = floatval($time);
         // Xdebug writes the time since the start of the script, which can be long before the start of the trace
         if (TraceClock::MARK === $function && null !== $this->markedAt) {
-            $this->traceStartedAt = $this->markedAt - (float) $time;
+            $this->traceStartedAt = $this->markedAt - floatval($time);
 
             return;
         }
 
-        [$class, $method] = preg_split('/->|::/', $function, 2) + [1 => null];
+        [$class, $method] = (preg_split('/->|::/', $function, 2) ?: []) + ['', null];
         $definition = $this->classes[$class] ?? null;
-        if (null === $definition || !isset($definition['file']['methods'][$method])) {
+        if (null === $method || null === $definition || !isset($definition['file']['methods'][$method])) {
             return;
         }
 
@@ -137,7 +141,7 @@ final class XdebugTraceReader
             return;
         }
 
-        $at = $this->traceStartedAt + (float) $time;
+        $at = (float) $this->traceStartedAt + floatval($time);
         $this->describe($definition, $function, $method, $at);
         $this->recordedCalls[(int) $number] = (int) $depth;
         $this->store->addStep($this->requestId, $this->functions[$function], $definition['file']['methods'][$method][0], (int) $depth, (int) round(($at - $this->requestStartedAt) * 1e6));
@@ -155,9 +159,9 @@ final class XdebugTraceReader
     private function exit(array $fields): void
     {
         $this->flushExit();
-        $this->lastTime = (float) $fields[3];
+        $this->lastTime = floatval($fields[3]);
         if (isset($this->recordedCalls[(int) $fields[1]])) {
-            $this->pendingExit = ['number' => (int) $fields[1], 'depth' => $this->recordedCalls[(int) $fields[1]], 'at' => $this->traceStartedAt + (float) $fields[3], 'details' => []];
+            $this->pendingExit = ['number' => (int) $fields[1], 'depth' => $this->recordedCalls[(int) $fields[1]], 'at' => (float) $this->traceStartedAt + floatval($fields[3]), 'details' => []];
         }
     }
 
@@ -183,11 +187,14 @@ final class XdebugTraceReader
         $coverage = json_decode((string) @file_get_contents($this->store->linesPath($this->requestId)), true);
         foreach (\is_array($coverage) ? $coverage : [] as $path => $lines) {
             if (isset($this->files[$path]) && \is_array($lines)) {
-                $this->store->addExecutedLines($this->requestId, $this->files[$path], array_map(intval(...), $lines), (float) $this->endedAt());
+                $this->store->addExecutedLines($this->requestId, $this->files[$path], array_values(array_map(intval(...), $lines)), (float) $this->endedAt());
             }
         }
     }
 
+    /**
+     * @param array{path: string, file: array{class: string, blob: string, entrypoint: bool, methods: array<string, array{int, int, list<string>}>}} $definition
+     */
     private function describe(array $definition, string $function, string $method, float $at): void
     {
         $path = $definition['path'];

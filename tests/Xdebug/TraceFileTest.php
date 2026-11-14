@@ -39,6 +39,7 @@ final class TraceFileTest extends TestCase
     {
         $file = new TraceFile($this->path.'.gz');
         $deflate = deflate_init(\ZLIB_ENCODING_GZIP);
+        $this->assertNotFalse($deflate);
 
         file_put_contents($this->path.'.gz', deflate_add($deflate, "TRACE START\n1\t0", \ZLIB_SYNC_FLUSH));
         $this->assertSame("TRACE START\n1\t0", $file->read());

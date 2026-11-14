@@ -44,7 +44,7 @@ final class TraceDataCollectorTest extends TestCase
         $collector = $this->collector(null);
 
         $this->assertSame(['Xdebug is not loaded.'], $collector->getProblems());
-        $this->assertStringContainsString('xdebug.output_dir=/srv/app/var/share/traces', $collector->getXdebugSettings());
+        $this->assertStringContainsString('xdebug.output_dir=/srv/app/var/share/traces', (string) $collector->getXdebugSettings());
         $this->assertSame([], $this->collector(self::RECORDED)->getProblems());
     }
 

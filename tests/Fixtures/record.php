@@ -13,6 +13,7 @@ use Valtzu\DomainTracingBundle\Xdebug\Recorder;
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 require __DIR__.'/project/src/Greeter.php';
 
+/** @var list<string> $argv */
 [, $traceDirectory, $uri] = $argv;
 $recorder = new Recorder(__DIR__.'/project', new ExcludedUris(['^/health$']), new TraceStore($traceDirectory));
 // The time between the start of the script and the start of the recording, as in a worker process

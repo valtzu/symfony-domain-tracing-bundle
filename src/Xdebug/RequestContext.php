@@ -17,13 +17,16 @@ final class RequestContext
      */
     public static function fromServer(array $server): ?array
     {
+        /** @var string|null $method */
         $method = $server['REQUEST_METHOD'] ?? null;
+        /** @var string|null $uri */
         $uri = $server['REQUEST_URI'] ?? null;
         if (null !== $uri && preg_match('{^/_(tracing|profiler|wdt)(/|\?|$)}', $uri)) {
             return null;
         }
         if (null === $method && \is_array($argv = $server['argv'] ?? null)) {
             // A console command has a profile, and so a trace, only with --profile
+            /** @var list<string> $argv */
             if (!\in_array('--profile', $argv, true)) {
                 return null;
             }
@@ -39,7 +42,7 @@ final class RequestContext
             'traceId' => $parent[1] ?? bin2hex(random_bytes(16)),
             'spanId' => bin2hex(random_bytes(8)),
             'parentSpanId' => $parent[2] ?? null,
-            'service' => $server['OTEL_SERVICE_NAME'] ?? (getenv('OTEL_SERVICE_NAME') ?: ('' === $project || '.' === $project ? null : $project)),
+            'service' => \is_string($server['OTEL_SERVICE_NAME'] ?? null) ? $server['OTEL_SERVICE_NAME'] : (getenv('OTEL_SERVICE_NAME') ?: ('' === $project || '.' === $project ? null : $project)),
             'method' => $method,
             'uri' => $uri,
         ];

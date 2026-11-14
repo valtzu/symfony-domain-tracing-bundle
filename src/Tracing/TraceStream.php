@@ -45,7 +45,7 @@ final readonly class TraceStream
                 $changes = $builder->add($record);
                 $event = match ($record['type']) {
                     'request' => $record['request'] === $rootId ? ['request', $record] : null,
-                    'step' => ['step', $record + ['service' => $builder->span($builder->currentSpanOf($record['request']))['service'] ?? null]],
+                    'step' => ['step', $record + ['service' => $builder->span($builder->currentSpanOf($record['request']) ?? '')['service'] ?? null]],
                     'end' => $record['request'] === $rootId ? ['end', $record] : null,
                     default => null,
                 };

@@ -67,8 +67,11 @@ final class TraceCommandTest extends TestCase
             '/app/src/Gateway.php' => $file('App\Gateway', entrypoint: false, method: 'charge'),
         ];
         file_put_contents($traces.'/codeindex-'.$fingerprint.'.json', json_encode(['root' => '/app', 'namespaces' => ['App\\'], 'files' => $files]));
+        $this->assertNotNull($request = $this->store->request('aaaaaaaaaaaaaaaa'));
+        $startedAt = \DateTimeImmutable::createFromFormat('U.u', \sprintf('%.6F', $request['startedAt']));
+        $this->assertNotFalse($startedAt);
         file_put_contents($traceFile, implode("\n", [
-            'TRACE START ['.\DateTimeImmutable::createFromFormat('U.u', \sprintf('%.6F', $this->store->request('aaaaaaaaaaaaaaaa')['startedAt']))->format('Y-m-d H:i:s.u').']',
+            'TRACE START ['.$startedAt->format('Y-m-d H:i:s.u').']',
             "2\t1\t0\t0.001\t1000\tApp\\Shop->order\t1\t\t/app/src/Shop.php\t5\t0",
             "3\t2\t0\t0.002\t1000\tApp\\Gateway->charge\t1\t\t/app/src/Gateway.php\t5\t0",
             "\t\t\t0.010\t1000",

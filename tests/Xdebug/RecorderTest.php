@@ -41,6 +41,7 @@ final class RecorderTest extends TestCase
     {
         $result = $this->record('/greet?name=Ada');
 
+        static::assertIsString($result['spanId']);
         $request = $this->request($result['spanId']);
         static::assertSame(['request', 'GET', '/greet?name=Ada', 'project'], [$request['type'], $request['method'], $request['uri'], $request['service']]);
         static::assertStringStartsWith($this->traceDirectory.'/trace.'.$result['spanId'].'.xt', $request['traceFile']);
@@ -82,8 +83,10 @@ final class RecorderTest extends TestCase
     {
         $result = $this->record('/greet?name=Ada', ['xdebug.start_with_request' => 'yes', 'xdebug.trace_format' => '1', 'xdebug.output_dir' => $this->ownDirectory]);
 
+        static::assertIsString($result['spanId']);
         $request = $this->request($result['spanId']);
         static::assertSame($result['traceFile'], $request['traceFile'], 'The trace of Xdebug goes on after the request');
+        static::assertIsString($request['traceFile']);
         static::assertStringStartsWith($this->ownDirectory.'/', $request['traceFile']);
         static::assertStringContainsString("\tR\t\t\t'Hello Ada'", (string) file_get_contents('compress.zlib://'.$request['traceFile']));
         static::assertSame([], glob($this->traceDirectory.'/trace.*'), 'No trace of the bundle');
@@ -95,6 +98,7 @@ final class RecorderTest extends TestCase
         $result = $this->record('/greet?name=Ada', ['xdebug.start_with_request' => 'yes', 'xdebug.output_dir' => $this->ownDirectory]);
 
         static::assertNull($result['spanId']);
+        static::assertIsString($result['traceFile']);
         static::assertFileExists($result['traceFile'], 'The trace of Xdebug is left as it is');
         static::assertDirectoryDoesNotExist($this->traceDirectory);
     }
@@ -104,7 +108,7 @@ final class RecorderTest extends TestCase
         static::assertNull($this->record('/health')['spanId']);
         static::assertNull($this->record('/health', ['xdebug.start_with_request' => 'yes', 'xdebug.trace_format' => '1', 'xdebug.output_dir' => $this->ownDirectory])['spanId']);
         static::assertDirectoryDoesNotExist($this->traceDirectory);
-        static::assertCount(1, glob($this->ownDirectory.'/trace.*'), 'The trace of Xdebug is left as it is');
+        static::assertCount(1, glob($this->ownDirectory.'/trace.*') ?: [], 'The trace of Xdebug is left as it is');
     }
 
     private function request(?string $spanId): array

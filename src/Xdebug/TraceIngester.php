@@ -92,7 +92,7 @@ final class TraceIngester
             'exception' => \is_array($exception) && \is_string($exception['class'] ?? null) && \is_string($exception['message'] ?? null) ? [
                 'class' => $exception['class'],
                 'message' => $this->redactor->redact(mb_substr($exception['message'], start: 0, length: self::MAX_MESSAGE_LENGTH)),
-                'functions' => array_values(array_filter((array) ($exception['functions'] ?? []), is_string(...))),
+                'functions' => array_values(array_filter((\is_array($exception['functions'] ?? null) ? $exception['functions'] : []), is_string(...))),
             ] : null,
         ], static fn (mixed $value): bool => null !== $value);
     }

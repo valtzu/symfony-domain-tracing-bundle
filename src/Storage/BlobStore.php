@@ -44,8 +44,8 @@ final class BlobStore
             return $this->blobs[$id];
         }
 
-        if (is_file($path = $this->directory.'/'.$id)) {
-            return $this->blobs[$id] = file_get_contents($path);
+        if (is_file($path = $this->directory.'/'.$id) && false !== $contents = file_get_contents($path)) {
+            return $this->blobs[$id] = $contents;
         }
 
         foreach ($this->repositories as $repository) {
@@ -57,8 +57,8 @@ final class BlobStore
 
         if (microtime(true) - $this->lastScan >= self::SECONDS_BETWEEN_WORKING_TREE_SCANS) {
             $this->scanWorkingTrees();
-            if (is_file($path)) {
-                return $this->blobs[$id] = file_get_contents($path);
+            if (is_file($path) && false !== $contents = file_get_contents($path)) {
+                return $this->blobs[$id] = $contents;
             }
         }
 
@@ -98,8 +98,8 @@ final class BlobStore
                 if ('R' === $entry[0] || 'C' === $entry[0]) {
                     array_shift($entries);
                 }
-                if (is_file($file = $repository.'/'.substr($entry, 3))) {
-                    $this->put(file_get_contents($file));
+                if (is_file($file = $repository.'/'.substr($entry, 3)) && false !== $contents = file_get_contents($file)) {
+                    $this->put($contents);
                 }
             }
         }

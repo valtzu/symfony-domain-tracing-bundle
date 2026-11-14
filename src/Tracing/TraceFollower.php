@@ -57,7 +57,7 @@ final class TraceFollower
                     }
                     $recordsByRequest[$requestId][] = ['request' => $requestId] + $record;
                     if ('request' === $record['type'] && $requestId === $this->rootId) {
-                        $this->traceId = $record['traceId'];
+                        $this->traceId = $record['traceId'] ?? null;
                     }
                     if ('end' === $record['type']) {
                         $this->ended[$requestId] = true;

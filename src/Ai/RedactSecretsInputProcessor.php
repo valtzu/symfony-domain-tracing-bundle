@@ -33,7 +33,7 @@ final readonly class RedactSecretsInputProcessor implements InputProcessorInterf
     private function redactMessage(MessageInterface $message): MessageInterface
     {
         return match (true) {
-            $message instanceof SystemMessage && \is_string($message->getContent()) => new SystemMessage($this->redactor->redact($message->getContent())),
+            $message instanceof SystemMessage && \is_string($content = $message->getContent()) => new SystemMessage($this->redactor->redact($content)),
             $message instanceof UserMessage => new UserMessage(...$this->redactContent($message->getContent())),
             $message instanceof AssistantMessage => new AssistantMessage(...$this->redactContent($message->getContent())),
             default => throw new \LogicException(\sprintf('Cannot check a "%s" for secrets, so it is not sent.', get_debug_type($message))),
@@ -45,11 +45,11 @@ final readonly class RedactSecretsInputProcessor implements InputProcessorInterf
      */
     private function redactContent(array $content): array
     {
-        return array_map(
+        return array_values(array_map(
             fn (object $part) => $part instanceof Text && null === $part->getSignature()
             ? new Text($this->redactor->redact($part->getText()))
             : throw new \LogicException(\sprintf('Cannot check "%s" content for secrets, so it is not sent.', get_debug_type($part))),
             $content,
-        );
+        ));
     }
 }

@@ -78,13 +78,14 @@ final readonly class TraceDescriber
             $ended = $follower->hasEnded();
             $idle = microtime(true) - $lastActivity;
             // The last part tells how the request ended, even when it has no new calls
-            if ($pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_DESCRIBING) || $ended && $describedAPart && !$describedTheEnd) {
+            if ([] !== $pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_PART || $idle >= self::IDLE_SECONDS_BEFORE_DESCRIBING) || $ended && $describedAPart && !$describedTheEnd) {
                 $describedAPart = true;
                 $describedTheEnd = $ended;
                 $names = $this->nameOperations($rootId, $builder, $names);
                 $spans = self::withNames($builder->spans(), $names);
                 $eventsSoFar = array_map(static fn (array $event) => \sprintf('[%s] %s', $spans[$event['span']]['name'], $event['text']), $events);
                 $code = [];
+                /** @var array<string> $functions */
                 $functions = array_unique([...array_column($pending, 'function'), ...array_keys($described)]);
                 foreach ($functions as $name) {
                     $executedLines = self::executedLines($spans, $name);
@@ -127,7 +128,7 @@ final readonly class TraceDescriber
     {
         $operations = [];
         foreach ($builder->spans() as $span) {
-            if (null !== $span['function'] && !isset($names[$span['function']]) && null !== $function = $builder->function($span['function'])) {
+            if (\is_string($span['function']) && \is_string($span['service']) && !isset($names[$span['function']]) && null !== ($function = $builder->function($span['function'])) && \is_string($function['code'])) {
                 $operations[$span['function']] = ['service' => $span['service'], 'function' => $span['function'], 'code' => $function['code']];
             }
         }
@@ -147,6 +148,7 @@ final readonly class TraceDescriber
      */
     private static function executedLines(array $spans, string $function): ?array
     {
+        /** @var list<int>|null $lines */
         $lines = null;
         foreach ($spans as $span) {
             if ($span['function'] === $function && isset($span['executedLines'])) {

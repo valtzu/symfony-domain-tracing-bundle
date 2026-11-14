@@ -11,7 +11,7 @@ final class XdebugSetupTest extends TestCase
     {
         $settings = (new XdebugSetup('/srv/app/var/share/traces'))->settings();
 
-        $this->assertStringContainsString("xdebug.mode=trace,coverage,debug\n", $settings);
+        $this->assertStringContainsString("xdebug.mode=trace,coverage\n", $settings);
         $this->assertStringContainsString("xdebug.output_dir=/srv/app/var/share/traces\n", $settings);
         $this->assertStringContainsString('auto_prepend_file='.realpath(__DIR__.'/../../resources/xdebug-prepend.php')."\n", $settings);
     }

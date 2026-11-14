@@ -139,6 +139,12 @@ message = 'Missing `#[Override]` attribute on overriding method `Valtzu\DomainTr
 count = 1
 
 [[issues]]
+file = "src/DomainTracingBundle.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('exclude_uris')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
 file = "src/Tracing/BlobStore.php"
 code = "falsable-return-statement"
 message = '''Function `Valtzu\DomainTracingBundle\Tracing\BlobStore::get` is declared to return `null|string` but possibly returns 'false' (inferred as `false|string`).'''
@@ -217,9 +223,21 @@ message = 'Potentially unhandled exception `Symfony\Component\Process\Exception\
 count = 1
 
 [[issues]]
-file = "src/Tracing/DbgpConnection.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Exception` in `Valtzu\DomainTracingBundle\Tracing\DbgpConnection::receive`.'
+file = "src/Tracing/ExcludedRequestListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Tracing/ExcludedRequestListener.php"
+code = "non-existent-function"
+message = 'Could not find definition for function `Valtzu\DomainTracingBundle\Prepend\discard_trace` (also tried as `discard_trace` in a broader scope).'
+count = 1
+
+[[issues]]
+file = "src/Tracing/ExcludedRequestListener.php"
+code = "non-existent-use-import"
+message = 'Imported function `Valtzu\DomainTracingBundle\Prepend\discard_trace` does not exist.'
 count = 1
 
 [[issues]]
@@ -268,468 +286,6 @@ count = 1
 file = "src/Tracing/OperationNamer.php"
 code = "unhandled-thrown-type"
 message = 'Potentially unhandled exception `Symfony\AI\Agent\Exception\ExceptionInterface` in `Valtzu\DomainTracingBundle\Tracing\OperationNamer::name`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "imprecise-type"
-message = "Type `array` in parameter `$event` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "imprecise-type"
-message = "Type `array` in parameter `$function` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "invalid-operand"
-message = "Left operand in `&&` operation is an `array`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "less-specific-argument"
-message = 'Argument type mismatch for argument #6 of `Valtzu\DomainTracingBundle\Tracing\TraceNarrator::narrate`: expected `array<string, string>`, but provided type `array<array-key, string>` is less specific.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "less-specific-nested-argument-type"
-message = '''Argument type mismatch for argument #1 of `Valtzu\DomainTracingBundle\Tracing\OperationNamer::name`: expected `list<array{'code': string, 'function': string, 'service': string}>`, but provided type `non-empty-list<array{'code': mixed, 'function': nonnull, 'service': mixed}>` is less specific.'''
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "less-specific-nested-return-statement"
-message = '''Returned type `list<mixed>|null` is less specific than the declared return type `list<int>|null` for function `Valtzu\DomainTracingBundle\Tracing\ProcessTracesCommand::executedLines` due to nested 'mixed'.'''
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "missing-constant-type"
-message = "Class constant `IDLE_SECONDS_BEFORE_DESCRIBING` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "missing-constant-type"
-message = "Class constant `MAX_STEPS_PER_PART` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "missing-constant-type"
-message = "Class constant `SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "missing-constant-type"
-message = "Class constant `TIMEOUT_SECONDS` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "missing-return-type"
-message = "Function `arrow function` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::currentSpanOf`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::function`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::function`: expected `string`, but found `nonnull`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #1 of `array_key_exists`: expected `bool|float|int|string`, but found `mixed`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Valtzu\DomainTracingBundle\Tracing\ProcessTracesCommand::executedLines`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #2 of `array_merge`: expected `array<array-key, mixed>`, but found `nonnull`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #2 of `explode`: expected `string`, but found `mixed`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-array-index"
-message = "Invalid index type `mixed` used in array assignment on `array<array-key, bool>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-array-index"
-message = "Invalid index type `mixed` used in array assignment on `array<array-key, string>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-array-index"
-message = "Invalid index type `nonnull` used in array assignment on `array<array-key, array{'code': mixed, 'function': nonnull, 'service': mixed}>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "mixed-operand"
-message = "Left operand in binary operation has type `mixed`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-null-array-access"
-message = "Cannot perform array access on possibly `null` value."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('code')` accessed on `array<array-key, mixed>`."
-count = 2
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('function')` accessed on `array<array-key, mixed>`."
-count = 2
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('line')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('name')` accessed on `array<array-key, mixed>`."
-count = 2
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('type')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string` accessed on `array<string, array<array-key, mixed>>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/ProcessTracesCommand.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `RuntimeException` in `Valtzu\DomainTracingBundle\Tracing\ProcessTracesCommand::process`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "impossible-assignment"
-message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "impossible-condition"
-message = "Impossible condition: variable `$session->finished` (type `null`) will always evaluate to false."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "imprecise-type"
-message = "Type `array` in parameter `$session` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "invalid-iterator"
-message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "invalid-property-access"
-message = "Attempting to access property `$finished` on a non-object type (`never`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "invalid-property-access"
-message = "Attempting to access property `$traceReader` on a non-object type (`never`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "less-specific-argument"
-message = 'Argument type mismatch for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::end`: expected `string`, but provided type `array-key` is less specific.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "missing-constant-type"
-message = "Class constant `POLL_SECONDS` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "missing-constant-type"
-message = "Class constant `SECONDS_TO_WAIT_FOR_THE_TRACE_END` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "missing-return-type"
-message = "Function `arrow function` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "null-operand"
-message = "Right operand in `||` operation is `null`, which coerces to `false`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "possibly-null-argument"
-message = "Argument #1 of method `Exception::__construct` is possibly `null`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "redundant-logical-operation"
-message = "Redundant `||` operation: left operand is evaluated and right operand is always falsy."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "reference-to-undefined-variable"
-message = "Reference created from a previously undefined variable `$errorCode`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "reference-to-undefined-variable"
-message = "Reference created from a previously undefined variable `$errorMessage`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Recorder.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `RuntimeException` in `Valtzu\DomainTracingBundle\Tracing\Recorder::run`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "falsable-return-statement"
-message = "Function `{closure:src/Tracing/Resources/code_index.php:5:8}` is declared to return `string` but possibly returns 'false' (inferred as `false|string`)."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-iterator"
-message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-method-access"
-message = "Attempting to call method `getExtension()` on a non-object type (`string`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-method-access"
-message = "Attempting to call method `getMTime()` on a non-object type (`string`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-method-access"
-message = "Attempting to call method `getPathname()` on a non-object type (`string`)."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-operand"
-message = "Right operand in `||` operation is an `array`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-return-statement"
-message = "Invalid return type for function `{closure:src/Tracing/Resources/code_index.php:5:8}`: expected `string`, but found `false|string`."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "invalid-type-cast"
-message = "Casting `mixed` to `array`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "missing-parameter-type"
-message = "Parameter `$parameter` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "missing-return-type"
-message = "Function `arrow function` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #1 of `array_keys`: expected `array<('K.array_keys() extends array-key), ('V.array_keys() extends mixed)>`, but found `nonnull`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 3
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-assignment"
-message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-operand"
-message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-operand"
-message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "mixed-property-access"
-message = "Attempting to access property `$text` on a non-object type (`mixed`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-false-argument"
-message = "Argument #1 of function `md5` is possibly `false`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-false-argument"
-message = "Argument #1 of function `strlen` is possibly `false`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-false-argument"
-message = "Argument #1 of method `PhpToken::tokenize` is possibly `false`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-false-operand"
-message = "Possibly false right operand used in string concatenation (type `false|string`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-null-operand"
-message = "Possibly null left operand used in string concatenation (type `null|string`)."
-count = 2
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "possibly-undefined-variable"
-message = "Variable `$nextToken` might not have been defined on all execution paths leading to this point."
-count = 1
-
-[[issues]]
-file = "src/Tracing/Resources/code_index.php"
-code = "unhandled-thrown-type"
-message = "Potentially unhandled exception `ReflectionException` in `{closure:src/Tracing/Resources/code_index.php:5:8}`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/RunCommand.php"
-code = "missing-constant-type"
-message = "Class constant `SECONDS_BETWEEN_WORKER_STARTS` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/RunCommand.php"
-code = "missing-return-type"
-message = "Function `arrow function` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/RunCommand.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Symfony\Component\Process\Exception\ProcessStartFailedException` in `{closure:src/Tracing/RunCommand.php:32:44}`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/RunCommand.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Symfony\Component\Process\Exception\RuntimeException` in `{closure:src/Tracing/RunCommand.php:32:44}`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/RunCommand.php"
-code = "unused-parameter"
-message = "Parameter `$type` is never used."
 count = 1
 
 [[issues]]
@@ -1165,18 +721,6 @@ message = "A value of a less specific type `non-empty-array<array-key, mixed>` i
 count = 1
 
 [[issues]]
-file = "src/Tracing/TraceContext.php"
-code = "missing-constant-type"
-message = "Class constant `TRACEPARENT` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceContext.php"
-code = "reference-to-undefined-variable"
-message = "Reference created from a previously undefined variable `$match`."
-count = 1
-
-[[issues]]
 file = "src/Tracing/TraceController.php"
 code = "missing-constant-type"
 message = "Class constant `TIMEOUT_SECONDS` is missing a type hint."
@@ -1525,6 +1069,198 @@ message = "Possibly undefined array key `string` accessed on `array<string, arra
 count = 1
 
 [[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$event` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$function` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "invalid-operand"
+message = "Left operand in `&&` operation is an `array`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #6 of `Valtzu\DomainTracingBundle\Tracing\TraceNarrator::narrate`: expected `array<string, string>`, but provided type `array<array-key, string>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #1 of `Valtzu\DomainTracingBundle\Tracing\OperationNamer::name`: expected `list<array{'code': string, 'function': string, 'service': string}>`, but provided type `non-empty-list<array{'code': mixed, 'function': nonnull, 'service': mixed}>` is less specific.'''
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<mixed>|null` is less specific than the declared return type `list<int>|null` for function `Valtzu\DomainTracingBundle\Tracing\TraceDescriber::executedLines` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "missing-constant-type"
+message = "Class constant `IDLE_SECONDS_BEFORE_DESCRIBING` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "missing-constant-type"
+message = "Class constant `MAX_STEPS_PER_PART` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "missing-constant-type"
+message = "Class constant `SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "missing-constant-type"
+message = "Class constant `TIMEOUT_SECONDS` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "missing-return-type"
+message = "Function `arrow function` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::currentSpanOf`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::function`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\SpanBuilder::function`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_key_exists`: expected `bool|float|int|string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Valtzu\DomainTracingBundle\Tracing\TraceDescriber::executedLines`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_merge`: expected `array<array-key, mixed>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `explode`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-array-index"
+message = "Invalid index type `mixed` used in array assignment on `array<array-key, bool>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-array-index"
+message = "Invalid index type `mixed` used in array assignment on `array<array-key, string>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-array-index"
+message = "Invalid index type `nonnull` used in array assignment on `array<array-key, array{'code': mixed, 'function': nonnull, 'service': mixed}>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "mixed-operand"
+message = "Left operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-null-array-access"
+message = "Cannot perform array access on possibly `null` value."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('code')` accessed on `array<array-key, mixed>`."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('function')` accessed on `array<array-key, mixed>`."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('line')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('name')` accessed on `array<array-key, mixed>`."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('type')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string` accessed on `array<string, array<array-key, mixed>>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceDescriber.php"
+code = "unhandled-thrown-type"
+message = 'Potentially unhandled exception `RuntimeException` in `Valtzu\DomainTracingBundle\Tracing\TraceDescriber::process`.'
+count = 1
+
+[[issues]]
 file = "src/Tracing/TraceFile.php"
 code = "invalid-property-assignment-value"
 message = "Invalid type for property `$inflate`: expected `InflateContext|null`, but got `InflateContext|false`."
@@ -1637,6 +1373,78 @@ file = "src/Tracing/TraceFollower.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key accessed on `array{'at': mixed, 'depth': mixed, 'fn': mixed, 'line': mixed, 'type': string('request')}|array{'type': string('request'), ...}`."
 count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "missing-constant-type"
+message = "Class constant `SECONDS_WITHOUT_CHANGE_BEFORE_ENDING` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::codeIndex`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\XdebugTraceReader::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `filemtime`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Valtzu\DomainTracingBundle\Tracing\XdebugTraceReader::__construct`: expected `float`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-operand"
+message = "Left operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "mixed-operand"
+message = "Right operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "possibly-null-argument"
+message = "Argument #1 of function `fclose` is possibly `null`, but parameter type `resource` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "possibly-null-array-access"
+message = "Cannot perform array access on possibly `null` value."
+count = 6
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('startedAt')` accessed on `array<array-key, mixed>`."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceIngester.php"
+code = "possibly-undefined-string-array-index"
+message = '''Possibly undefined array key `string` accessed on `array<string, array{'lock': resource, 'reader': Valtzu\DomainTracingBundle\Tracing\XdebugTraceReader|null, 'request': array<array-key, mixed>}>`.'''
+count = 2
 
 [[issues]]
 file = "src/Tracing/TraceNarrator.php"
@@ -1795,246 +1603,6 @@ message = 'Potentially unhandled exception `Symfony\AI\Agent\Exception\Exception
 count = 1
 
 [[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "imprecise-type"
-message = "Type `array` in parameter `$request` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "imprecise-type"
-message = "Type `array` in parameter `$result` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "imprecise-type"
-message = "Type `array` in property `$request` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "imprecise-type"
-message = "Type `array` in return type of `evalResult` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "missing-constant-type"
-message = "Class constant `AUTOLOADER` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "missing-constant-type"
-message = "Class constant `HTTP_CLIENTS` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "missing-constant-type"
-message = "Class constant `REQUEST` is missing a type hint."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceContext::fromHeaders`: expected `null|string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::isValidId`: expected `string`, but found `nonnull`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::start`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #1 of `parse_url`: expected `string`, but found `nonnull`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #1 of `str_contains`: expected `string`, but found `mixed`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Valtzu\DomainTracingBundle\Tracing\TraceContext::fromHeaders`: expected `null|string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #2 of `Valtzu\DomainTracingBundle\Tracing\XdebugTraceReader::__construct`: expected `string`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-argument"
-message = 'Invalid argument type for argument #3 of `Valtzu\DomainTracingBundle\Tracing\XdebugTraceReader::__construct`: expected `float`, but found `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-assignment"
-message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
-count = 2
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-operand"
-message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-operand"
-message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-property-type-coercion"
-message = "A value with a less specific type `mixed` is being assigned to property `$traceFile` (null|string)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-return-statement"
-message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tracing\TraceSession::evalResult`. Saw type `nonnull`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "mixed-return-statement"
-message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tracing\TraceSession::requestId`. Saw type `mixed`.'
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "non-documented-property"
-message = "Ambiguous property access: $property on class `SimpleXMLElement`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-false-argument"
-message = "Argument #1 of function `str_starts_with` is possibly `false`, but parameter type `string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-false-argument"
-message = "Argument #3 of function `preg_replace` is possibly `false`, but parameter type `array<('K.preg_replace() extends array-key), string>|string` does not accept it."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-invalid-argument"
-message = '''Possible argument type mismatch for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceContext::traceparent`: expected `array{'spanId': string, 'traceId': string}`, but possibly received `array<array-key, mixed>|null`.'''
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-invalid-argument"
-message = "Possible argument type mismatch for argument #2 of `sprintf`: expected `Stringable|null|scalar`, but possibly received `array<array-key, string>|null|string`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-argument"
-message = '''Argument #1 of method `Valtzu\DomainTracingBundle\Tracing\TraceContext::traceparent` is possibly `null`, but parameter type `array{'spanId': string, 'traceId': string}` does not accept it.'''
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-array-access"
-message = "Cannot perform array access on possibly `null` value."
-count = 6
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-array-index"
-message = "Possibly using `null` as an array index to access element."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-operand"
-message = "Left operand in arithmetic operation might be `null` (type `array<array-key, mixed>|null`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-operand"
-message = "Possibly null right operand used in string concatenation (type `null|string`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-null-operand"
-message = "Right operand in arithmetic operation might be `null` (type `array{'parentSpanId': null|string, 'spanId': string, 'traceId': string}|null`)."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('at')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('fingerprint')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('id')` accessed on `array<array-key, mixed>`."
-count = 2
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('method')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('service')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('traceparent')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('uri')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "src/Tracing/TraceSession.php"
-code = "unhandled-thrown-type"
-message = 'Potentially unhandled exception `Random\RandomException` in `Valtzu\DomainTracingBundle\Tracing\TraceSession::newRequestId`.'
-count = 1
-
-[[issues]]
 file = "src/Tracing/TraceStore.php"
 code = "falsable-return-statement"
 message = '''Function `Valtzu\DomainTracingBundle\Tracing\TraceStore::spansOf` is declared to return `list<string>` but possibly returns 'false' (inferred as `array<int, string>|false`).'''
@@ -2102,6 +1670,24 @@ count = 1
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
+code = "missing-return-type"
+message = "Function `lockDescription` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "missing-return-type"
+message = "Function `lockSpan` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "missing-return-type"
+message = "Function `lock` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
 code = "mixed-argument"
 message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::spansOf`: expected `string`, but found `nonnull`.'
 count = 1
@@ -2114,9 +1700,15 @@ count = 1
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceStore::tracePath`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
 code = "mixed-assignment"
 message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
-count = 2
+count = 3
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
@@ -2132,8 +1724,32 @@ count = 1
 
 [[issues]]
 file = "src/Tracing/TraceStore.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tracing\TraceStore::codeIndex`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tracing\TraceStore::request`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
 code = "possibly-false-operand"
 message = "Left operand in `<` comparison might be `false` (type `false|int<1750595956, max>`)."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "possibly-false-operand"
+message = "Left operand in arithmetic operation might be `false` (type `false|non-negative-int`)."
+count = 2
+
+[[issues]]
+file = "src/Tracing/TraceStore.php"
+code = "possibly-false-operand"
+message = "Possibly false left operand used in string concatenation (type `false|non-empty-string`)."
 count = 1
 
 [[issues]]
@@ -2147,6 +1763,36 @@ file = "src/Tracing/TraceStore.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('traceId')` accessed on `array<array-key, mixed>`."
 count = 1
+
+[[issues]]
+file = "src/Tracing/TraceparentHttpClient.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$options` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceparentHttpClient.php"
+code = "imprecise-type"
+message = "Type `iterable` in parameter `$headers` is imprecise, equivalent to `iterable<mixed, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceparentHttpClient.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Valtzu\DomainTracingBundle\Tracing\TraceparentHttpClient::hasTraceparent`: expected `iterable<mixed, mixed>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceparentHttpClient.php"
+code = "mixed-array-assignment"
+message = "Unsafe array assignment on type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Tracing/TraceparentHttpClient.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
 
 [[issues]]
 file = "src/Tracing/XdebugSetup.php"
@@ -2169,7 +1815,7 @@ count = 1
 [[issues]]
 file = "src/Tracing/XdebugSetup.php"
 code = "mixed-argument"
-message = "Invalid argument type for argument #2 of `array_diff`: expected `array<array-key, string('coverage')|string('debug')|string('trace')>`, but found `mixed`."
+message = "Invalid argument type for argument #2 of `array_diff`: expected `array<array-key, string('coverage')|string('trace')>`, but found `mixed`."
 count = 1
 
 [[issues]]
@@ -2182,7 +1828,7 @@ count = 1
 file = "src/Tracing/XdebugSetup.php"
 code = "mixed-argument"
 message = "Invalid argument type for argument #2 of `in_array`: expected `array<array-key, ('V.in_array() extends mixed)>`, but found `mixed`."
-count = 2
+count = 1
 
 [[issues]]
 file = "src/Tracing/XdebugSetup.php"
@@ -2887,6 +2533,18 @@ message = 'Missing `#[Override]` attribute on overriding method `Valtzu\DomainTr
 count = 1
 
 [[issues]]
+file = "tests/Tracing/ExcludedUrisTest.php"
+code = "missing-return-type"
+message = "Function `testExcludesNothingByDefault` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/ExcludedUrisTest.php"
+code = "missing-return-type"
+message = "Function `testMatchesThePathAndTheQuery` is missing a return type hint."
+count = 1
+
+[[issues]]
 file = "tests/Tracing/OperationNamerTest.php"
 code = "impossible-type-comparison"
 message = "Impossible type assertion: `$asked` of type `false` can never be `true`."
@@ -2977,6 +2635,60 @@ message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Excepti
 count = 1
 
 [[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
+message = "Function `testIgnoresAnInvalidTraceparent` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
+message = "Function `testJoinsTheTraceOfTheCaller` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
+message = "Function `testNeverRecordsThePagesOfTheBundleAndOfTheProfiler` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "missing-return-type"
+message = "Function `testStartsATraceWhenNoTraceparentArrives` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `PHPUnit\Framework\Assert::assertMatchesRegularExpression`: expected `string`, but found `mixed`.'
+count = 2
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 5
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "non-existent-function"
+message = 'Could not find definition for function `Valtzu\DomainTracingBundle\Prepend\request_context` (also tried as `request_context` in a broader scope).'
+count = 7
+
+[[issues]]
+file = "tests/Tracing/RequestContextTest.php"
+code = "non-existent-use-import"
+message = 'Imported function `Valtzu\DomainTracingBundle\Prepend\request_context` does not exist.'
+count = 1
+
+[[issues]]
 file = "tests/Tracing/SpanBuilderTest.php"
 code = "imprecise-type"
 message = "Type `array` in parameter `$span` is imprecise, equivalent to `array<array-key, mixed>`."
@@ -3028,30 +2740,6 @@ count = 2
 file = "tests/Tracing/SpanBuilderTest.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string('parentId')` accessed on `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceContextTest.php"
-code = "missing-return-type"
-message = "Function `testIgnoresAnInvalidTraceparent` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceContextTest.php"
-code = "missing-return-type"
-message = "Function `testJoinsTheTraceOfTheCaller` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceContextTest.php"
-code = "missing-return-type"
-message = "Function `testStartsATraceWithoutTraceparent` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceContextTest.php"
-code = "possibly-null-array-access"
-message = "Cannot perform array access on possibly `null` value."
 count = 1
 
 [[issues]]
@@ -3199,42 +2887,6 @@ message = 'Potentially unhandled exception `PHPUnit\Framework\MockObject\Excepti
 count = 1
 
 [[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "imprecise-type"
-message = "Type `array` in return type of `request` is imprecise, equivalent to `array<array-key, mixed>`."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "missing-return-type"
-message = "Function `testNamesTheServiceAfterTheOpenTelemetryVariable` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "missing-return-type"
-message = "Function `testNamesTheServiceAfterTheProjectDirectory` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "mixed-argument"
-message = "Invalid argument type for argument #1 of `json_decode`: expected `string`, but found `mixed`."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "mixed-return-statement"
-message = 'Could not infer a precise return type for function `Valtzu\DomainTracingBundle\Tests\Tracing\TraceSessionTest::request`. Saw type `mixed`.'
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceSessionTest.php"
-code = "possibly-undefined-string-array-index"
-message = "Possibly undefined array key `string('service')` accessed on `array<array-key, mixed>`."
-count = 2
-
-[[issues]]
 file = "tests/Tracing/TraceStoreTest.php"
 code = "missing-constant-type"
 message = "Class constant `CHILD` is missing a type hint."
@@ -3261,19 +2913,43 @@ count = 1
 [[issues]]
 file = "tests/Tracing/TraceStoreTest.php"
 code = "missing-return-type"
-message = "Function `testDescribesATraceOnce` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceStoreTest.php"
-code = "missing-return-type"
-message = "Function `testDescribesOnlyTheTracesThatSomeoneAskedFor` is missing a return type hint."
-count = 1
-
-[[issues]]
-file = "tests/Tracing/TraceStoreTest.php"
-code = "missing-return-type"
 message = "Function `testFindsTheRequestThatStartedTheTrace` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "missing-return-type"
+message = "Function `testGivesALockToOneHolderAtATime` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "missing-return-type"
+message = "Function `testKeepsTheRequestWhenItRestarts` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "missing-return-type"
+message = "Function `testKnowsWhenATraceIsDescribed` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "possibly-null-argument"
+message = "Argument #1 of function `array_column` is possibly `null`, but parameter type `array<array-key, array<array-key, mixed>|object>|list<array<array-key, mixed>|object>` does not accept it."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "possibly-null-array-access"
+message = "Cannot perform array access on possibly `null` value."
+count = 2
+
+[[issues]]
+file = "tests/Tracing/TraceStoreTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('traceId')` accessed on `array<array-key, mixed>`."
 count = 1
 
 [[issues]]
@@ -3286,6 +2962,96 @@ count = 1
 file = "tests/Tracing/TraceStoreTest.php"
 code = "uninitialized-property"
 message = 'Property `$store` is not initialized in the constructor of class `Valtzu\DomainTracingBundle\Tests\Tracing\TraceStoreTest`.'
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$headers` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "imprecise-type"
+message = "Type `array` in parameter `$options` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "imprecise-type"
+message = "Type `array` in return type of `sentHeaders` is imprecise, equivalent to `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-constant-type"
+message = "Class constant `TRACEPARENT` is missing a type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-return-type"
+message = "Function `arrow function` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-return-type"
+message = "Function `closure` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-return-type"
+message = "Function `testKeepsATraceparentThatIsAlreadySet` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-return-type"
+message = "Function `testPassesTheTraceContextOn` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "missing-return-type"
+message = "Function `testSendsNothingWhenTheRequestIsNotRecorded` is missing a return type hint."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_map`: expected `array<('K.array_map() extends array-key), string>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "possibly-undefined-string-array-index"
+message = "Possibly undefined array key `string('headers')` accessed on `array<array-key, mixed>`."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "unhandled-thrown-type"
+message = 'Potentially unhandled exception `Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface` in `Valtzu\DomainTracingBundle\Tests\Tracing\TraceparentHttpClientTest::sentHeaders`.'
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "unused-parameter"
+message = "Parameter `$method` is never used."
+count = 1
+
+[[issues]]
+file = "tests/Tracing/TraceparentHttpClientTest.php"
+code = "unused-parameter"
+message = "Parameter `$url` is never used."
 count = 1
 
 [[issues]]

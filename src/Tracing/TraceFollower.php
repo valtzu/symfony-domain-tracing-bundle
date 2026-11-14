@@ -70,6 +70,14 @@ final class TraceFollower
         return isset($this->ended[$this->rootId]) && \count($this->ended) === \count($this->offsets);
     }
 
+    /**
+     * @return list<string> the spans of the trace found so far
+     */
+    public function spanIds(): array
+    {
+        return array_keys($this->offsets);
+    }
+
     public function traceId(): ?string
     {
         return $this->traceId;

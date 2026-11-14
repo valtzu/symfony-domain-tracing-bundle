@@ -32,7 +32,7 @@
                     {% for problem in collector.problems %}<li>{{ problem }}</li>{% endfor %}
                 </ul>
             {% else %}
-                <p>Xdebug is set up, but the recorder did not record this request. Its output may tell why.</p>
+                <p>Xdebug is set up, but this request was not recorded. Its URI may be excluded by the <code>exclude_uris</code> option.</p>
             {% endif %}
         </div>
         {% if collector.problems %}

@@ -21,29 +21,32 @@ final class TraceController extends AbstractController
         TraceStore $store,
         BlobStore $blobs,
         OperationNamer $namer,
+        TraceIngester $ingester,
+        TraceDescriber $describer,
     ): Response {
         if (!TraceStore::isValidId($id)) {
             throw $this->createNotFoundException();
         }
         $id = $store->rootOf($id);
         $describe = $request->query->getBoolean('describe');
-        if ($describe) {
-            $store->requestDescription($id);
-        }
 
-        $stream = function () use ($id, $describe, $store, $blobs, $namer) {
+        $stream = function () use ($id, $describe, $store, $blobs, $namer, $ingester, $describer) {
+            // The stream reads the traces and waits for the AI, for longer than a page usually takes
+            set_time_limit(0);
             $send = static function (string $event, mixed $data): void {
                 echo 'event: ', $event, "\ndata: ", json_encode($data, \JSON_UNESCAPED_SLASHES), "\n\n";
                 flush();
             };
 
             $follower = new TraceFollower($store, $blobs, $id);
+            $description = $describe ? $describer->describe($id) : null;
             $builder = new SpanBuilder();
             $names = [];
             $narrationOffset = 0;
             $startedAt = microtime(true);
 
             while (!connection_aborted() && microtime(true) - $startedAt < self::TIMEOUT_SECONDS) {
+                $ingester->poll($follower->spanIds());
                 foreach ($follower->poll() as $record) {
                     $changes = $builder->add($record);
                     match ($record['type']) {
@@ -78,7 +81,11 @@ final class TraceController extends AbstractController
                     }
                 }
 
-                usleep(100_000);
+                if ($description?->valid()) {
+                    $description->next();
+                } else {
+                    usleep(100_000);
+                }
             }
 
             $send('done', ['traceId' => $follower->traceId()]);

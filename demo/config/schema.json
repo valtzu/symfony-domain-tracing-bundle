@@ -7941,6 +7941,25 @@
                 },
                 "additionalProperties": false
             },
+            "domain_tracing": {
+                "$ref": "#/$defs/types/object_null",
+                "properties": {
+                    "exclude_uris": {
+                        "$ref": "#/$defs/types/array_null",
+                        "items": {
+                            "$ref": "#/$defs/types/scalar"
+                        },
+                        "description": "Regular expressions, without delimiters, matched against the path and the query of the requests not to record. The pages of this bundle and of the profiler are never recorded.",
+                        "examples": [
+                            [
+                                "^/health$",
+                                "[?&]frankenphp_hot_reloading="
+                            ]
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
             "framework": {
                 "$ref": "#/$defs/types/object_null",
                 "properties": {
@@ -10646,6 +10665,9 @@
                 "cache": {
                     "$ref": "#/$defs/nodes/cache"
                 },
+                "domain_tracing": {
+                    "$ref": "#/$defs/nodes/domain_tracing"
+                },
                 "framework": {
                     "$ref": "#/$defs/nodes/framework"
                 },
@@ -10693,6 +10715,9 @@
                 },
                 "cache": {
                     "$ref": "#/$defs/nodes/cache"
+                },
+                "domain_tracing": {
+                    "$ref": "#/$defs/nodes/domain_tracing"
                 },
                 "framework": {
                     "$ref": "#/$defs/nodes/framework"

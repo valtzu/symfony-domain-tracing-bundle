@@ -4,3 +4,6 @@ when@dev:
         context: |
             The application is a web shop. The people who read the traces work in customer support.
             Use the words of the shop: customers, products, prices, discounts, stock and payment.
+        exclude_uris:
+            # FrankenPHP reloads the page with this query when the code changes
+            - '[?&]frankenphp_hot_reloading='

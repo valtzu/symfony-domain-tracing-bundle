@@ -11,7 +11,7 @@ use Valtzu\DomainTracingBundle\Tracing\XdebugSetup;
 
 final class TraceDataCollectorTest extends TestCase
 {
-    private const RECORDED = '8985fb33-258f-4229-81f6-78dc02d1ee28';
+    private const RECORDED = '8985fb33258f4229';
 
     private TraceStore $store;
 
@@ -28,7 +28,7 @@ final class TraceDataCollectorTest extends TestCase
 
     public function testIgnoresARequestThatWasNotRecorded()
     {
-        $this->assertNull($this->collect('97f16856-e73a-4d4a-9702-28b8732fbb17'));
+        $this->assertNull($this->collect('97f16856e73a4d4a'));
         $this->assertNull($this->collect(null));
     }
 
@@ -54,7 +54,7 @@ final class TraceDataCollectorTest extends TestCase
     {
         $collector = new TraceDataCollector($this->store, new XdebugSetup('/srv/app/var/share/traces'));
         $request = new Request();
-        $request->headers->set('X-Request-Id', $requestId);
+        $request->server->set('DOMAIN_TRACING_SPAN_ID', $requestId);
         $collector->collect($request, new Response());
 
         return $collector;

@@ -7,11 +7,11 @@ https://github.com/user-attachments/assets/39e56c64-3818-459c-b766-c72d5c74a27f
 ## What
 
 [Xdebug](https://xdebug.org/) traces the calls of the application methods of each request, with their arguments,
-return values and times, and records which lines of them ran. A recorder that takes part in each request as a
-debugging client (DBGp) follows the request across services. A worker turns the recording into spans, gives each method a business name ("Apply
-discounts", "Charge card") and describes what happened in it ("Card declined: insufficient funds") with
-[Symfony AI](https://symfony.com/doc/current/ai/index.html) and Claude Code. The result streams into a waterfall
-while the request runs.
+return values and times, and records which lines of them ran. The bundle reads the trace files while Xdebug writes
+them, follows the request across services with the W3C `traceparent` header, turns the recording into spans, gives
+each method a business name ("Apply discounts", "Charge card") and describes what happened in it ("Card declined:
+insufficient funds") with [Symfony AI](https://symfony.com/doc/current/ai/index.html) and Claude Code. The result
+streams into a waterfall while the request runs. No other process runs next to the application.
 
 ## Why
 
@@ -22,8 +22,8 @@ no spans in the code and no SDK in the services, and the AI only adds the names 
 ## Quickstart
 
 Requirements: Docker, and the [Claude Code CLI](https://code.claude.com/docs/en/overview) logged in on the host.
-The worker uses `~/.local/bin/claude` and `~/.claude/.credentials.json`; set `CLAUDE_CLI` and `CLAUDE_CREDENTIALS`
-when they are somewhere else.
+The shop container uses `~/.local/bin/claude` and `~/.claude/.credentials.json`; set `CLAUDE_CLI` and
+`CLAUDE_CREDENTIALS` when they are somewhere else.
 
 ```shell
 docker compose up -d
@@ -58,16 +58,24 @@ Requirements: Symfony 8.2, Xdebug for the PHP of the web server, a git repositor
    bin/console domain-tracing:xdebug-settings
    ```
 
-3. Start the recorder, and keep it running:
-
-   ```shell
-   bin/console domain-tracing:run
-   ```
-
-4. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
+3. Open a page of the application, then its "Domain traces" panel in the profiler. When the request was not recorded,
    the panel tells why. `/_tracing/` shows the requests live.
 
-Set `OTEL_SERVICE_NAME` in the environment of each service to name it in the traces.
+When a request calls other services with Symfony HttpClient, the bundle adds the `traceparent` header, unless the
+request already has one, from OpenTelemetry for example. A service records its requests in the same trace when it
+has the bundle too and writes its traces into the same directory. Set `OTEL_SERVICE_NAME` in the environment of each
+service to name it; otherwise a service is named after its project directory.
+
+The `exclude_uris` option lists the requests not to record, as regular expressions matched against the path and the
+query. The pages of the bundle and of the profiler are never recorded.
+
+```yaml
+# config/packages/domain_tracing.yaml
+when@dev:
+    domain_tracing:
+        exclude_uris:
+            - '^/health$'
+```
 
 The AI agents name the operations and describe the requests with general instructions, in
 [`config/prompts/`](config/prompts/). To get the words of your business in the traces, describe the application in
@@ -87,18 +95,18 @@ when@dev:
   stream under `/_tracing/`, and adds a "Domain traces" panel to the profiler.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
   no tracing code. It requires the bundle from the parent directory.
-- The `tracing` container runs `bin/console domain-tracing:run` with the image of the demo:
-  - The recorder is the DBGp client. It reads the code of each service through the debugger, so it needs no access to
-    it, sets the `X-Request-Id`, and adds the `traceparent` header to outgoing Symfony HttpClient requests. It only
-    stops a request at these HTTP calls. It reads the trace file that Xdebug writes for the request into a shared
-    directory, from the first method of the entrypoint on. A trace refers to code by git blob ID and line.
-  - The worker process builds the spans, names the operations (once per method and code version), describes the
-    request when someone opens its "Domain traces" panel in the profiler, and removes secrets before anything goes to the AI. It reads the source from the git repositories in
-    `TRACE_GIT_REPOSITORIES` (the project directory by default), including uncommitted files.
+- The prepend file of the Xdebug settings (`bin/console domain-tracing:xdebug-settings`) runs first in each request.
+  It takes the trace context of the `traceparent` header or starts a trace, starts the record of the request next to
+  the trace file, and limits the trace and the code coverage to the application. When the request ends, it writes
+  the lines that ran, and an index of the application code once per version of the code. A trace refers to code by
+  git blob ID and line.
+- The event stream of the live view and of the profiler panel reads the trace files while Xdebug writes them, from
+  the first method of the entrypoint on. One stream reads each trace file, and another one takes over when it stops.
+- The stream of the profiler panel also builds the spans, names the operations (once per method and code version),
+  describes the request, and removes secrets before anything goes to the AI. It reads the source from the git
+  repositories in `TRACE_GIT_REPOSITORIES` (the project directory by default), including uncommitted files.
 
-A service needs the settings of `bin/console domain-tracing:xdebug-settings`. Their prepend file limits the trace and the
-code coverage to the application, and writes the lines that ran next to the trace. In the demo, the services also have
-`XDEBUG_CONFIG=client_host=tracing` and the shared trace directory mounted at `var/share/traces`.
+In the demo, both services write their traces into the same `traces` volume, mounted at `var/share/traces`.
 
 ## Limits
 
@@ -108,10 +116,9 @@ code coverage to the application, and writes the lines that ran next to the trac
   | | `GET /` (shop) | `POST /` (shop and payments) |
   |---|---|---|
   | No Xdebug | 7.1–7.9 ms | 16–19 ms |
-  | Recorded | 27–29 ms | 59–66 ms |
-  | Xdebug, no recorder running | 31–33 ms | 64–68 ms |
+  | Recorded | 24–29 ms | 53–65 ms |
 
-  Most of the time goes to the Xdebug trace and code coverage, not to the recorder.
+  The time goes to the Xdebug trace and code coverage.
 
   An earlier version recorded every line with [PHP Debugger](https://php-debugger.dev/) and was about 25 times
   slower (90 ms and 220 ms): a connected debugger disables OPcache for the request, and every breakpoint is checked

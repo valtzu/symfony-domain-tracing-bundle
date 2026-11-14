@@ -19,7 +19,7 @@ final class TraceDataCollector extends AbstractDataCollector
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $id = (string) $request->headers->get('X-Request-Id');
+        $id = (string) $request->server->get('DOMAIN_TRACING_SPAN_ID');
         $recorded = $this->store->has($id);
         $this->data = [
             'id' => $recorded ? $id : null,

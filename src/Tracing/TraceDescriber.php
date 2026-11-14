@@ -2,15 +2,12 @@
 
 namespace Valtzu\DomainTracingBundle\Tracing;
 
-use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Style\SymfonyStyle;
-
 /**
- * Follows each new trace while it is recorded: builds its spans, names the operations and describes what happened in
- * them. The results are written next to the trace, so that a page can show them while they come.
+ * Follows a trace while it is recorded: builds its spans, names the operations and describes what happened in them.
+ * The results are written next to the trace, so that a page can show them while they come. One process describes a
+ * trace: the one that holds its lock.
  */
-#[AsCommand('domain-tracing:process', 'Name and describe the recorded traces')]
-final readonly class ProcessTracesCommand
+final readonly class TraceDescriber
 {
     private const MAX_STEPS_PER_PART = 80;
     private const IDLE_SECONDS_BEFORE_DESCRIBING = 1.0;
@@ -25,26 +22,28 @@ final readonly class ProcessTracesCommand
     ) {
     }
 
-    public function __invoke(SymfonyStyle $io): int
+    /**
+     * Describes the trace that the given span started, unless another process does it or did it already. The generator
+     * gives control back to the caller between the steps of the work, so that the caller can do other work meanwhile.
+     */
+    public function describe(string $rootId): \Generator
     {
-        $io->writeln('Waiting for traces');
+        if (!$this->store->has($rootId) || $this->store->isDescribed($rootId) || null === $lock = $this->store->lockDescription($rootId)) {
+            return;
+        }
 
-        while (true) {
-            foreach ($this->store->unprocessedRoots() as $rootId) {
-                $io->writeln(\sprintf('Processing %s', $rootId));
-                try {
-                    $this->process($rootId);
-                } catch (\Throwable $e) {
-                    $io->error($e->getMessage());
-                    $this->store->addNarration($rootId, ['type' => 'failure', 'message' => $e->getMessage()]);
-                    $this->store->addNarration($rootId, ['type' => 'end', 'traceId' => null]);
-                }
-            }
-            usleep(100_000);
+        try {
+            $this->store->clearNarration($rootId);
+            yield from $this->process($rootId);
+        } catch (\Throwable $e) {
+            $this->store->addNarration($rootId, ['type' => 'failure', 'message' => $e->getMessage()]);
+            $this->store->addNarration($rootId, ['type' => 'end', 'traceId' => null]);
+        } finally {
+            fclose($lock);
         }
     }
 
-    private function process(string $rootId): void
+    private function process(string $rootId): \Generator
     {
         $this->store->addNarration($rootId, ['type' => 'start']);
         $follower = new TraceFollower($this->store, $this->blobs, $rootId);
@@ -87,6 +86,7 @@ final readonly class ProcessTracesCommand
                 foreach ($this->narrator->narrate($pending, $spans, $builder->requestSpanOf($rootId), $eventsSoFar, $ended, $code) as $event) {
                     $events[] = $event;
                     $this->store->addNarration($rootId, ['type' => 'event'] + $event);
+                    yield;
                 }
                 $pending = [];
                 continue;
@@ -98,7 +98,7 @@ final readonly class ProcessTracesCommand
             if (!$seenRecords && microtime(true) - $startedAt > self::SECONDS_TO_WAIT_FOR_THE_FIRST_RECORD) {
                 throw new \RuntimeException('The trace has no records.');
             }
-            usleep(100_000);
+            yield;
         }
 
         $this->nameOperations($rootId, $builder, $names);

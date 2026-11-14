@@ -18,6 +18,11 @@ final class DomainTracingBundle extends AbstractBundle
                     ->info('Description of the application that the AI agents get with their instructions, such as what it does, who reads the traces and the words of the business')
                     ->example('The application is a web shop. The people who read the traces work in customer support.')
                 ->end()
+                ->arrayNode('exclude_uris')
+                    ->info('Regular expressions, without delimiters, matched against the path and the query of the requests not to record. The pages of this bundle and of the profiler are never recorded.')
+                    ->example(['^/health$', '[?&]frankenphp_hot_reloading='])
+                    ->scalarPrototype()->end()
+                ->end()
             ->end();
     }
 
@@ -33,6 +38,7 @@ final class DomainTracingBundle extends AbstractBundle
             return;
         }
 
+        $container->parameters()->set('domain_tracing.exclude_uris', $config['exclude_uris']);
         $container->import('../config/services.php');
         $container->parameters()->set('domain_tracing.context', $config['context'] ?? null);
     }

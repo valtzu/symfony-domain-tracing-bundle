@@ -36,6 +36,9 @@
     "autoload-dev": {
         "psr-4": {
             "Valtzu\\DomainTracingBundle\\Tests\\": "tests/"
-        }
+        },
+        "files": [
+            "resources/functions.php"
+        ]
     }
 }

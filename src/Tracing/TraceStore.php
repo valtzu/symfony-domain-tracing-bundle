@@ -5,8 +5,8 @@ namespace Valtzu\DomainTracingBundle\Tracing;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs: a "request"
- * record, a step for each call of an application method with its arguments and its exit, and an "end" record. A step
+ * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs, in the trace
+ * directory of Xdebug: a "request" record, which the prepend file writes when the request starts, a step for each call of an application method with its arguments and its exit, and an "end" record. A step
  * is the array [function, line, call depth, microseconds since the request started], because it is the most frequent
  * record. Readers can follow the file while it is written. A trace index file lists the spans of each trace, in the
  * order they started.
@@ -14,14 +14,14 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class TraceStore
 {
     public function __construct(
-        #[Autowire('%kernel.project_dir%/var/traces')]
+        #[Autowire('%kernel.project_dir%/var/share/traces')]
         private string $directory,
     ) {
     }
 
     public static function isValidId(string $id): bool
     {
-        return 1 === preg_match('/^[0-9a-f-]{36}$/', $id);
+        return 1 === preg_match('/^[0-9a-f]{16}$/', $id);
     }
 
     public function has(string $id): bool
@@ -38,6 +38,78 @@ final readonly class TraceStore
         file_put_contents($this->path($id), '');
         $this->append($id, ['type' => 'request', 'startedAt' => microtime(true)] + $request);
         file_put_contents($this->tracePath($request['traceId']), $id."\n", \FILE_APPEND);
+    }
+
+    /**
+     * @return array|null the first record of the span, which the prepend file wrote
+     */
+    public function request(string $id): ?array
+    {
+        if (!$this->has($id)) {
+            return null;
+        }
+        $handle = fopen($this->path($id), 'r');
+        $line = fgets($handle);
+        fclose($handle);
+
+        return \is_string($line) && str_ends_with($line, "\n") ? json_decode($line, true) : null;
+    }
+
+    public function hasEnded(string $id): bool
+    {
+        if (!$this->has($id)) {
+            return false;
+        }
+        $handle = fopen($this->path($id), 'r');
+        fseek($handle, max(0, filesize($this->path($id)) - 256));
+        $tail = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        return str_contains($tail, '{"type":"end"');
+    }
+
+    /**
+     * Removes all the records of the span but the first one, to read its Xdebug trace again.
+     */
+    public function restart(string $id): void
+    {
+        $request = $this->request($id);
+        if (null !== $request) {
+            file_put_contents($this->path($id), json_encode($request, \JSON_UNESCAPED_SLASHES)."\n");
+        }
+    }
+
+    /**
+     * Takes the lock for reading the Xdebug trace of a span, which is released when the returned handle is closed or
+     * the process ends.
+     *
+     * @return resource|null null when another process holds the lock
+     */
+    public function lockSpan(string $id)
+    {
+        return $this->has($id) ? self::lock($this->path($id)) : null;
+    }
+
+    /**
+     * Takes the lock for describing the trace that the given span started.
+     *
+     * @return resource|null null when another process holds the lock
+     */
+    public function lockDescription(string $rootId)
+    {
+        $traceId = $this->request($rootId)['traceId'] ?? '';
+
+        return is_file($path = $this->tracePath($traceId)) ? self::lock($path) : null;
+    }
+
+    /**
+     * @return array|null the index of the application code that the prepend file wrote for the given version of the code
+     */
+    public function codeIndex(string $fingerprint): ?array
+    {
+        $path = $this->directory.'/codeindex-'.$fingerprint.'.json';
+
+        return preg_match('/^[0-9a-f]{32}$/', $fingerprint) && is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
     }
 
     /**
@@ -116,33 +188,23 @@ final readonly class TraceStore
         return $this->spansOf($request['traceId'] ?? '')[0] ?? $id;
     }
 
-    /**
-     * Asks for a description of a trace. Only the traces that someone looks at are described, because a description
-     * costs AI usage.
-     */
-    public function requestDescription(string $rootId): void
+    public function remove(string $id): void
     {
-        if ($this->has($rootId) && !is_file($this->narrationPath($rootId))) {
-            touch($this->requestedPath($rootId));
+        if (self::isValidId($id)) {
+            @unlink($this->path($id));
         }
     }
 
-    /**
-     * @return list<string> IDs of the traces that someone asked to describe and that have not been processed yet, the
-     *                      most recently asked first
-     */
-    public function unprocessedRoots(): array
+    public function isDescribed(string $rootId): bool
     {
-        $roots = [];
-        foreach (glob($this->directory.'/*.requested') ?: [] as $path) {
-            $id = basename($path, '.requested');
-            if (self::isValidId($id) && !is_file($this->narrationPath($id))) {
-                $roots[$id] = filemtime($path);
-            }
-        }
-        arsort($roots);
+        $path = $this->narrationPath($rootId);
 
-        return array_keys($roots);
+        return is_file($path) && str_contains((string) file_get_contents($path, offset: max(0, filesize($path) - 200)), '{"type":"end"');
+    }
+
+    public function clearNarration(string $rootId): void
+    {
+        @unlink($this->narrationPath($rootId));
     }
 
     /**
@@ -208,13 +270,21 @@ final readonly class TraceStore
         return $this->directory.'/'.$rootId.'.narration';
     }
 
-    private function requestedPath(string $rootId): string
-    {
-        return $this->directory.'/'.$rootId.'.requested';
-    }
-
     private function tracePath(string $traceId): string
     {
         return $this->directory.'/trace-'.$traceId.'.spans';
+    }
+
+    /**
+     * @return resource|null
+     */
+    private static function lock(string $path)
+    {
+        $handle = @fopen($path, 'r');
+        if (false === $handle || !flock($handle, \LOCK_EX | \LOCK_NB)) {
+            return null;
+        }
+
+        return $handle;
     }
 }

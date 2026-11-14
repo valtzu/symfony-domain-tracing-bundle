@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final readonly class XdebugSetup
 {
-    private const MODES = ['trace', 'coverage', 'debug'];
+    private const MODES = ['trace', 'coverage'];
 
     public function __construct(
         #[Autowire('%kernel.project_dir%/var/share/traces')]
@@ -59,6 +59,9 @@ final readonly class XdebugSetup
         }
 
         $outputDirectory = (string) ini_get('xdebug.output_dir');
+        if (realpath($outputDirectory) !== realpath($this->traceDirectory)) {
+            $problems[] = \sprintf('xdebug.output_dir is "%s", and it must be "%s", where the bundle reads the traces.', $outputDirectory, $this->traceDirectory);
+        }
         if (!is_dir($outputDirectory)) {
             $problems[] = \sprintf('The trace directory "%s" (xdebug.output_dir) does not exist.', $outputDirectory);
         } elseif (!is_writable($outputDirectory)) {
@@ -68,15 +71,7 @@ final readonly class XdebugSetup
         }
 
         if (realpath((string) ini_get('auto_prepend_file')) !== self::prependFile()) {
-            $problems[] = \sprintf('auto_prepend_file must be "%s", which limits the trace to the code of the application.', self::prependFile());
-        }
-
-        if (\in_array('debug', $modes, true) && !xdebug_is_debugger_active()) {
-            $problems[] = \sprintf(
-                'No recorder was connected to this request. Run "bin/console domain-tracing:run", and check that Xdebug reaches it at %s:%s (xdebug.client_host and xdebug.client_port).',
-                ini_get('xdebug.client_host'),
-                ini_get('xdebug.client_port'),
-            );
+            $problems[] = \sprintf('auto_prepend_file must be "%s", which starts the record of the request.', self::prependFile());
         }
 
         return $problems;

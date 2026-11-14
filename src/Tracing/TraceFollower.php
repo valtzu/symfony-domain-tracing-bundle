@@ -100,17 +100,20 @@ final class TraceFollower
     private static function mergeByTime(array $recordsByRequest): array
     {
         $merged = [];
-        while ($recordsByRequest = array_filter($recordsByRequest)) {
-            $next = array_key_first($recordsByRequest);
-            foreach ($recordsByRequest as $requestId => $records) {
-                if ($records[0]['at'] < $recordsByRequest[$next][0]['at']) {
+        $positions = array_fill_keys(array_keys($recordsByRequest), 0);
+        while (true) {
+            $next = null;
+            foreach ($positions as $requestId => $position) {
+                $record = $recordsByRequest[$requestId][$position] ?? null;
+                if (null !== $record && (null === $next || $record['at'] < $recordsByRequest[$next][$positions[$next]]['at'])) {
                     $next = $requestId;
                 }
             }
-            $merged[] = array_shift($recordsByRequest[$next]);
+            if (null === $next) {
+                return $merged;
+            }
+            $merged[] = $recordsByRequest[$next][$positions[$next]++];
         }
-
-        return $merged;
     }
 
     private function discoverRequests(): void

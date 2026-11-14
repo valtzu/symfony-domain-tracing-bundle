@@ -29,3 +29,26 @@ jobs:
           php-version: '8.4'
       - uses: ramsey/composer-install@v3
       - run: vendor/bin/mago analyze --reporting-format github
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }}, ${{ matrix.dependencies }} dependencies)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+        dependencies: [highest]
+        include:
+          - php: '8.4'
+            dependencies: lowest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # The recorder tests run PHP with Xdebug in trace mode
+          coverage: xdebug
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+      - run: vendor/bin/phpunit

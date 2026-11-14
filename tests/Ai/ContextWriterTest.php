@@ -88,20 +88,6 @@ final class ContextWriterTest extends TestCase
         static::assertFileDoesNotExist($this->projectDir.'/config/packages/domain_tracing.yaml');
     }
 
-    public function testYamlKeepsParagraphsAndWrapsLongLines(): void
-    {
-        $yaml = ContextGenerateCommand::yaml(str_repeat('word ', times: 30)."\n\nSecond paragraph.");
-
-        static::assertSame(
-            "when@dev:\n    domain_tracing:\n        context: |\n"
-            .'            '.trim(str_repeat('word ', times: 21))."\n"
-            .'            '.trim(str_repeat('word ', times: 9))."\n"
-            ."\n"
-            ."            Second paragraph.\n",
-            $yaml,
-        );
-    }
-
     private function project(): ProjectSummary
     {
         $routes = new RouteCollection();

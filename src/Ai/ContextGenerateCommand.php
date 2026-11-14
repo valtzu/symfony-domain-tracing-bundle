@@ -46,8 +46,16 @@ final readonly class ContextGenerateCommand
         }
 
         $file = $this->projectDir.'/'.self::CONFIG_FILE;
-        $question = is_file($file) ? \sprintf('Replace %s?', self::CONFIG_FILE) : \sprintf('Write %s?', self::CONFIG_FILE);
-        if (!$write && !($input->isInteractive() && $io->confirm($question, !is_file($file)))) {
+        $current = is_file($file) ? file_get_contents($file) : false;
+        $yaml = ContextConfigFile::withContext(false === $current ? null : $current, $context);
+        if (null === $yaml) {
+            $io->warning(\sprintf('%s has no "domain_tracing" key. Add the description as "domain_tracing.context" yourself.', self::CONFIG_FILE));
+
+            return Command::FAILURE;
+        }
+
+        $question = \sprintf(false === $current ? 'Write %s?' : 'Put the description into %s?', self::CONFIG_FILE);
+        if (!$write && !($input->isInteractive() && $io->confirm($question))) {
             $io->note(\sprintf('Not written. Run the command with --write, or copy the description into %s.', self::CONFIG_FILE));
 
             return Command::SUCCESS;
@@ -56,19 +64,9 @@ final readonly class ContextGenerateCommand
         if (!is_dir(\dirname($file))) {
             mkdir(\dirname($file), recursive: true);
         }
-        file_put_contents($file, self::yaml($context));
+        file_put_contents($file, $yaml);
         $io->success(\sprintf('Wrote %s. Read the description, change what is wrong, and commit it.', self::CONFIG_FILE));
 
         return Command::SUCCESS;
-    }
-
-    public static function yaml(string $context): string
-    {
-        $lines = explode(separator: "\n", string: wordwrap(preg_replace('/[ \t]*\R/', replacement: "\n", subject: $context) ?? $context, width: 108));
-
-        return "when@dev:\n    domain_tracing:\n        context: |\n".implode('', array_map(
-            static fn (string $line): string => '' === $line ? "\n" : '            '.$line."\n",
-            $lines,
-        ));
     }
 }

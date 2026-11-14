@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Storage;
 
 use Symfony\Component\Process\Process;
@@ -65,7 +68,7 @@ final class BlobStore
     public function put(string $contents): string
     {
         if (!is_dir($this->directory)) {
-            mkdir($this->directory, 0777, true);
+            mkdir($this->directory, 0o777, true);
         }
 
         $id = self::id($contents);

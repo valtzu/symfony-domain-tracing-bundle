@@ -1029,7 +1029,7 @@ count = 1
 [[issues]]
 file = "src/Tracing/SpanBuilder.php"
 code = "possibly-null-argument"
-message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:94:18}` is possibly `null`, but parameter type `string` does not accept it."
+message = "Argument #1 of closure `{closure:src/Tracing/SpanBuilder.php:97:18}` is possibly `null`, but parameter type `string` does not accept it."
 count = 1
 
 [[issues]]
@@ -1653,7 +1653,7 @@ count = 4
 [[issues]]
 file = "src/Tracing/TraceFollower.php"
 code = "mixed-operand"
-message = "Left operand in `<` comparison has `mixed` type."
+message = "Left operand in `>=` comparison has `mixed` type."
 count = 1
 
 [[issues]]
@@ -1665,7 +1665,7 @@ count = 1
 [[issues]]
 file = "src/Tracing/TraceFollower.php"
 code = "mixed-operand"
-message = "Right operand in `<` comparison has `mixed` type."
+message = "Right operand in `>=` comparison has `mixed` type."
 count = 1
 
 [[issues]]
@@ -1738,7 +1738,7 @@ count = 1
 file = "src/Tracing/TraceFollower.php"
 code = "possibly-undefined-string-array-index"
 message = "Possibly undefined array key `string` accessed on `non-empty-array<string, non-empty-array<non-negative-int, array<array-key, mixed>>|non-empty-list<array<array-key, mixed>>>`."
-count = 1
+count = 2
 
 [[issues]]
 file = "src/Tracing/TraceFollower.php"
@@ -2138,8 +2138,8 @@ count = 1
 
 [[issues]]
 file = "src/Xdebug/CodeIndex.php"
-code = "possibly-undefined-variable"
-message = "Variable `$nextToken` might not have been defined on all execution paths leading to this point."
+code = "undefined-variable"
+message = "Undefined variable: `$nextToken`."
 count = 1
 
 [[issues]]

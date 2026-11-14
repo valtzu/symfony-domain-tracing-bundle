@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
 use PHPUnit\Framework\TestCase;

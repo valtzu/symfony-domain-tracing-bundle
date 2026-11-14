@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 
 use PHPUnit\Framework\TestCase;
@@ -11,14 +14,14 @@ final class ExcludedUrisTest extends TestCase
     {
         $uris = new ExcludedUris(['[?&]frankenphp_hot_reloading=', '^/health$']);
 
-        $this->assertTrue($uris->matches('/?frankenphp_hot_reloading=true&reload=1794665290468'));
-        $this->assertTrue($uris->matches('/health'));
-        $this->assertFalse($uris->matches('/healthy'));
-        $this->assertFalse($uris->matches('/hello?name=ada'));
+        static::assertTrue($uris->matches('/?frankenphp_hot_reloading=true&reload=1794665290468'));
+        static::assertTrue($uris->matches('/health'));
+        static::assertFalse($uris->matches('/healthy'));
+        static::assertFalse($uris->matches('/hello?name=ada'));
     }
 
     public function testExcludesNothingByDefault()
     {
-        $this->assertFalse((new ExcludedUris())->matches('/health'));
+        static::assertFalse((new ExcludedUris())->matches('/health'));
     }
 }

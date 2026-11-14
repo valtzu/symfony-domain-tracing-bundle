@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Storage;
 
 use PHPUnit\Framework\TestCase;
@@ -24,48 +27,48 @@ final class TraceStoreTest extends TestCase
 
     public function testFindsTheRequestThatStartedTheTrace()
     {
-        $this->assertSame(self::ROOT, $this->store->rootOf(self::CHILD));
-        $this->assertSame(self::ROOT, $this->store->rootOf(self::ROOT));
+        static::assertSame(self::ROOT, $this->store->rootOf(self::CHILD));
+        static::assertSame(self::ROOT, $this->store->rootOf(self::ROOT));
     }
 
     public function testKeepsTheRequestWhenItRestarts()
     {
         $this->store->addStep(self::ROOT, 0, 12, 1, 100);
         $this->store->end(self::ROOT, 1.0);
-        $this->assertTrue($this->store->hasEnded(self::ROOT));
+        static::assertTrue($this->store->hasEnded(self::ROOT));
 
         $this->store->restart(self::ROOT);
 
-        $this->assertFalse($this->store->hasEnded(self::ROOT));
-        $this->assertSame(['request'], array_column($this->store->read(self::ROOT)['records'], 'type'));
-        $this->assertSame(self::TRACE, $this->store->request(self::ROOT)['traceId']);
+        static::assertFalse($this->store->hasEnded(self::ROOT));
+        static::assertSame(['request'], array_column($this->store->read(self::ROOT)['records'], 'type'));
+        static::assertSame(self::TRACE, $this->store->request(self::ROOT)['traceId']);
     }
 
     public function testGivesALockToOneHolderAtATime()
     {
         $lock = $this->store->lockSpan(self::ROOT);
-        $this->assertNotNull($lock);
-        $this->assertNull($this->store->lockSpan(self::ROOT));
-        $this->assertNotNull($this->store->lockSpan(self::CHILD));
+        static::assertNotNull($lock);
+        static::assertNull($this->store->lockSpan(self::ROOT));
+        static::assertNotNull($this->store->lockSpan(self::CHILD));
 
         fclose($lock);
 
-        $this->assertNotNull($this->store->lockSpan(self::ROOT));
-        $this->assertNotNull($description = $this->store->lockDescription(self::ROOT));
-        $this->assertNull($this->store->lockDescription(self::ROOT));
+        static::assertNotNull($this->store->lockSpan(self::ROOT));
+        static::assertNotNull($description = $this->store->lockDescription(self::ROOT));
+        static::assertNull($this->store->lockDescription(self::ROOT));
         fclose($description);
     }
 
     public function testKnowsWhenATraceIsDescribed()
     {
         $this->store->addNarration(self::ROOT, ['type' => 'start']);
-        $this->assertFalse($this->store->isDescribed(self::ROOT));
+        static::assertFalse($this->store->isDescribed(self::ROOT));
 
         $this->store->addNarration(self::ROOT, ['type' => 'end', 'traceId' => self::TRACE]);
-        $this->assertTrue($this->store->isDescribed(self::ROOT));
+        static::assertTrue($this->store->isDescribed(self::ROOT));
 
         $this->store->clearNarration(self::ROOT);
-        $this->assertFalse($this->store->isDescribed(self::ROOT));
+        static::assertFalse($this->store->isDescribed(self::ROOT));
     }
 
     public function testRemovesTheTracesOlderThanTheGivenTime()
@@ -76,13 +79,13 @@ final class TraceStoreTest extends TestCase
         file_put_contents($this->directory.'/codeindex-6151f083bbd6339185fa5352b12567f4.json', '{}');
         file_put_contents($this->directory.'/notes.txt', '');
         foreach (glob($this->directory.'/*') as $path) {
-            touch($path, time() - 3 * 86400);
+            touch($path, time() - 3 * 86_400);
         }
         touch($this->directory.'/'.self::CHILD.'.jsonl');
 
-        $this->store->removeOlderThan(time() - 2 * 86400);
+        $this->store->removeOlderThan(time() - 2 * 86_400);
 
-        $this->assertSame([self::CHILD.'.jsonl', 'notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
+        static::assertSame([self::CHILD.'.jsonl', 'notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
     }
 
     public function testRemovesAllTheTraces()
@@ -92,6 +95,6 @@ final class TraceStoreTest extends TestCase
 
         $this->store->clear();
 
-        $this->assertSame(['notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
+        static::assertSame(['notes.txt'], array_map(basename(...), glob($this->directory.'/*')));
     }
 }

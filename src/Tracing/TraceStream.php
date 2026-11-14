@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Valtzu\DomainTracingBundle\Ai\OperationNamer;

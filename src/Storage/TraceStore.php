@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Storage;
 
 /**
@@ -34,7 +37,7 @@ final readonly class TraceStore
     public function createDirectory(): void
     {
         if (!is_dir($this->directory)) {
-            mkdir($this->directory, 0777, true);
+            mkdir($this->directory, 0o777, true);
         }
     }
 
@@ -230,9 +233,11 @@ final readonly class TraceStore
     public function removeOlderThan(int $timestamp): void
     {
         foreach ($this->files() as $path) {
-            if ((@filemtime($path) ?: \PHP_INT_MAX) < $timestamp) {
-                @unlink($path);
+            if ((@filemtime($path) ?: \PHP_INT_MAX) >= $timestamp) {
+                continue;
             }
+
+            @unlink($path);
         }
     }
 

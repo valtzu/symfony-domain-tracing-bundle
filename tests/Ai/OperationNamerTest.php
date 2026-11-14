@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Ai;
 
 use PHPUnit\Framework\TestCase;
@@ -30,17 +33,17 @@ final class OperationNamerTest extends TestCase
 
         $names = (new OperationNamer($agent, $cache))->name([self::CACHED, self::NEW]);
 
-        $this->assertSame([self::CACHED['function'] => 'Add product to order'], [$names->key() => $names->current()]);
-        $this->assertFalse($asked);
+        static::assertSame([self::CACHED['function'] => 'Add product to order'], [$names->key() => $names->current()]);
+        static::assertFalse($asked);
         $names->next();
-        $this->assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
-        $this->assertTrue($asked);
+        static::assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
+        static::assertTrue($asked);
     }
 
     public function testGivesEachNameAsSoonAsItsLineOfTheAnswerArrives()
     {
         $received = [];
-        $answer = (function () use (&$received) {
+        $answer = (static function () use (&$received) {
             foreach (["{\"operation\": 0, \"name\": \"Report checkout failure\"}\n{\"operation\"", ': 1, "name": "Reserve stock"}'] as $chunk) {
                 $received[] = $chunk;
                 yield new TextDelta($chunk);
@@ -51,10 +54,10 @@ final class OperationNamerTest extends TestCase
 
         $names = (new OperationNamer($agent, new ArrayAdapter()))->name([self::NEW, self::OTHER]);
 
-        $this->assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
-        $this->assertCount(1, $received);
+        static::assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
+        static::assertCount(1, $received);
         $names->next();
-        $this->assertSame([self::OTHER['function'] => 'Reserve stock'], [$names->key() => $names->current()]);
+        static::assertSame([self::OTHER['function'] => 'Reserve stock'], [$names->key() => $names->current()]);
     }
 
     /**

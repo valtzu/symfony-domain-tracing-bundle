@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Xdebug;
 
 use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
@@ -12,7 +15,7 @@ final class XdebugValueTest extends TestCase
     #[DataProvider('provideValues')]
     public function testParsesValues(string $text, mixed $expected)
     {
-        $this->assertSame($expected, (new XdebugValue(new SecretRedactor([])))->parse($text, ['App\\']));
+        static::assertSame($expected, (new XdebugValue(new SecretRedactor([])))->parse($text, ['App\\']));
     }
 
     public static function provideValues(): iterable

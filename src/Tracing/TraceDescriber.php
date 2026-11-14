@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tracing;
 
 use Valtzu\DomainTracingBundle\Ai\OperationNamer;
@@ -124,9 +127,11 @@ final readonly class TraceDescriber
     {
         $operations = [];
         foreach ($builder->spans() as $span) {
-            if (null !== $span['function'] && !isset($names[$span['function']]) && null !== $function = $builder->function($span['function'])) {
-                $operations[$span['function']] = ['service' => $span['service'], 'function' => $span['function'], 'code' => $function['code']];
+            if (!(null !== $span['function'] && !isset($names[$span['function']]) && null !== $function = $builder->function($span['function']))) {
+                continue;
             }
+
+            $operations[$span['function']] = ['service' => $span['service'], 'function' => $span['function'], 'code' => $function['code']];
         }
 
         foreach ($operations ? $this->namer->name(array_values($operations)) : [] as $function => $name) {
@@ -146,9 +151,11 @@ final readonly class TraceDescriber
     {
         $lines = null;
         foreach ($spans as $span) {
-            if ($span['function'] === $function && isset($span['executedLines'])) {
-                $lines = array_merge($lines ?? [], $span['executedLines']);
+            if (!($span['function'] === $function && isset($span['executedLines']))) {
+                continue;
             }
+
+            $lines = array_merge($lines ?? [], $span['executedLines']);
         }
 
         return null === $lines ? null : array_values(array_unique($lines));

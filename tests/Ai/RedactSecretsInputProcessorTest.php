@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Tests\Ai;
 
 use Valtzu\DomainTracingBundle\Ai\RedactSecretsInputProcessor;
@@ -24,9 +27,9 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
         (new RedactSecretsInputProcessor(new SecretRedactor([])))->processInput($input);
 
         $messages = $input->getMessageBag()->getMessages();
-        $this->assertSame('Explain the trace.', $messages[0]->getContent());
-        $this->assertSame('$token = \'[redacted]\';', $messages[1]->asText());
-        $this->assertSame('The key is [redacted].', $messages[2]->getContent()[0]->getText());
+        static::assertSame('Explain the trace.', $messages[0]->getContent());
+        static::assertSame('$token = \'[redacted]\';', $messages[1]->asText());
+        static::assertSame('The key is [redacted].', $messages[2]->getContent()[0]->getText());
     }
 
     public function testRefusesContentItCannotCheck()
@@ -52,9 +55,9 @@ final class RedactSecretsInputProcessorTest extends KernelTestCase
             "\$client = new Client('live-key-1234567890');\n\$password = 'hunter2!';",
         )))->getContent();
 
-        $this->assertStringNotContainsString('live-key-1234567890', $sent);
-        $this->assertStringNotContainsString('hunter2!', $sent);
-        $this->assertStringContainsString('[TEST_API_KEY redacted]', $sent);
+        static::assertStringNotContainsString('live-key-1234567890', $sent);
+        static::assertStringNotContainsString('hunter2!', $sent);
+        static::assertStringContainsString('[TEST_API_KEY redacted]', $sent);
     }
 
     protected function tearDown(): void

@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Command;
 
 use Symfony\Component\Console\Attribute\Argument;

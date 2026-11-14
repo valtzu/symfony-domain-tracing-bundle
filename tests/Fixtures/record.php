@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 // Records one request in a separate PHP process, because Xdebug starts a trace only in the trace mode, which PHPUnit
 // does not run in.
 

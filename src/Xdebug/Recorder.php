@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
 use Symfony\Contracts\Service\ResetInterface;
@@ -118,9 +121,11 @@ final class Recorder implements ResetInterface
 
         $functions = [];
         foreach (\array_slice($exception->getTrace(), offset: 0, length: self::MAX_EXCEPTION_FUNCTIONS) as $frame) {
-            if (isset($frame['class'], $frame['type'])) {
-                $functions[] = $frame['class'].$frame['type'].$frame['function'];
+            if (!(isset($frame['class'], $frame['type']))) {
+                continue;
             }
+
+            $functions[] = $frame['class'].$frame['type'].$frame['function'];
         }
         $this->exception = ['class' => $exception::class, 'message' => $exception->getMessage(), 'functions' => $functions];
     }
@@ -176,9 +181,11 @@ final class Recorder implements ResetInterface
     private static function restore(array $settings): void
     {
         foreach ($settings as $name => $value) {
-            if (false !== $value) {
-                ini_set($name, $value);
+            if (false === $value) {
+                continue;
             }
+
+            ini_set($name, $value);
         }
     }
 
@@ -192,9 +199,11 @@ final class Recorder implements ResetInterface
         $paths = [];
         foreach ($autoload as $directories) {
             foreach ((array) $directories as $directory) {
-                if ($path = realpath($this->projectDir.'/'.$directory)) {
-                    $paths[] = $path.'/';
+                if (!($path = realpath($this->projectDir.'/'.$directory))) {
+                    continue;
                 }
+
+                $paths[] = $path.'/';
             }
         }
 

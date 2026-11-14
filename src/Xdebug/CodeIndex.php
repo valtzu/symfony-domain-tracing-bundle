@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
 final class CodeIndex
@@ -22,10 +25,12 @@ final class CodeIndex
                     continue;
                 }
                 foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
-                    if ('php' === $file->getExtension()) {
-                        $class = $prefix.strtr(substr($file->getPathname(), \strlen($directory) + 1, -4), '/', '\\');
-                        $files[$file->getPathname()] = ['class' => $class, 'modified' => $file->getMTime()];
+                    if ('php' !== $file->getExtension()) {
+                        continue;
                     }
+
+                    $class = $prefix.strtr(substr($file->getPathname(), \strlen($directory) + 1, -4), '/', '\\');
+                        $files[$file->getPathname()] = ['class' => $class, 'modified' => $file->getMTime()];
                 }
             }
         }
@@ -46,8 +51,7 @@ final class CodeIndex
             $tokens = \PhpToken::tokenize($source);
             foreach ($tokens as $i => $token) {
                 $next = $i;
-                while (($nextToken = $tokens[++$next] ?? null) && ($nextToken->isIgnorable() || '&' === $nextToken->text)) {
-                }
+
                 if ($token->is(\T_FN) || $token->is(\T_FUNCTION) && '(' === $nextToken?->text) {
                     $file['closureLines'][$token->line] = $token->line;
                 }
@@ -60,10 +64,12 @@ final class CodeIndex
             $class = new \ReflectionClass($file['class']);
             $file['entrypoint'] = (bool) ($class->getAttributes('Symfony\Component\Console\Attribute\AsCommand') ?: $class->getAttributes('Symfony\Component\Routing\Attribute\Route'));
             foreach ($class->getMethods() as $method) {
-                if ($method->getFileName() === $path) {
-                    $file['methods'][$method->getName()] = [$method->getStartLine(), $method->getEndLine(), array_map(static fn ($parameter) => $parameter->getName(), $method->getParameters())];
-                    $file['entrypoint'] = $file['entrypoint'] || $method->getAttributes('Symfony\Component\Routing\Attribute\Route');
+                if ($method->getFileName() !== $path) {
+                    continue;
                 }
+
+                $file['methods'][$method->getName()] = [$method->getStartLine(), $method->getEndLine(), array_map(static fn ($parameter) => $parameter->getName(), $method->getParameters())];
+                    $file['entrypoint'] = $file['entrypoint'] || $method->getAttributes('Symfony\Component\Routing\Attribute\Route');
             }
         }
 

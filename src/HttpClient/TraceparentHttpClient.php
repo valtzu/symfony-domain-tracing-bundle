@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\HttpClient;
 
 use Symfony\Component\HttpClient\DecoratorTrait;

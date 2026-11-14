@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace Valtzu\DomainTracingBundle\Xdebug;
 
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
@@ -172,9 +175,11 @@ final class XdebugTraceReader
     {
         $coverage = json_decode((string) @file_get_contents($this->store->linesPath($this->requestId)), true);
         foreach (\is_array($coverage) ? $coverage : [] as $path => $lines) {
-            if (isset($this->files[$path]) && \is_array($lines)) {
-                $this->store->addExecutedLines($this->requestId, $this->files[$path], array_map(intval(...), $lines), (float) $this->endedAt());
+            if (!(isset($this->files[$path]) && \is_array($lines))) {
+                continue;
             }
+
+            $this->store->addExecutedLines($this->requestId, $this->files[$path], array_map(intval(...), $lines), (float) $this->endedAt());
         }
     }
 

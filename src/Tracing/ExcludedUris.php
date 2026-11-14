@@ -6,7 +6,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * The requests that are not recorded, from the regular expressions of the "exclude_uris" option. The pages of this
- * bundle and of the profiler are never recorded: the prepend file skips them.
+ * bundle and of the profiler are never recorded.
  */
 final readonly class ExcludedUris
 {

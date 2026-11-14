@@ -6,7 +6,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Keeps each span (one request to one service) as a JSON Lines file that grows while the request runs, in the trace
- * directory of Xdebug: a "request" record, which the prepend file writes when the request starts, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
+ * directory of Xdebug: a "request" record, which the recorder writes when the request starts, a step for each call of an application method with its arguments and its exit, an "outcome" record with the response status and the exception that the request did not handle, and an "end" record. A step
  * is the array [function, line, call depth, microseconds since the request started], because it is the most frequent
  * record. Readers can follow the file while it is written. A trace index file lists the spans of each trace, in the
  * order they started.
@@ -41,7 +41,7 @@ final readonly class TraceStore
     }
 
     /**
-     * @return array|null the first record of the span, which the prepend file wrote
+     * @return array|null the first record of the span, which the recorder wrote
      */
     public function request(string $id): ?array
     {
@@ -103,7 +103,7 @@ final readonly class TraceStore
     }
 
     /**
-     * @return array|null the index of the application code that the prepend file wrote for the given version of the code
+     * @return array|null the index of the application code that the recorder wrote for the given version of the code
      */
     public function codeIndex(string $fingerprint): ?array
     {
@@ -301,7 +301,7 @@ final readonly class TraceStore
     }
 
     /**
-     * @return list<string> the files that this store and the prepend file write, and not the other files of the
+     * @return list<string> the files that this store and the recorder write, and not the other files of the
      *                      directory
      */
     private function files(): array

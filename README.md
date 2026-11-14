@@ -160,11 +160,13 @@ it, then read the output. Add `--describe` for a description in business terms.
   stream under `/_tracing/`, and adds a "Domain traces" panel to the profiler.
 - `demo/`: the demo shop, and a payments service that the shop calls over HTTP. Same codebase, two containers,
   no tracing code. It requires the bundle from the parent directory.
-- The prepend file of the Xdebug settings (`bin/console domain-tracing:xdebug-settings`) runs first in each request.
-  It takes the trace context of the `traceparent` header or starts a trace, starts the record of the request next to
-  the trace file, and limits the trace and the code coverage to the application. When the request ends, it writes
-  the lines that ran, and an index of the application code once per version of the code. A trace refers to code by
-  git blob ID and line.
+- A listener of the bundle starts the record of each main request, and of each console command that runs with
+  `--profile`, when the kernel handles it. It takes the trace context of the `traceparent` header or starts a trace,
+  starts the Xdebug trace and the code coverage, limited to the application, and writes the record of the request
+  next to the trace file. When the request ends, it writes the lines that ran, the response status and the exception
+  that the request did not handle, stops the trace, and writes an index of the application code once per version of
+  the code. A trace refers to code by git blob ID and line. The bundle needs no `auto_prepend_file`, and the
+  requests that are not recorded are not traced.
 - The event stream of the live view and of the profiler panel reads the trace files while Xdebug writes them, from
   the first method of the entrypoint on. One stream reads each trace file, and another one takes over when it stops.
 - The stream of the profiler panel also builds the spans, names the operations (once per method and code version),
@@ -191,5 +193,7 @@ In the demo, both services write their traces into the same `traces` volume, mou
 - The lines that ran come from the code coverage of the whole request. When a method runs more than once in a request,
   its span shows the lines of all its calls together.
 - The times in a trace include the overhead of Xdebug.
+- The record starts when the kernel handles the request, so application code that runs before, such as the kernel
+  class or a request listener with a priority above 4096, is not in the trace.
 - Only Symfony HttpClient carries the trace to other services.
 - A return value is known only when the caller uses it; PHP discards an unused one.

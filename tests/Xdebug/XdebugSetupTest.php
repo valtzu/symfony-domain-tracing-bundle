@@ -13,7 +13,8 @@ final class XdebugSetupTest extends TestCase
 
         $this->assertStringContainsString("xdebug.mode=trace,coverage\n", $settings);
         $this->assertStringContainsString("xdebug.output_dir=/srv/app/var/share/traces\n", $settings);
-        $this->assertStringContainsString('auto_prepend_file='.realpath(__DIR__.'/../../resources/xdebug-prepend.php')."\n", $settings);
+        $this->assertStringNotContainsString('auto_prepend_file', $settings);
+        $this->assertStringNotContainsString('xdebug.start_with_request', $settings);
     }
 
     public function testSaysThatXdebugIsMissing()

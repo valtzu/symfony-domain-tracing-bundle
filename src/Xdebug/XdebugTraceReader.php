@@ -8,7 +8,7 @@ use Valtzu\DomainTracingBundle\Storage\TraceStore;
  * Follows the trace file that Xdebug writes for one request (trace format 1: tab-separated function entries, exits
  * and return values) and records the calls of application methods, from the first method of the entrypoint other than
  * its constructor. The framework code and the services built before that are not part of the flow. When the trace
- * ends, it records which lines of these methods ran, from the code coverage that the prepend file of the service
+ * ends, it records which lines of these methods ran, from the code coverage that the recorder of the service
  * writes next to the trace file.
  *
  * @see https://xdebug.org/docs/trace#trace_format

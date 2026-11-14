@@ -10,7 +10,7 @@ use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
  * Reads the Xdebug trace files of spans into the trace store while Xdebug writes them. One process reads each span:
  * the one that holds its lock. When that process stops before the trace ends, another one takes the lock and reads
  * the trace again from its start. Before the end of a span, it records how the request ended: its response status and
- * the exception that it did not handle, from the file that the prepend file writes next to the trace file.
+ * the exception that it did not handle, from the file that the recorder writes next to the trace file.
  */
 final class TraceIngester
 {

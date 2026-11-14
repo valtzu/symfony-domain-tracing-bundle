@@ -301,8 +301,9 @@ final class SpanBuilder
 
     private function close(string $spanId, float $at): array
     {
+        // The time of a call is rounded to the microsecond, so a short call can return before it starts
         if ('server' !== $this->spans[$spanId]['kind']) {
-            $this->spans[$spanId]['end'] = $at;
+            $this->spans[$spanId]['end'] = max($at, $this->spans[$spanId]['start']);
         }
 
         return ['close', $this->spans[$spanId]];

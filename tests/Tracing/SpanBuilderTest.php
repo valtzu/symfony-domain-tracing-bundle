@@ -47,6 +47,26 @@ final class SpanBuilderTest extends TestCase
         ], $tree);
     }
 
+    public function testASpanDoesNotEndBeforeItStarts()
+    {
+        $builder = new SpanBuilder();
+        $records = [
+            ['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/'],
+            self::step('shop', 1.1, 'App\Shop->show', 7),
+            // The time of a call is rounded to the microsecond, and the time of its return is not
+            self::step('shop', 1.2000005, 'App\Catalog->products', 8),
+            ['request' => 'shop', 'type' => 'exit', 'depth' => 8, 'at' => 1.2000001],
+            ['request' => 'shop', 'type' => 'end', 'at' => 1.3],
+        ];
+        foreach ($records as $record) {
+            $builder->add($record);
+        }
+
+        foreach ($builder->spans() as $span) {
+            $this->assertGreaterThanOrEqual($span['start'], $span['end'], $span['name']);
+        }
+    }
+
     public function testGivesEachSpanTheLinesOfItsMethodThatRan()
     {
         $builder = new SpanBuilder();

@@ -91,7 +91,7 @@ final class Recorder implements ResetInterface
 
         $codeIndex = CodeIndex::build($this->projectDir, false)['fingerprint'];
         $markedAt = TraceClock::mark();
-        $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt]);
+        $this->store->start($context['spanId'], $context + ['traceFile' => $traceFile, 'codeIndex' => $codeIndex, 'markedAt' => $markedAt, 'receivedAt' => is_numeric($server['REQUEST_TIME_FLOAT'] ?? null) ? (float) $server['REQUEST_TIME_FLOAT'] : null]);
         $ownCoverage = \in_array('coverage', xdebug_info('mode'), true) && !xdebug_code_coverage_started();
         $this->current = ['traceFile' => $traceFile, 'spanId' => $context['spanId'], 'codeIndex' => $codeIndex, 'ownTrace' => !$traced, 'ownCoverage' => $ownCoverage, 'settings' => $settings];
         $this->exception = null;

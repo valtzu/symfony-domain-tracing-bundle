@@ -69,6 +69,16 @@ final class SpanBuilderTest extends TestCase
         $this->assertSame(['App\Shipping->apply' => [15, 17, 18, 21]], $lines);
     }
 
+    public function testStartsTheSpanOfARequestWhenTheRequestArrives(): void
+    {
+        $builder = new SpanBuilder();
+        $builder->add(['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'receivedAt' => 0.8, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'POST', 'uri' => '/']);
+
+        $span = $builder->span('aaaaaaaaaaaaaaaa');
+        $this->assertNotNull($span);
+        $this->assertSame([0.8, 1.0], [$span['start'], $span['handledAt']]);
+    }
+
     public function testUpdatesTheSpanWhenItsArgumentsArrive(): void
     {
         $builder = new SpanBuilder();

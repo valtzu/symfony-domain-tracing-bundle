@@ -31,6 +31,7 @@
 .waterfall-name { overflow: hidden; text-overflow: ellipsis; }
 .waterfall-track { position: relative; height: 24px; background: var(--trace-track); }
 .waterfall-bar { position: absolute; top: 6px; height: 12px; border-radius: 2px; background: var(--trace-color); }
+.waterfall-startup { position: absolute; top: 6px; height: 12px; border-radius: 2px 0 0 2px; background: repeating-linear-gradient(135deg, var(--trace-track) 0 3px, transparent 3px 6px); opacity: .55; cursor: help; }
 .waterfall-duration { position: absolute; top: 4px; color: var(--trace-muted); font-size: 11px; white-space: nowrap; }
 .waterfall-marker { position: absolute; top: 3px; width: 2px; height: 18px; background: var(--trace-text); opacity: .6; }
 .waterfall-marker.error { background: var(--trace-bad); opacity: 1; }

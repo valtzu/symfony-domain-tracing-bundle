@@ -173,6 +173,14 @@ function createWaterfall(container, describing) {
             bar.className = 'waterfall-bar';
             bar.style.left = `${(span.start - start) / range * 100}%`;
             bar.style.width = `max(2px, ${(end - span.start) / range * 100}%)`;
+            // A request waits for its service to start before the application handles it
+            if (span.handledAt > span.start) {
+                const startup = track.appendChild(document.createElement('div'));
+                startup.className = 'waterfall-startup';
+                startup.style.left = bar.style.left;
+                startup.style.width = `${(Math.min(span.handledAt, end) - span.start) / range * 100}%`;
+                startup.title = `Getting ready: the ${span.service} service was starting up before it could handle this request (${milliseconds(span.handledAt - span.start)})`;
+            }
             const duration = track.appendChild(document.createElement('span'));
             duration.className = 'waterfall-duration';
             duration.style.left = `calc(${(end - start) / range * 100}% + 4px)`;

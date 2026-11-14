@@ -104,7 +104,7 @@ final class SpanBuilder
 
     private function openRequest(array $record): array
     {
-        /** @var array{parentSpanId: string|null, spanId: string, traceId: string, request: string, service?: string|null, method: string, uri: string, at: float} $record */
+        /** @var array{parentSpanId: string|null, spanId: string, traceId: string, request: string, service?: string|null, method: string, uri: string, at: float, receivedAt?: float|null} $record */
         $parentSpanId = $record['parentSpanId'];
         if (null !== $parentSpanId && null !== $callerRequest = $this->requestsBySpanId[$parentSpanId] ?? null) {
             $parentSpanId = $this->currentSpanOf($callerRequest);
@@ -121,7 +121,9 @@ final class SpanBuilder
             'name' => \sprintf('%s %s', $record['method'], parse_url($record['uri'], \PHP_URL_PATH)),
             'method' => $record['method'],
             'uri' => $record['uri'],
-            'start' => $record['at'],
+            // The request waits for the service to start before the recording starts
+            'start' => min($record['at'], \is_float($record['receivedAt'] ?? null) ? $record['receivedAt'] : $record['at']),
+            'handledAt' => $record['at'],
             'end' => null,
         ];
         $this->spans[$span['id']] = $span;

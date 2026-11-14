@@ -42,7 +42,7 @@ final class TraceNarratorTest extends TestCase
         $builder = new SpanBuilder();
         $steps = [];
         foreach ([
-            ['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', times: 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'POST', 'uri' => '/'],
+            ['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'receivedAt' => 0.82, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', times: 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'POST', 'uri' => '/'],
             ['request' => 'shop', 'type' => 'step', 'at' => 1.1, 'function' => 'App\Checkout\CheckoutController->place', 'file' => 'src/App.php', 'line' => 1, 'depth' => 7, 'code' => ''],
             ['request' => 'shop', 'type' => 'step', 'at' => 1.2, 'function' => 'App\Checkout\PaymentGateway->charge', 'file' => 'src/App.php', 'line' => 1, 'depth' => 8, 'code' => ''],
             [
@@ -77,6 +77,7 @@ final class TraceNarratorTest extends TestCase
 
         static::assertStringContainsString('1: [shop]   "Payment gateway: charge" (App\Checkout\PaymentGateway->charge) threw Symfony\Component\HttpClient\Exception\TransportException: "Could not resolve host: payments.invalid"', $prompt);
         static::assertStringContainsString('[shop] POST / failed with status 500', $prompt);
+        static::assertStringContainsString('[shop] POST / waited 180 ms for the service to start before it was handled.', $prompt);
     }
 
     private function narrate(string ...$lines): iterable

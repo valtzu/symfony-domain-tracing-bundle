@@ -55,7 +55,7 @@ final readonly class TraceNarrator
                 $prompt .= \sprintf("\n%s():\n%s\n", $function, $source);
             }
         }
-        $prompt .= "\n".($traceEnded ? "The request has finished.\n".self::outcomes($spans) : 'The request is still running. More calls will follow.');
+        $prompt .= "\n".($traceEnded ? "The request has finished.\n".self::outcomes($spans).self::startups($spans) : 'The request is still running. More calls will follow.');
 
         $buffer = '';
         /** @var iterable<mixed> $deltas */
@@ -95,6 +95,22 @@ final readonly class TraceNarrator
         }
 
         return $outcomes;
+    }
+
+    /**
+     * @param array<string, array> $spans
+     */
+    private static function startups(array $spans): string
+    {
+        $startups = '';
+        foreach ($spans as $span) {
+            $milliseconds = 'server' === $span['kind'] && isset($span['handledAt']) ? (int) round(($span['handledAt'] - $span['start']) * 1000) : 0;
+            if ($milliseconds >= 1) {
+                $startups .= \sprintf("[%s] %s %s waited %d ms for the service to start before it was handled.\n", $span['service'], $span['method'], parse_url($span['uri'], \PHP_URL_PATH), $milliseconds);
+            }
+        }
+
+        return $startups;
     }
 
     private static function exception(array $exception): string

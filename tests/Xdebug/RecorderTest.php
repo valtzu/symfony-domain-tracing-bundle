@@ -71,6 +71,10 @@ final class RecorderTest extends TestCase
         $steps = array_values(array_filter($store->read($spanId)['records'] ?? [], array_is_list(...)));
 
         static::assertCount(1, $steps, 'Greeter->greet is the only step');
+        $request = $store->request($spanId);
+        $this->assertNotNull($request);
+        $this->assertIsFloat($request['receivedAt'] ?? null);
+        static::assertGreaterThan(0.25, $request['startedAt'] - $request['receivedAt'], 'The request arrived when the script started, 300 ms before the recording');
         $records = $store->read($spanId)['records'] ?? [];
         $end = end($records);
         static::assertIsArray($end);

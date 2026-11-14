@@ -95,7 +95,9 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('domain_tracing.trace_controller', TraceController::class)
         ->public()
-        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig')]);
+        ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig')])
+        // The "routing.controllers" resource of the application imports the routes of the tagged controllers
+        ->tag('routing.controller');
     // The routes refer to the controller by its class
     $services->alias(TraceController::class, 'domain_tracing.trace_controller')
         ->public();

@@ -17,7 +17,10 @@ use Valtzu\DomainTracingBundle\Ai\SecretRedactor;
  */
 final class TraceIngester
 {
-    private const SECONDS_WITHOUT_CHANGE_BEFORE_ENDING = 30;
+    /** After the request ended, a trace without an end line, such as when PHP was killed */
+    private const int SECONDS_WITHOUT_CHANGE_AFTER_THE_REQUEST = 5;
+    /** A request that never wrote how it ended, such as when its process crashed */
+    private const int SECONDS_WITHOUT_CHANGE_BEFORE_GIVING_UP = 600;
     private const int MAX_MESSAGE_LENGTH = 1000;
 
     /** @var array<string, array{lock: resource, request: array, reader: ?XdebugTraceReader}> */
@@ -48,11 +51,22 @@ final class TraceIngester
 
             if ($span['reader']?->read()) {
                 $this->end($id, $span['reader']->endedAt() ?? microtime(true));
-            } elseif (microtime(true) - (@filemtime($traceFile) ?: $span['request']['startedAt']) > self::SECONDS_WITHOUT_CHANGE_BEFORE_ENDING) {
+            } elseif ($this->hasStopped($id, $traceFile, $span['request'])) {
                 $this->end($id, $span['reader']?->endedAt() ?? microtime(true));
             }
             unset($span);
         }
+    }
+
+    /**
+     * A request can run long without calling the application, such as during a slow query, so its trace is waited for
+     * until the recorder writes how the request ended.
+     */
+    private function hasStopped(string $id, string $traceFile, array $request): bool
+    {
+        $unchanged = microtime(true) - (@filemtime($traceFile) ?: (is_numeric($request['startedAt'] ?? null) ? (float) $request['startedAt'] : 0.0));
+
+        return $unchanged > (is_file($this->store->outcomePath($id)) ? self::SECONDS_WITHOUT_CHANGE_AFTER_THE_REQUEST : self::SECONDS_WITHOUT_CHANGE_BEFORE_GIVING_UP);
     }
 
     private function take(string $id): bool

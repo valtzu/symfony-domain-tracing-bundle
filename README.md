@@ -16,9 +16,13 @@ streams into a waterfall while the request runs. No other process runs next to t
 
 ## Why
 
-Logs and traces show what the code was told to report. Support and product people want to know what the system
-decided for a customer and why. Here the trace comes from the code that actually ran, so it needs no log statements,
-no spans in the code and no SDK in the services, and the AI only adds the names and the story on top.
+Engineers write less and less of their code by hand: AI agents write it, and the engineers review what it does. So
+an engineer can know the application well without knowing its code, and a trace in the terms of the code, with class
+names, method names and line numbers, tells them little. This bundle shows what a request did in the terms of the
+application instead: what it decided, for whom and why.
+
+The trace comes from the code that actually ran, so it needs no log statements, no spans in the code and no SDK in the
+services. The AI only adds the names and the story on top.
 
 ## Quickstart
 
@@ -98,7 +102,7 @@ application in `config/prompts/domain_tracing_context.md` of the project. The ag
 instructions:
 
 ```text
-The application is a web shop. The people who read the traces work in customer support.
+The application is a web shop. Its engineers read the traces to see why a checkout failed or how an order was priced.
 Use the words of the shop: customers, products, prices, discounts, stock and payment.
 ```
 

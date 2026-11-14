@@ -21,7 +21,7 @@ final class DomainTracingBundle extends AbstractBundle
         $definition->rootNode()
             ->children()
                 ->stringNode('context_file')
-                    ->info('Text file that describes the application to the AI agents, such as what it does, who reads the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist.')
+                    ->info('Text file that describes the application to the AI agents, such as what it does, what its engineers look for in the traces and the words of the business. domain-tracing:context:generate writes a first version. The agents get no description when the file does not exist.')
                     ->defaultValue('%kernel.project_dir%/config/prompts/domain_tracing_context.md')
                 ->end()
                 ->scalarNode('agent')

@@ -2,7 +2,8 @@
 
 Business-level traces of PHP requests, without instrumenting the code.
 
-https://github.com/user-attachments/assets/39e56c64-3818-459c-b766-c72d5c74a27f
+https://github.com/user-attachments/assets/732670c3-dbde-4fd5-b72f-622840ddfd48
+
 
 ## What
 

@@ -6,6 +6,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -55,19 +56,37 @@ final readonly class OperationNamer
             $prompt .= \sprintf("Operation %d in the %s service, %s():\n%s\n\n", $index, $operation['service'], $operation['function'], $operation['code']);
         }
 
-        $answer = (string) $this->agent->call(new MessageBag(Message::ofUser($prompt)))->getContent();
-        foreach (explode("\n", $answer) as $line) {
-            $named = json_decode(trim($line), true);
-            $operation = $missing[$named['operation'] ?? -1] ?? null;
-            if (null === $operation || !\is_string($named['name'] ?? null) || '' === trim($named['name'])) {
+        $buffer = '';
+        foreach ($this->agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true])->getContent() as $delta) {
+            if (!$delta instanceof TextDelta) {
                 continue;
             }
-
-            $name = mb_substr(trim($named['name']), 0, 60);
-            $item = $this->cache->getItem(self::key($operation['service'], $operation['function'], $operation['code']));
-            $this->cache->save($item->set($name));
-            yield $operation['function'] => $name;
+            $buffer .= $delta->getText();
+            while (false !== $newline = strpos($buffer, "\n")) {
+                yield from $this->toName(substr($buffer, 0, $newline), $missing);
+                $buffer = substr($buffer, $newline + 1);
+            }
         }
+        yield from $this->toName($buffer, $missing);
+    }
+
+    /**
+     * @param list<array{service: string, function: string, code: string}> $operations
+     *
+     * @return iterable<string, string>
+     */
+    private function toName(string $line, array $operations): iterable
+    {
+        $named = json_decode(trim($line), true);
+        $operation = $operations[$named['operation'] ?? -1] ?? null;
+        if (null === $operation || !\is_string($named['name'] ?? null) || '' === trim($named['name'])) {
+            return;
+        }
+
+        $name = mb_substr(trim($named['name']), 0, 60);
+        $item = $this->cache->getItem(self::key($operation['service'], $operation['function'], $operation['code']));
+        $this->cache->save($item->set($name));
+        yield $operation['function'] => $name;
     }
 
     private static function key(string $service, string $function, string $code): string

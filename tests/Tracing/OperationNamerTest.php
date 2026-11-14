@@ -5,6 +5,7 @@ namespace Valtzu\DomainTracingBundle\Tests\Tracing;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Execution\ExecutionInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Valtzu\DomainTracingBundle\Tracing\OperationNamer;
 
@@ -12,18 +13,19 @@ final class OperationNamerTest extends TestCase
 {
     private const CACHED = ['service' => 'shop', 'function' => 'App\OrderLine->__construct', 'code' => 'function __construct() {}'];
     private const NEW = ['service' => 'shop', 'function' => 'App\CheckoutFailed->__construct', 'code' => 'function __construct() {}'];
+    private const OTHER = ['service' => 'shop', 'function' => 'App\Inventory->reserve', 'code' => 'function reserve() {}'];
 
     public function testGivesTheCachedNamesBeforeAskingForTheOthers()
     {
         $cache = new ArrayAdapter();
-        iterator_to_array((new OperationNamer($this->agentAnswering('{"operation": 0, "name": "Add product to order"}'), $cache))->name([self::CACHED]));
+        iterator_to_array((new OperationNamer($this->agentAnswering(['{"operation": 0, "name": "Add product to order"}']), $cache))->name([self::CACHED]));
 
         $asked = false;
         $agent = $this->createStub(AgentInterface::class);
         $agent->method('call')->willReturnCallback(function () use (&$asked) {
             $asked = true;
 
-            return $this->execution('{"operation": 0, "name": "Report checkout failure"}');
+            return $this->execution(['{"operation": 0, "name": "Report checkout failure"}']);
         });
 
         $names = (new OperationNamer($agent, $cache))->name([self::CACHED, self::NEW]);
@@ -35,7 +37,30 @@ final class OperationNamerTest extends TestCase
         $this->assertTrue($asked);
     }
 
-    private function agentAnswering(string $answer): AgentInterface
+    public function testGivesEachNameAsSoonAsItsLineOfTheAnswerArrives()
+    {
+        $received = [];
+        $answer = (function () use (&$received) {
+            foreach (["{\"operation\": 0, \"name\": \"Report checkout failure\"}\n{\"operation\"", ': 1, "name": "Reserve stock"}'] as $chunk) {
+                $received[] = $chunk;
+                yield new TextDelta($chunk);
+            }
+        })();
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn($this->execution($answer));
+
+        $names = (new OperationNamer($agent, new ArrayAdapter()))->name([self::NEW, self::OTHER]);
+
+        $this->assertSame([self::NEW['function'] => 'Report checkout failure'], [$names->key() => $names->current()]);
+        $this->assertCount(1, $received);
+        $names->next();
+        $this->assertSame([self::OTHER['function'] => 'Reserve stock'], [$names->key() => $names->current()]);
+    }
+
+    /**
+     * @param iterable<string|TextDelta> $answer
+     */
+    private function agentAnswering(iterable $answer): AgentInterface
     {
         $agent = $this->createStub(AgentInterface::class);
         $agent->method('call')->willReturn($this->execution($answer));
@@ -43,10 +68,18 @@ final class OperationNamerTest extends TestCase
         return $agent;
     }
 
-    private function execution(string $answer): ExecutionInterface
+    /**
+     * @param iterable<string|TextDelta> $answer
+     */
+    private function execution(iterable $answer): ExecutionInterface
     {
+        $deltas = (static function () use ($answer) {
+            foreach ($answer as $delta) {
+                yield $delta instanceof TextDelta ? $delta : new TextDelta($delta);
+            }
+        })();
         $execution = $this->createStub(ExecutionInterface::class);
-        $execution->method('getContent')->willReturn($answer);
+        $execution->method('getContent')->willReturn($deltas);
 
         return $execution;
     }

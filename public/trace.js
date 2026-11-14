@@ -1,6 +1,9 @@
 const SERVICE_COLORS = 4;
 const BASE_URL = new URL('./', import.meta.url);
 const ROW_ENTER_MILLISECONDS = 250;
+const NAME_ERASE_MILLISECONDS = 300;
+const NAME_WRITE_MILLISECONDS = 450;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 /**
  * A waterfall of the spans of a trace, like the trace view of Jaeger, that grows while the trace is recorded.
@@ -9,6 +12,7 @@ function createWaterfall(container, describing) {
     const spans = new Map();
     const events = new Map();
     const names = new Map();
+    const namedAt = new Map();
     const services = [];
     let latest = 0;
     let recordingEnded = false;
@@ -64,6 +68,27 @@ function createWaterfall(container, describing) {
         }
     };
 
+    /**
+     * Erases the label that the row had before its name arrived and types the name, as a typewriter would.
+     */
+    const rename = (element, span) => {
+        const named = namedAt.get(span.function);
+        const age = performance.now() - named;
+        if (!(shownAt.get(span.id) < named) || age >= NAME_ERASE_MILLISECONDS + NAME_WRITE_MILLISECONDS || reducedMotion.matches) {
+            return;
+        }
+
+        const name = names.get(span.function);
+        const erasing = age < NAME_ERASE_MILLISECONDS;
+        element.textContent = erasing
+            ? span.name.slice(0, Math.ceil(span.name.length * (1 - age / NAME_ERASE_MILLISECONDS)))
+            : name.slice(0, Math.floor(name.length * (age - NAME_ERASE_MILLISECONDS) / NAME_WRITE_MILLISECONDS));
+        element.classList.add(erasing ? 'erasing' : 'writing');
+        element.setAttribute('aria-label', name);
+        element.appendChild(document.createElement('span')).className = 'waterfall-caret';
+        update();
+    };
+
     const milliseconds = seconds => seconds * 1000 >= 10 ? `${(seconds * 1000).toFixed(0)} ms` : `${(seconds * 1000).toFixed(2)} ms`;
 
     function render() {
@@ -82,7 +107,7 @@ function createWaterfall(container, describing) {
         axis.className = 'waterfall-axis';
         axis.innerHTML = `<span></span><span class="waterfall-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left: ${f * 100}%">${milliseconds(f * range)}</span>`).join('')}</span>`;
 
-        for (const { span, event, depth } of rows) {
+        for (const [index, { span, event, depth }] of rows.entries()) {
             if (event) {
                 const item = table.appendChild(document.createElement('div'));
                 item.className = `waterfall-row waterfall-event${event.error ? ' error' : ''}`;
@@ -125,9 +150,14 @@ function createWaterfall(container, describing) {
             ].filter(Boolean).join('\n');
             label.innerHTML = '<span class="waterfall-service"></span><span class="waterfall-name"></span>';
             label.querySelector('.waterfall-service').textContent = span.service;
-            label.querySelector('.waterfall-name').textContent = names.get(span.function) ?? span.name;
-            if (describing && span.function && !names.has(span.function)) {
-                label.appendChild(spinner('Naming this operation'));
+            const name = label.querySelector('.waterfall-name');
+            name.textContent = names.get(span.function) ?? span.name;
+            if (names.has(span.function)) {
+                rename(name, span);
+            } else if (describing && span.function) {
+                name.classList.add('naming');
+                name.style.animationDelay = `${-pulsePhase(index)}ms`;
+                label.setAttribute('aria-busy', 'true');
             }
 
             const track = row.appendChild(document.createElement('div'));
@@ -175,6 +205,7 @@ function createWaterfall(container, describing) {
         },
         name(function_, name) {
             names.set(function_, name);
+            namedAt.set(function_, performance.now());
             update();
         },
         event(event) {
@@ -190,6 +221,16 @@ function createWaterfall(container, describing) {
             update();
         },
     };
+}
+
+const NAMING_PULSE_MS = 1600;
+const NAMING_PULSE_STEP_MS = 120;
+
+// The rows are rebuilt on each update, so the delay keeps the pulse in phase with the clock instead of restarting it.
+function pulsePhase(index) {
+    const phase = (performance.now() - index * NAMING_PULSE_STEP_MS) % NAMING_PULSE_MS;
+
+    return phase < 0 ? phase + NAMING_PULSE_MS : phase;
 }
 
 function spinner(label = '') {

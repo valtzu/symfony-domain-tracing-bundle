@@ -57,10 +57,14 @@
 .waterfall-pending { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--trace-muted); font-size: 12px; }
 .waterfall-pending .trace-spinner { margin-left: 0; }
 .waterfall-row.running .waterfall-bar { animation: trace-pulse 1.2s ease-in-out infinite; }
+.waterfall-name.naming { animation: trace-pulse 1.6s ease-in-out infinite; }
+.waterfall-name.erasing { color: var(--trace-muted); }
+.waterfall-caret { display: inline-block; width: 1.5px; height: 1em; margin-left: 1px; vertical-align: -2px; background: currentColor; }
 @keyframes trace-spin { to { transform: rotate(360deg); } }
 @keyframes trace-pulse { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) {
     .trace-spinner { animation-duration: 3s; }
+    .waterfall-name.naming { animation: none; opacity: .6; }
     .waterfall-row.running .waterfall-bar { animation: none; }
     .waterfall-enter { animation: none; }
 }

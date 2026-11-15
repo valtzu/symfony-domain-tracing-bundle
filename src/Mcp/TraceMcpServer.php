@@ -149,7 +149,17 @@ final readonly class TraceMcpServer
         return $this->follow($request, $values, true);
     }
 
-    private function follow(string $request, bool $values, bool $waitsForTheAi): CallToolResult
+    /**
+     * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
+     */
+    public function events(): array
+    {
+        $id = $this->store->followedByMcp() ?? $this->startNextAwaited();
+
+        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, '0');
+    }
+
+    private function follow(string $request, bool $values, bool $waitForTheAi): CallToolResult
     {
         $startedAt = microtime(true);
         $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
@@ -178,29 +188,19 @@ final readonly class TraceMcpServer
         }
         // The host shows the app only with the result, so the tool gives the trace as soon as it is recorded, and the
         // app reads the events of the AI after it. For a request that the caller names, the tool waits for them.
-        $waitsForTheAi = $this->describes && ($waitsForTheAi || $this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true));
-        foreach ($this->traces->follow($id, $waitsForTheAi, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
+        $described = !$this->describes || $waitForTheAi || $this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true);
+        foreach ($this->traces->follow($id, $this->describes && $described, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
         }
-        if ($this->describes && !$waitsForTheAi) {
+        if (!$described) {
             $lines[] = \sprintf('The AI is describing what happened. To read it, call domain_trace_description with request "%s".', $id);
         }
 
         return new CallToolResult(
             [new TextContent(implode("\n", $lines))],
-            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'described' => $waitsForTheAi || !$this->describes, 'events' => $events]],
+            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'described' => $described, 'events' => $events]],
         );
-    }
-
-    /**
-     * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
-     */
-    public function events(): array
-    {
-        $id = $this->store->followedByMcp() ?? $this->startNextAwaited();
-
-        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, '0');
     }
 
     /**

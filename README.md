@@ -2,7 +2,8 @@
 
 Business-level traces of PHP requests, without instrumenting the code.
 
-https://github.com/user-attachments/assets/732670c3-dbde-4fd5-b72f-622840ddfd48
+https://github.com/user-attachments/assets/9867a421-198a-4212-9619-954f5dabefcb
+
 
 
 ## What
@@ -223,7 +224,7 @@ need to reach the web server of the application.
 In Claude Code in the Claude desktop app, "trace next request" shows the waterfall of the next request, with the
 names of its operations and what the AI found:
 
-[The MCP app in Claude Code](https://github.com/user-attachments/assets/5a2229a9-3913-40ed-a43d-7ba828fec387)
+![The MCP app in Claude Code: the waterfall of a checkout that failed because of missing stock](docs/mcp-app.png)
 
 ## How it is put together
 

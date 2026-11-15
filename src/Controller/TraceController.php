@@ -43,7 +43,7 @@ final readonly class TraceController
         $id = $this->store->rootOf($id);
         $describe = $this->describes && $request->query->getBoolean('describe');
         if ($request->query->has('cursor')) {
-            return new JsonResponse($this->poller->events($id, $describe, $request->query->getString('cursor')));
+            return self::shared(new JsonResponse($this->poller->events($id, $describe, $request->query->getString('cursor'))));
         }
 
         $stream = function () use ($id, $describe) {
@@ -56,7 +56,17 @@ final readonly class TraceController
             }
         };
 
-        return new EventStreamResponse($stream);
+        return self::shared(new EventStreamResponse($stream));
+    }
+
+    /**
+     * The MCP app streams the events from another origin
+     */
+    private static function shared(Response $response): Response
+    {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+
+        return $response;
     }
 
     #[Route('/_tracing/', name: 'domain_tracing_live', methods: ['GET'])]
@@ -86,11 +96,11 @@ final readonly class TraceController
         if ($request->query->has('cursor')) {
             $traces = $this->store->startedAfter($after);
 
-            return new JsonResponse([
+            return self::shared(new JsonResponse([
                 'events' => array_map(static fn (array $trace): array => ['trace', $trace], $traces),
                 'cursor' => [] === $traces ? $after : end($traces)['startedAt'],
                 'done' => false,
-            ]);
+            ]));
         }
 
         $stream = function () use ($after) {

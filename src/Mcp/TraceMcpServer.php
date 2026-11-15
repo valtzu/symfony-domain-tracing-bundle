@@ -22,7 +22,11 @@ use Mcp\Server;
 use Mcp\Server\ClientGateway;
 use Mcp\Server\Configuration;
 use Mcp\Server\Handler\Request\InitializeHandler;
+use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StdioTransport;
+use Mcp\Server\Transport\StreamableHttpTransport;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Twig\Environment;
 use Valtzu\DomainTracingBundle\Storage\TraceStore;
 use Valtzu\DomainTracingBundle\Tracing\TracePoller;
@@ -42,6 +46,10 @@ final readonly class TraceMcpServer
     public const string APP_URI = 'ui://domain-tracing/trace';
     public const string META_KEY = 'valtzu/domain-tracing';
     public const string EVENTS_URI = 'ui://domain-tracing/events';
+
+    /** @var \ArrayObject<string, true> the ended traces that MCP loaded without their description, by ID */
+    private \ArrayObject $loaded;
+
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
@@ -49,7 +57,10 @@ final readonly class TraceMcpServer
         private TracePoller $poller,
         private bool $describes,
         private int $timeoutSeconds = 600,
+        private bool $inProcess = false,
+        private ?string $streamUrl = null,
     ) {
+        $this->loaded = new \ArrayObject();
     }
 
     /**
@@ -57,6 +68,19 @@ final readonly class TraceMcpServer
      * @param resource $output
      */
     public function run($input = \STDIN, $output = \STDOUT): void
+    {
+        $this->server()->run(new StdioTransport($input, $output));
+    }
+
+    public function handle(ServerRequestInterface $request, string $sessionDirectory): ResponseInterface
+    {
+        $uri = $request->getUri();
+        $streamUrl = \sprintf('%s://%s%s', $uri->getScheme(), $uri->getAuthority(), preg_replace('{mcp$}', '', $uri->getPath()));
+
+        return (clone($this, ['inProcess' => true, 'streamUrl' => $streamUrl]))->server(new FileSessionStore($sessionDirectory))->run(new StreamableHttpTransport($request));
+    }
+
+    private function server(?FileSessionStore $sessions = null): Server
     {
         if (!class_exists(Server::class)) {
             throw new \LogicException('The MCP server needs the MCP SDK: run "composer require --dev mcp/sdk".');
@@ -113,14 +137,14 @@ final readonly class TraceMcpServer
         $apps = new McpApps();
         $capabilities = new ServerCapabilities(prompts: false, extensions: [(string) $apps->getId() => $apps->getCapabilities()]);
 
-        Server::builder()
+        return Server::builder()
             ->setServerInfo($serverInfo->name, $serverInfo->version)
             ->setInstructions($instructions)
             ->enableExtension($apps)
             ->addRequestHandler(new ListChangedInitializeHandler(new InitializeHandler(new Configuration($serverInfo, $capabilities, instructions: $instructions))))
             ->setRegistry($registry)
-            ->build()
-            ->run(new StdioTransport($input, $output));
+            ->setSession($sessions)
+            ->build();
     }
 
     /**
@@ -136,11 +160,11 @@ final readonly class TraceMcpServer
             return $this->follow($request, $values, false);
         }
 
-        $this->store->awaitNextByMcp(microtime(true));
+        $wait = $this->store->awaitNextByMcp(microtime(true));
 
         return new CallToolResult(
             [new TextContent('Waiting for the next request. Call domain_trace_description with request "next" to wait for it and read its trace.')],
-            meta: [self::META_KEY => ['id' => null, 'describe' => $this->describes, 'waiting' => true]],
+            meta: [self::META_KEY => ['id' => null, 'describe' => $this->describes, 'waiting' => true, 'wait' => $wait]],
         );
     }
 
@@ -150,13 +174,78 @@ final readonly class TraceMcpServer
     }
 
     /**
-     * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
+     * @return array{id: ?string, wait?: string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool, waits?: array<string, array<string, mixed>>}
      */
     public function events(): array
     {
         $id = $this->store->followedByMcp() ?? $this->startNextAwaited();
+        $wait = $this->store->nextWaitByMcp();
+        $trace = ['id' => $id] + (null === $wait ? [] : ['wait' => $wait]);
+        if (null !== $id) {
+            $trace += ['describe' => $this->describes] + $this->eventsOf($id);
+        }
 
-        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, '0');
+        $waits = $this->awaitedTraces($trace);
+
+        return $trace + ([] === $waits ? [] : ['waits' => $waits]);
+    }
+
+    /**
+     * Over HTTP, the server starts no other process, and a tool call describes a trace only when the model asks for
+     * its description. So, after the response, the server describes the ended traces that the request loaded.
+     */
+    public function describeLoaded(): void
+    {
+        $startedAt = microtime(true);
+        $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
+        foreach (array_keys($this->loaded->getArrayCopy()) as $id) {
+            unset($this->loaded[$id]);
+            if (!$this->store->isDescribed($id) && $this->store->claimDescription($id)) {
+                foreach ($this->traces->follow($id, true, $stop) as $event) {
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $followed the trace that the last call follows, so that its events are read once
+     *
+     * @return array<string, array<string, mixed>> the trace of each recent wait, by the wait
+     */
+    private function awaitedTraces(array $followed): array
+    {
+        $traces = [];
+        foreach ($this->store->waitsByMcp() as $wait) {
+            if (null === $awaited = $this->store->awaitedByMcp($wait)) {
+                continue;
+            }
+            $awaited = $this->store->rootOf($awaited);
+            $traces[$wait] = $awaited === $followed['id']
+                ? array_diff_key($followed, ['wait' => true])
+                : ['id' => $awaited, 'describe' => $this->describes] + $this->eventsOf($awaited);
+        }
+
+        return $traces;
+    }
+
+    /**
+     * @return array{events: list<array{string, mixed}>, cursor: string, done: bool}
+     */
+    private function eventsOf(string $id): array
+    {
+        $trace = $this->poller->events($id, $this->describes, '0', !$this->inProcess);
+        if (\in_array('end', array_column($trace['events'], 0), true)) {
+            $this->load($id);
+        }
+
+        return $trace;
+    }
+
+    private function load(string $id): void
+    {
+        if ($this->describes && $this->inProcess && !$this->store->isDescribed($id)) {
+            $this->loaded[$id] = true;
+        }
     }
 
     private function follow(string $request, bool $values, bool $waitForTheAi): CallToolResult
@@ -165,7 +254,7 @@ final readonly class TraceMcpServer
         $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
         // The server reads the next message of the host only when the tool call suspends its fiber. Meanwhile, the host
         // waits for the app of the tool, and the app for its calls.
-        $wait = static function (): void {
+        $wait = $this->inProcess ? static fn () => usleep(100_000) : static function (): void {
             null === \Fiber::getCurrent() ? usleep(100_000) : \Fiber::suspend();
         };
         $id = 'next' === $request && $this->store->awaitsNextByMcp() ? $this->nextAwaited($stop, $wait) : $this->store->find($request, $stop, $wait);
@@ -182,18 +271,19 @@ final readonly class TraceMcpServer
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
-        if ($this->describes) {
+        if ($this->describes && !$this->inProcess) {
             // The AI calls would block the server, so another process makes them
             $this->poller->describeInBackground($id);
         }
         // The host shows the app only with the result, so the tool gives the trace as soon as it is recorded, and the
         // app reads the events of the AI after it. For a request that the caller names, the tool waits for them.
         $described = !$this->describes || $waitForTheAi || $this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true);
-        foreach ($this->traces->follow($id, $this->describes && $described, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
+        foreach ($this->traces->follow($id, $this->describes && $described, $stop, describeHere: $this->inProcess, wait: $wait) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
         }
         if (!$described) {
+            $this->load($id);
             $lines[] = \sprintf('The AI is describing what happened. To read it, call domain_trace_description with request "%s".', $id);
         }
 
@@ -227,7 +317,7 @@ final readonly class TraceMcpServer
 
         $id = $this->store->rootOf($id);
         $this->store->followByMcp($id);
-        if ($this->describes) {
+        if ($this->describes && !$this->inProcess) {
             $this->poller->describeInBackground($id);
         }
 
@@ -241,7 +331,7 @@ final readonly class TraceMcpServer
 
         $registry->registerResource(
             new ResourceDefinition($appUri, 'domain-trace', 'Domain trace', 'The waterfall of a trace', McpApps::MIME_TYPE, meta: ['ui' => McpApps::resourceMarker()]),
-            static fn (): TextResourceContents => new TextResourceContents($appUri, McpApps::MIME_TYPE, $app),
+            fn (): TextResourceContents => new TextResourceContents($appUri, McpApps::MIME_TYPE, $app, null === $this->streamUrl ? null : ['ui' => ['csp' => ['connectDomains' => [self::origin($this->streamUrl)]]]]),
         );
         $registry->registerTool(new Tool(
             'domain_trace',
@@ -268,6 +358,12 @@ final readonly class TraceMcpServer
             'script' => (string) file_get_contents($public.'/trace.js'),
             'meta_key' => self::META_KEY,
             'events_uri' => self::EVENTS_URI,
+            'stream_url' => $this->streamUrl,
         ]);
+    }
+
+    private static function origin(string $url): string
+    {
+        return (string) preg_replace('{^(\w+://[^/]+).*$}', '$1', $url);
     }
 }

@@ -15,6 +15,7 @@ namespace Valtzu\DomainTracingBundle\Storage;
 final readonly class TraceStore
 {
     private const int CLAIM_SECONDS = 60;
+    private const int MCP_WAITS = 5;
 
     public function __construct(
         private string $directory,
@@ -300,18 +301,52 @@ final readonly class TraceStore
     /**
      * Keeps when an MCP tool call started to wait for the next request, or null when no call waits, for the other
      * processes of the MCP server.
+     *
+     * @return string|null the wait, which tells the apps of the calls apart
      */
-    public function awaitNextByMcp(?float $since): void
+    public function awaitNextByMcp(?float $since): ?string
     {
         $this->createDirectory();
+        $wait = null === $since ? null : \sprintf('%.6F', $since);
         $temporary = $this->directory.'/.mcp-next.'.bin2hex(random_bytes(4));
-        file_put_contents($temporary, null === $since ? '' : \sprintf('%.6F', $since));
+        file_put_contents($temporary, (string) $wait);
         rename($temporary, $this->directory.'/.mcp-next');
+        if (null !== $wait) {
+            $temporary = $this->directory.'/.mcp-waits.'.bin2hex(random_bytes(4));
+            file_put_contents($temporary, implode("\n", [...\array_slice($this->waitsByMcp(), -(self::MCP_WAITS - 1)), $wait]));
+            rename($temporary, $this->directory.'/.mcp-waits');
+        }
+
+        return $wait;
+    }
+
+    /**
+     * @return list<string> the last waits of the MCP tool calls, so that an app that the host loads again finds the
+     *                      request of its own call
+     */
+    public function waitsByMcp(): array
+    {
+        return array_values(array_filter(explode("\n", (string) @file_get_contents($this->directory.'/.mcp-waits')), is_numeric(...)));
+    }
+
+    /**
+     * @return string|null the first request that started after the wait
+     */
+    public function awaitedByMcp(string $wait): ?string
+    {
+        return is_numeric($wait) ? ($this->startedAfter((float) $wait)[0]['id'] ?? null) : null;
     }
 
     public function awaitsNextByMcp(): bool
     {
-        return is_numeric(@file_get_contents($this->directory.'/.mcp-next'));
+        return null !== $this->nextWaitByMcp();
+    }
+
+    public function nextWaitByMcp(): ?string
+    {
+        $wait = @file_get_contents($this->directory.'/.mcp-next');
+
+        return is_numeric($wait) ? $wait : null;
     }
 
     /**
@@ -319,9 +354,9 @@ final readonly class TraceStore
      */
     public function nextAwaitedByMcp(): ?string
     {
-        $since = @file_get_contents($this->directory.'/.mcp-next');
+        $wait = $this->nextWaitByMcp();
 
-        return is_numeric($since) ? ($this->startedAfter((float) $since)[0]['id'] ?? null) : null;
+        return null === $wait ? null : $this->awaitedByMcp($wait);
     }
 
     public function clearNarration(string $rootId): void

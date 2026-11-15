@@ -14,6 +14,7 @@ use Valtzu\DomainTracingBundle\Ai\TraceNarrator;
 use Valtzu\DomainTracingBundle\CacheClearer\TraceCacheClearer;
 use Valtzu\DomainTracingBundle\Command\ContextGenerateCommand;
 use Valtzu\DomainTracingBundle\Command\TraceCommand;
+use Valtzu\DomainTracingBundle\Controller\McpController;
 use Valtzu\DomainTracingBundle\Controller\TraceController;
 use Valtzu\DomainTracingBundle\DataCollector\TraceDataCollector;
 use Valtzu\DomainTracingBundle\EventListener\RecordingListener;
@@ -106,6 +107,14 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('domain_tracing.mcp_server', TraceMcpServer::class)
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), service('twig'), service('domain_tracing.trace_poller'), '%domain_tracing.describe%']);
+
+    $services->set('domain_tracing.mcp_controller', McpController::class)
+        ->public()
+        ->args([service('domain_tracing.mcp_server'), '%kernel.cache_dir%/domain_tracing_mcp_sessions'])
+        ->tag('routing.controller')
+        ->tag('kernel.event_listener', ['event' => KernelEvents::TERMINATE, 'method' => 'onTerminate']);
+    $services->alias(McpController::class, 'domain_tracing.mcp_controller')
+        ->public();
 
     $services->set('domain_tracing.trace_command', TraceCommand::class)
         ->args([service('domain_tracing.trace_store'), service('domain_tracing.trace_stream'), '%domain_tracing.describe%', service('domain_tracing.mcp_server')])

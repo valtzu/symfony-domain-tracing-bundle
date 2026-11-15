@@ -234,10 +234,104 @@ final class TraceMcpServerTest extends KernelTestCase
 
         static::assertInstanceOf(TextContent::class, $waiting->content[0]);
         static::assertStringContainsString('domain_trace_description', $waiting->content[0]->text);
-        static::assertSame(['id' => null], $before, 'The app waits until the next request starts');
+        static::assertNull($before['id'], 'The app waits until the next request starts');
         static::assertSame('bbbbbbbbbbbbbbbb', $after['id'] ?? null, 'The app follows the first request after the call');
         static::assertInstanceOf(TextContent::class, $description->content[0]);
         static::assertStringContainsString('GET /checkout [shop]', $description->content[0]->text, 'The model reads the trace that the app shows');
+    }
+
+    public function testTellsTheAppOfEachCallWhichRequestItWaitedFor(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), false, timeoutSeconds: 1);
+
+        try {
+            $first = $server->trace('next');
+            $store->start('bbbbbbbbbbbbbbbb', ['traceId' => str_repeat('b', times: 32), 'spanId' => 'bbbbbbbbbbbbbbbb', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/checkout']);
+            $store->end('bbbbbbbbbbbbbbbb', microtime(true));
+            $afterFirst = $server->events();
+            usleep(10);
+            $second = $server->trace('next');
+            $beforeSecond = $server->events();
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        $firstWait = $first->meta[TraceMcpServer::META_KEY]['wait'] ?? null;
+        $secondWait = $second->meta[TraceMcpServer::META_KEY]['wait'] ?? null;
+        static::assertIsString($firstWait);
+        static::assertIsString($secondWait);
+        static::assertNotSame($firstWait, $secondWait);
+        static::assertSame(['id' => 'bbbbbbbbbbbbbbbb', 'wait' => $firstWait], array_intersect_key($afterFirst, ['id' => true, 'wait' => true]), 'The app of the first call follows the request that the first call waited for');
+        static::assertSame(['id' => null, 'wait' => $secondWait], array_intersect_key($beforeSecond, ['id' => true, 'wait' => true]), 'The app of the first call does not take the wait of the second call for its own');
+    }
+
+    public function testGivesTheAppOfAnEarlierCallTheRequestItWaitedForAfterAnotherCallWaits(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), false, timeoutSeconds: 1);
+
+        try {
+            $first = $server->trace('next');
+            $store->start('bbbbbbbbbbbbbbbb', ['traceId' => str_repeat('b', times: 32), 'spanId' => 'bbbbbbbbbbbbbbbb', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/checkout']);
+            $store->end('bbbbbbbbbbbbbbbb', microtime(true));
+            $server->events();
+            usleep(10);
+            $second = $server->trace('next');
+            $store->start('cccccccccccccccc', ['traceId' => str_repeat('c', times: 32), 'spanId' => 'cccccccccccccccc', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/cart']);
+            $store->end('cccccccccccccccc', microtime(true));
+            $events = $server->events();
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        $firstWait = (string) ($first->meta[TraceMcpServer::META_KEY]['wait'] ?? '');
+        $secondWait = (string) ($second->meta[TraceMcpServer::META_KEY]['wait'] ?? '');
+        $waits = $events['waits'] ?? [];
+        static::assertSame('bbbbbbbbbbbbbbbb', $waits[$firstWait]['id'] ?? null, 'An app that the host loads again finds the request of its own call');
+        static::assertNotEmpty($waits[$firstWait]['events'] ?? []);
+        static::assertSame('cccccccccccccccc', $waits[$secondWait]['id'] ?? null);
+    }
+
+    public function testDescribesTheEndedRequestThatMcpLoadsOverHttp(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), true, timeoutSeconds: 1, inProcess: true);
+
+        try {
+            $server->trace('next');
+            $store->start('bbbbbbbbbbbbbbbb', ['traceId' => str_repeat('b', times: 32), 'spanId' => 'bbbbbbbbbbbbbbbb', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/checkout']);
+            $server->events();
+            $server->describeLoaded();
+            $describedWhileRunning = $store->isDescribed('bbbbbbbbbbbbbbbb');
+            $store->end('bbbbbbbbbbbbbbbb', microtime(true));
+            $server->describeLoaded();
+            $describedBeforeItIsLoaded = $store->isDescribed('bbbbbbbbbbbbbbbb');
+            $server->events();
+            $server->describeLoaded();
+            $describedAfterItIsLoaded = $store->isDescribed('bbbbbbbbbbbbbbbb');
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        static::assertFalse($describedWhileRunning, 'The AI describes a request after it ends');
+        static::assertFalse($describedBeforeItIsLoaded, 'The AI describes only the requests that MCP loads');
+        static::assertTrue($describedAfterItIsLoaded, 'The app shows the description before the model asks for it');
     }
 
     /**

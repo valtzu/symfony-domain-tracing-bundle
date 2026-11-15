@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "domain-tracing-http": {
+            "type": "http",
+            "url": "http://localhost:8100/_tracing/mcp"
+        }
+    }
+}

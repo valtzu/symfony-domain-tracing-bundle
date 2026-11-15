@@ -7,4 +7,5 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return static function (RoutingConfigurator $routes): void {
     $routes->import('../src/Controller/TraceController.php', 'attribute');
+    $routes->import('../src/Controller/McpController.php', 'attribute');
 };

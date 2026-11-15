@@ -31,26 +31,37 @@ const panel = document.getElementById('domain-tracing');
 panel.className = 'trace-panel';
 panel.innerHTML = '<p class="trace-status"><span class="trace-spinner" role="status" aria-label="Loading"></span><span class="trace-status-text">Waiting for the trace…</span></p>';
 
+const STREAM_URL = {{ stream_url|json_encode|raw }};
+// An app may connect to the domains that its resource declares, so over HTTP it streams the events as the live page does
+let probe = 'no stream URL';
+const streams = null === STREAM_URL ? Promise.resolve(false) : fetch(`${STREAM_URL}started?cursor=${Date.now() / 1000}`).then(response => (probe = `HTTP ${response.status}`, response.ok), error => (probe = `${error}`, false));
+
 let followed = null;
+let wait = null;
 let source = null;
 let final = false;
-const follow = (trace, load) => {
+const follow = async (trace, load) => {
     if (!trace?.id || trace.id === followed) {
         return;
     }
     source?.close();
     followed = trace.id;
-    source = followTrace(trace.id, panel, { describe: trace.describe, load });
+    source = await streams
+        ? followTrace(trace.id, panel, { describe: trace.describe, base: STREAM_URL, title: 'What happened (streamed)' })
+        : followTrace(trace.id, panel, { describe: trace.describe, load, title: `What happened (polled: ${probe}, origin ${location.origin})` });
 };
 
-// The host gives the result of the tool only at its end, so meanwhile the app reads the events of the trace that the
-// tool follows from the server, as the live page does. Claude Desktop lets an app read resources, but not call tools.
+// The tool returns at once for the next request, so the app reads the events of that request from the server, as the
+// live page does. Claude Desktop lets an app read resources, but not call tools. All the apps read the same resource, so
+// an app follows the request of the wait that the result of its own call gave. The host loads an app again when it
+// shows the conversation again, after other calls waited, so the resource gives the request of each recent wait.
 // Claude Desktop lets an app read only a resource that a tool declares, so the app reads all the events of the trace
 // each time and skips the ones that it has, as the EventCursor of the server does: the order of each kind stays.
 const AI_EVENTS = ['name', 'event', 'failure', 'done'];
 const readEvents = async () => JSON.parse((await request('resources/read', { uri: '{{ events_uri }}' })).contents[0].text);
+const traceOf = (trace, id) => null === id || trace.id === id ? trace : Object.values(trace.waits ?? {}).find(awaited => awaited.id === id) ?? { id: null };
 const eventsOf = id => async cursor => {
-    const trace = await readEvents();
+    const trace = traceOf(await readEvents(), id);
     if (null !== id && trace.id !== id) {
         return { id: null, events: [], cursor, done: false };
     }
@@ -63,9 +74,9 @@ const eventsOf = id => async cursor => {
 const followWhileTheToolRuns = async () => {
     while (!followed && !final) {
         try {
-            const trace = await readEvents();
-            if (trace.id && !final) {
-                follow(trace, eventsOf(trace.id));
+            const awaited = null === wait ? null : (await readEvents()).waits?.[wait];
+            if (awaited?.id && !final) {
+                follow(awaited, eventsOf(awaited.id));
             }
         } catch {
         }
@@ -85,6 +96,7 @@ window.addEventListener('message', ({ data }) => {
         panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
     } else if ('ui/notifications/tool-result' === data.method && data.params?._meta?.['{{ meta_key }}']?.waiting) {
         // The tool returns at once for the next request, so the app waits for it
+        wait = data.params._meta['{{ meta_key }}'].wait ?? null;
         if (!followed) {
             panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
         }

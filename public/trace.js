@@ -386,7 +386,7 @@ function spinner(label = '') {
     return element;
 }
 
-export function followTrace(id, panel, { describe = false, poll = false, load = null, title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
+export function followTrace(id, panel, { describe = false, poll = false, load = null, base = baseUrl(), title = 'What happened', onRequest = () => {}, onStep = () => {}, onEnd = () => {}, onDone = () => {} } = {}) {
     panel.classList.add('trace-panel');
     panel.innerHTML = '<h2></h2><p class="trace-status"><span class="trace-status-text">Waiting for the trace…</span></p><div class="trace-waterfall"></div>';
     if (title) {
@@ -402,7 +402,7 @@ export function followTrace(id, panel, { describe = false, poll = false, load = 
 
     const source = load
         ? new PollingEventSource(cursor => load(cursor, describe), 0)
-        : openEvents(new URL(`${id}/events${describe ? '?describe=1' : ''}`, baseUrl()), { poll });
+        : openEvents(new URL(`${id}/events${describe ? '?describe=1' : ''}`, base), { poll });
     const on = (event, handler) => source.addEventListener(event, message => handler(JSON.parse(message.data)));
 
     on('request', request => {

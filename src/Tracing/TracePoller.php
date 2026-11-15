@@ -30,9 +30,9 @@ final readonly class TracePoller
      *
      * @return array{events: list<array{string, mixed}>, cursor: string, done: bool}
      */
-    public function events(string $id, bool $describe, string $cursor): array
+    public function events(string $id, bool $describe, string $cursor, bool $inBackground = true): array
     {
-        if ($describe) {
+        if ($describe && $inBackground) {
             $this->describeInBackground($id);
         }
 

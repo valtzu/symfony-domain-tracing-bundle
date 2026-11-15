@@ -71,17 +71,29 @@ final readonly class TraceNarrator
             }
             $buffer .= $delta->getText();
             while (false !== $newline = strpos($buffer, "\n")) {
-                yield from $this->toEvent(substr($buffer, 0, $newline), $steps, $spans, $rootSpanId);
+                $line = substr($buffer, 0, $newline);
+                yield from $this->toEvent($line, $steps, $spans, $rootSpanId);
                 $buffer = substr($buffer, $newline + 1);
+                if (self::isOutcome($line)) {
+                    return;
+                }
             }
             // The last line has no newline after it, and the answer can end seconds after it, such as when the CLI of
-            // Claude Code summarizes the turn
+            // Claude Code summarizes the turn. The outcome is the last line, so the rest of the answer is not read.
             if (str_ends_with(rtrim($buffer), '}') && \is_array(json_decode($buffer, true))) {
                 yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
+                if (self::isOutcome($buffer)) {
+                    return;
+                }
                 $buffer = '';
             }
         }
         yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
+    }
+
+    private static function isOutcome(string $line): bool
+    {
+        return true === (json_decode(trim($line), true)['outcome'] ?? false);
     }
 
     private static function loop(array $step): string

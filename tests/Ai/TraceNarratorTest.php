@@ -59,6 +59,25 @@ final class TraceNarratorTest extends TestCase
         static::assertFalse($answerEnded);
     }
 
+    public function testStopsReadingTheAnswerAfterTheOutcome(): void
+    {
+        $readAfterTheOutcome = false;
+        $execution = $this->createStub(ExecutionInterface::class);
+        $execution->method('getContent')->willReturn((static function () use (&$readAfterTheOutcome) {
+            yield new TextDelta('{"line": 1, "when": "return", "text": "Greeting is \"Hello\""}'."\n");
+            yield new TextDelta('{"outcome": true, "text": "Greeting page shown to Ada"}');
+            $readAfterTheOutcome = true;
+            yield new TextDelta("\n");
+        })());
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn($execution);
+
+        $events = iterator_to_array((new TraceNarrator($agent))->narrate(self::STEPS, self::SPANS, 'request', [], true), false);
+
+        static::assertSame(['Greeting is "Hello"', 'Greeting page shown to Ada'], array_column($events, 'text'));
+        static::assertFalse($readAfterTheOutcome);
+    }
+
     public function testTellsHowTheRequestFailed(): void
     {
         $builder = new SpanBuilder();

@@ -63,8 +63,7 @@ final readonly class TraceMcpServer
 
         $registry = new Registry();
         $app = $this->app();
-        $followed = null;
-        $tool = function (ClientGateway $client, string $request = 'latest', bool $values = false) use ($registry, &$app, &$tool, &$followed): CallToolResult {
+        $tool = function (ClientGateway $client, string $request = 'latest', bool $values = false) use ($registry, &$app, &$tool): CallToolResult {
             // The hosts keep the app of a tool until the server says that its tools changed
             $latest = $this->app();
             if ($latest !== $app) {
@@ -74,24 +73,26 @@ final readonly class TraceMcpServer
                 $client->notify(new ResourceListChangedNotification());
             }
 
-            return $this->trace($request, $values, static function (string $id) use (&$followed): void {
-                $followed = $id;
-            });
+            return $this->trace($request, $values);
         };
         $this->register($registry, $app, $tool);
         // The app shows the trace while the tool follows it, because the host gives the app the result of the tool
-        // only at its end
-        $events = function (string $cursor = '0') use (&$followed): CallToolResult {
-            return $this->events($followed, $cursor);
-        };
+        // only at its end. The host calls this tool on another connection, so it finds the trace by itself.
         $registry->registerTool(new Tool(
             'domain_trace_events',
             'Domain trace events',
-            ['type' => 'object', 'properties' => ['cursor' => ['type' => 'string', 'description' => 'The cursor of the previous call, or "0"']]],
-            'Gives the app the events of the trace that the "domain_trace" tool follows, after a cursor.',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'request' => ['type' => 'string', 'description' => 'The "request" argument of the "domain_trace" call'],
+                    'since' => ['type' => 'number', 'description' => 'For "next": the Unix time after which the request started'],
+                    'cursor' => ['type' => 'string', 'description' => 'The cursor of the previous call, or "0"'],
+                ],
+            ],
+            'Gives the app the events of the trace that a "domain_trace" call follows, after a cursor.',
             null,
             meta: ['ui' => new UiToolMeta(visibility: [ToolVisibility::App])],
-        ), $events);
+        ), $this->events(...));
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
         $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
@@ -108,10 +109,7 @@ final readonly class TraceMcpServer
             ->run(new StdioTransport($input, $output));
     }
 
-    /**
-     * @param ?\Closure(string): void $found gets the ID of the trace when the tool found it
-     */
-    public function trace(string $request = 'latest', bool $values = false, ?\Closure $found = null): CallToolResult
+    public function trace(string $request = 'latest', bool $values = false): CallToolResult
     {
         $startedAt = microtime(true);
         $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
@@ -130,9 +128,6 @@ final readonly class TraceMcpServer
         }
 
         $id = $this->store->rootOf($id);
-        if (null !== $found) {
-            $found($id);
-        }
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
@@ -151,8 +146,12 @@ final readonly class TraceMcpServer
         );
     }
 
-    public function events(?string $id, string $cursor = '0'): CallToolResult
+    public function events(string $request = 'latest', ?float $since = null, string $cursor = '0'): CallToolResult
     {
+        $id = 'next' === $request ? $this->store->startedAfter($since ?? microtime(true))[0]['id'] ?? null : $this->store->find($request, static fn (): bool => true);
+        if (null !== $id) {
+            $id = $this->store->rootOf($id);
+        }
         if (null === $id) {
             return new CallToolResult([new TextContent('No trace yet.')], meta: [self::META_KEY => ['id' => null]]);
         }

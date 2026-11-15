@@ -120,7 +120,7 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertSame('No request started.', $responses[2]['result']['content'][0]['text'] ?? null);
     }
 
-    public function testGivesTheAppTheEventsOfTheTraceThatTheToolFollows(): void
+    public function testGivesTheAppTheEventsOfTheTraceWithoutTheCallOfTheTool(): void
     {
         $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
         $store = new TraceStore($directory.'/traces');
@@ -129,17 +129,18 @@ final class TraceMcpServerTest extends KernelTestCase
         $namer = new OperationNamer($agent, new ArrayAdapter());
         $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
         $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'app'])), new TracePoller($store, $stream, $directory, 'test'), false);
+        $appShown = microtime(true);
         $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
         $store->end('aaaaaaaaaaaaaaaa', microtime(true));
 
         try {
+            // The host calls the tools of the app on another connection, so another server process may answer them
             [$responses] = $this->serveWith($server, [
                 self::INITIALIZE,
                 ['method' => 'notifications/initialized'],
                 ['method' => 'tools/list'],
-                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => []]],
-                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => []]],
-                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => ['cursor' => '0']]],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => ['request' => 'next', 'since' => $appShown + 60]]],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => ['request' => 'next', 'since' => $appShown, 'cursor' => '0']]],
             ]);
         } finally {
             (new Filesystem())->remove($directory);
@@ -147,8 +148,8 @@ final class TraceMcpServerTest extends KernelTestCase
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
         static::assertSame(['app'], $tools['domain_trace_events']['_meta']['ui']['visibility'] ?? null, 'Only the app reads the events');
-        static::assertNull($responses[3]['result']['_meta'][TraceMcpServer::META_KEY]['id'] ?? null, 'The tool has not found the trace yet');
-        $trace = $responses[5]['result']['_meta'][TraceMcpServer::META_KEY] ?? [];
+        static::assertNull($responses[3]['result']['_meta'][TraceMcpServer::META_KEY]['id'] ?? null, 'No request started after the time');
+        $trace = $responses[4]['result']['_meta'][TraceMcpServer::META_KEY] ?? [];
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
         static::assertSame(['request', 'span', 'end', 'span', 'done'], array_column($trace['events'] ?? [], 0));
         static::assertTrue($trace['done'] ?? null);

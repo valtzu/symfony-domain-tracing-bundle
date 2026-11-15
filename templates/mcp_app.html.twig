@@ -41,9 +41,11 @@ const follow = (trace, load) => {
 const traceOf = result => result?._meta?.['{{ meta_key }}'];
 
 // The host gives the result of the tool only at its end, so meanwhile the app reads the events of the trace from the
-// server, as the live page does
-const events = async cursor => traceOf(await request('tools/call', { name: 'domain_trace_events', arguments: { cursor } }));
-const followWhileTheToolRuns = async () => {
+// server, as the live page does. The host may call the tool on another connection, so the app tells which trace it
+// wants: a request that started after the app was shown is the next one.
+const shownAt = Date.now() / 1000 - 2;
+const followWhileTheToolRuns = async requested => {
+    const events = async cursor => traceOf(await request('tools/call', { name: 'domain_trace_events', arguments: { request: requested, since: shownAt, cursor } }));
     while (!followed) {
         try {
             const trace = await events('0');
@@ -51,11 +53,13 @@ const followWhileTheToolRuns = async () => {
                 follow(trace, events);
             }
         } catch {
-            return;
         }
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
 };
+let input = null;
+let initialized = false;
+const start = () => initialized && null !== input && followWhileTheToolRuns(input.request ?? 'latest');
 
 window.addEventListener('message', ({ data }) => {
     if (data?.jsonrpc !== '2.0') {
@@ -65,8 +69,12 @@ window.addEventListener('message', ({ data }) => {
         const { resolve, reject } = pending.get(data.id);
         pending.delete(data.id);
         data.error ? reject(data.error) : resolve(data.result);
-    } else if ('ui/notifications/tool-input' === data.method && 'next' === data.params?.arguments?.request) {
-        panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
+    } else if ('ui/notifications/tool-input' === data.method && null === input) {
+        input = data.params?.arguments ?? {};
+        if ('next' === input.request) {
+            panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
+        }
+        start();
     } else if ('ui/notifications/tool-result' === data.method) {
         const trace = traceOf(data.params);
         follow(trace, async () => ({ events: trace.events, cursor: '', done: true }));
@@ -90,7 +98,8 @@ await Promise.race([
     new Promise(resolve => setTimeout(resolve, 1000)),
 ]);
 post({ method: 'ui/notifications/initialized', params: {} });
-followWhileTheToolRuns();
+initialized = true;
+start();
 </script>
 </body>
 </html>

@@ -44,7 +44,7 @@
         "mcp/sdk": "To serve the traces to AI tools with debug:domain:trace --format=mcp"
     },
     "require-dev": {
-        "carthage-software/mago": "^1.59",
+        "carthage-software/mago": "1.59.*",
         "escapestudios/symfony2-coding-standard": "^3.18",
         "mcp/sdk": "^0.9",
         "phpunit/phpunit": "^13.4",

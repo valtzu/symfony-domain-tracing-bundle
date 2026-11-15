@@ -39,7 +39,8 @@ final class TraceMcpServerTest extends KernelTestCase
         ]);
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
-        static::assertSame(['domain_trace', 'domain_trace_events'], array_keys($tools));
+        static::assertSame(['domain_trace', 'domain_trace_events', 'domain_trace_description'], array_keys($tools));
+        static::assertArrayNotHasKey('_meta', $tools['domain_trace_description'], 'Reading the description after the trace opens no second app');
         static::assertSame(['request', 'values'], array_keys($tools['domain_trace']['inputSchema']['properties'] ?? []), 'Calling the tool means that the caller wants the trace described with AI');
         $appUri = $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null;
         static::assertIsString($appUri);
@@ -110,14 +111,16 @@ final class TraceMcpServerTest extends KernelTestCase
                 self::INITIALIZE,
                 ['method' => 'notifications/initialized'],
                 ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => ['request' => 'next']]],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_description', 'arguments' => ['request' => 'next']]],
                 ['method' => 'tools/list'],
             ], openSeconds: 2);
         } finally {
             (new Filesystem())->remove($directory);
         }
 
-        static::assertSame([0, 3, 2], array_keys($responses), 'The host reads the app while the tool waits for the next request');
-        static::assertSame('No request started.', $responses[2]['result']['content'][0]['text'] ?? null);
+        static::assertSame([0, 2, 4, 3], array_keys($responses), 'The host gets the app at once, and reads the tools while the description waits for the next request');
+        static::assertTrue($responses[2]['result']['_meta'][TraceMcpServer::META_KEY]['waiting'] ?? false, 'Claude Desktop shows the app only with the result, so the app waits for the next request');
+        static::assertSame('No request started.', $responses[3]['result']['content'][0]['text'] ?? null);
     }
 
     public function testGivesTheAppTheTraceOfTheLastCallAsAResource(): void
@@ -202,6 +205,39 @@ final class TraceMcpServerTest extends KernelTestCase
         $trace = $result->meta[TraceMcpServer::META_KEY] ?? [];
         static::assertTrue($trace['describe'] ?? null);
         static::assertFalse($trace['described'] ?? null, 'The app reads the events of the AI from the server after the result');
+    }
+
+    public function testFollowsTheNextRequestAfterTheToolReturns(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), false, timeoutSeconds: 1);
+        $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
+        $store->end('aaaaaaaaaaaaaaaa', microtime(true));
+
+        try {
+            $waiting = $server->trace('next');
+            $before = $server->events();
+            $store->start('bbbbbbbbbbbbbbbb', ['traceId' => str_repeat('b', times: 32), 'spanId' => 'bbbbbbbbbbbbbbbb', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/checkout']);
+            $store->end('bbbbbbbbbbbbbbbb', microtime(true));
+            $store->start('cccccccccccccccc', ['traceId' => str_repeat('c', times: 32), 'spanId' => 'cccccccccccccccc', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/cart']);
+            $store->end('cccccccccccccccc', microtime(true));
+            $after = $server->events();
+            $description = $server->description('next');
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        static::assertInstanceOf(TextContent::class, $waiting->content[0]);
+        static::assertStringContainsString('domain_trace_description', $waiting->content[0]->text);
+        static::assertSame(['id' => null], $before, 'The app waits until the next request starts');
+        static::assertSame('bbbbbbbbbbbbbbbb', $after['id'] ?? null, 'The app follows the first request after the call');
+        static::assertInstanceOf(TextContent::class, $description->content[0]);
+        static::assertStringContainsString('GET /checkout [shop]', $description->content[0]->text, 'The model reads the trace that the app shows');
     }
 
     /**

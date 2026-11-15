@@ -93,6 +93,20 @@ final readonly class TraceMcpServer
             null,
             meta: ['ui' => new UiToolMeta(self::EVENTS_URI, [ToolVisibility::App])],
         ), fn (): CallToolResult => new CallToolResult([new TextContent(json_encode($this->events(), \JSON_THROW_ON_ERROR))]));
+        $registry->registerTool(new Tool(
+            'domain_trace_description',
+            'Domain trace description',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'request' => ['type' => 'string', 'description' => 'The ID of the request that "domain_trace" gave, or "next" after "domain_trace" started to wait for the next request'],
+                    'values' => ['type' => 'boolean', 'description' => 'Include the arguments and the return values of the operations'],
+                ],
+                'required' => ['request'],
+            ],
+            'Waits for the next request that "domain_trace" waits for, or for the AI to describe a trace that "domain_trace" gave before the description, and gives the trace with the events that tell what happened and why. It shows no app, because the app of "domain_trace" shows the description already.',
+            null,
+        ), fn (string $request, bool $values = false): CallToolResult => $this->description($request, $values));
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
         $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
@@ -109,7 +123,33 @@ final readonly class TraceMcpServer
             ->run(new StdioTransport($input, $output));
     }
 
+    /**
+     * Claude Desktop shows the app only with the result of the tool, so for the next request the tool returns at once,
+     * the app waits for the request, and the model reads its trace with "domain_trace_description".
+     */
     public function trace(string $request = 'latest', bool $values = false): CallToolResult
+    {
+        $this->store->followByMcp(null);
+        if ('next' !== $request) {
+            $this->store->awaitNextByMcp(null);
+
+            return $this->follow($request, $values, false);
+        }
+
+        $this->store->awaitNextByMcp(microtime(true));
+
+        return new CallToolResult(
+            [new TextContent('Waiting for the next request. Call domain_trace_description with request "next" to wait for it and read its trace.')],
+            meta: [self::META_KEY => ['id' => null, 'describe' => $this->describes, 'waiting' => true]],
+        );
+    }
+
+    public function description(string $request, bool $values = false): CallToolResult
+    {
+        return $this->follow($request, $values, true);
+    }
+
+    private function follow(string $request, bool $values, bool $waitsForTheAi): CallToolResult
     {
         $startedAt = microtime(true);
         $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
@@ -118,8 +158,7 @@ final readonly class TraceMcpServer
         $wait = static function (): void {
             null === \Fiber::getCurrent() ? usleep(100_000) : \Fiber::suspend();
         };
-        $this->store->followByMcp(null);
-        $id = $this->store->find($request, $stop, $wait);
+        $id = 'next' === $request && $this->store->awaitsNextByMcp() ? $this->nextAwaited($stop, $wait) : $this->store->find($request, $stop, $wait);
         if (null === $id) {
             return new CallToolResult([new TextContent(match ($request) {
                 'latest' => 'No request was recorded yet. The web server records the requests when its php.ini has xdebug.mode=trace,coverage.',
@@ -139,13 +178,13 @@ final readonly class TraceMcpServer
         }
         // The host shows the app only with the result, so the tool gives the trace as soon as it is recorded, and the
         // app reads the events of the AI after it. For a request that the caller names, the tool waits for them.
-        $waitsForTheAi = $this->describes && ($this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true));
+        $waitsForTheAi = $this->describes && ($waitsForTheAi || $this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true));
         foreach ($this->traces->follow($id, $waitsForTheAi, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
         }
         if ($this->describes && !$waitsForTheAi) {
-            $lines[] = \sprintf('The AI is describing what happened. To read it, call domain_trace with request "%s".', $id);
+            $lines[] = \sprintf('The AI is describing what happened. To read it, call domain_trace_description with request "%s".', $id);
         }
 
         return new CallToolResult(
@@ -159,9 +198,40 @@ final readonly class TraceMcpServer
      */
     public function events(): array
     {
-        $id = $this->store->followedByMcp();
+        $id = $this->store->followedByMcp() ?? $this->startNextAwaited();
 
         return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, '0');
+    }
+
+    /**
+     * @param callable(): bool $stop
+     * @param callable(): void $wait
+     */
+    private function nextAwaited(callable $stop, callable $wait): ?string
+    {
+        while (!$stop()) {
+            if (null !== $id = $this->store->nextAwaitedByMcp()) {
+                return $id;
+            }
+            $wait();
+        }
+
+        return null;
+    }
+
+    private function startNextAwaited(): ?string
+    {
+        if (null === $id = $this->store->nextAwaitedByMcp()) {
+            return null;
+        }
+
+        $id = $this->store->rootOf($id);
+        $this->store->followByMcp($id);
+        if ($this->describes) {
+            $this->poller->describeInBackground($id);
+        }
+
+        return $id;
     }
 
     private function register(Registry $registry, string $app, \Closure $tool): void

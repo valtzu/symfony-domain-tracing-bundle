@@ -82,6 +82,11 @@ window.addEventListener('message', ({ data }) => {
         data.error ? reject(data.error) : resolve(data.result);
     } else if ('ui/notifications/tool-input' === data.method && 'next' === data.params?.arguments?.request && !followed) {
         panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
+    } else if ('ui/notifications/tool-result' === data.method && data.params?._meta?.['{{ meta_key }}']?.waiting) {
+        // The tool returns at once for the next request, so the app waits for it
+        if (!followed) {
+            panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
+        }
     } else if ('ui/notifications/tool-result' === data.method) {
         // The result tells which trace the call followed, also when the app shows an earlier call. The tool gives the
         // trace before the AI describes it, so then the app reads the events of the AI from the server.

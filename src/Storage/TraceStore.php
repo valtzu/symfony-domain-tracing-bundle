@@ -297,6 +297,33 @@ final readonly class TraceStore
         return \is_string($id) && self::isValidId($id) ? $id : null;
     }
 
+    /**
+     * Keeps when an MCP tool call started to wait for the next request, or null when no call waits, for the other
+     * processes of the MCP server.
+     */
+    public function awaitNextByMcp(?float $since): void
+    {
+        $this->createDirectory();
+        $temporary = $this->directory.'/.mcp-next.'.bin2hex(random_bytes(4));
+        file_put_contents($temporary, null === $since ? '' : \sprintf('%.6F', $since));
+        rename($temporary, $this->directory.'/.mcp-next');
+    }
+
+    public function awaitsNextByMcp(): bool
+    {
+        return is_numeric(@file_get_contents($this->directory.'/.mcp-next'));
+    }
+
+    /**
+     * @return string|null the first request that started after an MCP tool call started to wait for the next one
+     */
+    public function nextAwaitedByMcp(): ?string
+    {
+        $since = @file_get_contents($this->directory.'/.mcp-next');
+
+        return is_numeric($since) ? ($this->startedAfter((float) $since)[0]['id'] ?? null) : null;
+    }
+
     public function clearNarration(string $rootId): void
     {
         @unlink($this->narrationPath($rootId));

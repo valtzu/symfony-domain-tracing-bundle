@@ -218,6 +218,13 @@ at once while its app waits for the request. The `domain_trace_description` tool
 request and the description and gives them to the model. The events of the trace are in the result of the tool, so the app does not
 need to reach the web server of the application.
 
+### MCP app
+
+In Claude Code in the Claude desktop app, "trace next request" shows the waterfall of the next request, with the
+names of its operations and what the AI found:
+
+![The MCP app in Claude Code: the waterfall of a checkout that failed because of missing stock](docs/mcp-app.png)
+
 ## How it is put together
 
 - The root directory is a Symfony bundle, `DomainTracingBundle`. In debug mode, it serves the live view and its event

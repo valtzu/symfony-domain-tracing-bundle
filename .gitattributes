@@ -10,3 +10,4 @@
 /mago.toml export-ignore
 /phpcs.xml.dist export-ignore
 /.mcp.json export-ignore
+/docs export-ignore

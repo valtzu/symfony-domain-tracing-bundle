@@ -7,80 +7,103 @@
 
 {% block stylesheets %}
 <style>
-    :root { --bg: #f6f6f4; --card: #fff; --text: #1d1d1b; --muted: #6b6b66; --line: #e2e2dd; --accent: #2f5d50; --ok: #2f7d32; --warn: #a66300; --bad: #b3261e; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #20201e; --text: #ecece8; --muted: #9a9a94; --line: #34342f; --accent: #7fb8a6; --ok: #7cc47f; --warn: #e0a64a; --bad: #f08a80; } }
+    :root { --bg: #f4f3ef; --card: #fff; --text: #1d1d1b; --muted: #6b6b66; --line: #e6e4dd; --accent: #2f5d50; --accent2: #4f8a74; --ok: #2f7d32; --warn: #a66300; --bad: #b3261e; --shadow: 0 1px 2px #0000000d, 0 8px 24px #0000000f; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #20201e; --text: #ecece8; --muted: #9a9a94; --line: #34342f; --accent: #7fb8a6; --accent2: #5d9884; --ok: #7cc47f; --warn: #e0a64a; --bad: #f08a80; --shadow: 0 8px 24px #0006; } }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
-    main { max-width: 960px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; grid-template-columns: 1fr; }
-    @media (min-width: 800px) { main { grid-template-columns: 3fr 2fr; align-items: start; } }
-    h1 { grid-column: 1 / -1; margin: 0; font-size: 22px; }
-    section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
-    h2 { margin: 0 0 12px; font-size: 16px; }
-    label { display: block; color: var(--muted); font-size: 13px; margin: 12px 0 4px; }
-    select, input { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+    header { background: linear-gradient(120deg, #2f5d50, #4f8a74); color: #fff; }
+    header div { max-width: 720px; margin: 0 auto; padding: 18px 16px; display: flex; align-items: baseline; gap: 12px; }
+    header strong { font-size: 20px; letter-spacing: -.3px; }
+    header span { opacity: .8; font-size: 13px; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; box-shadow: var(--shadow); animation: enter .35s ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+    h2 { margin: 0 0 4px; font-size: 18px; }
+    label { display: block; color: var(--muted); font-size: 13px; margin: 16px 0 6px; }
+    select, input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; transition: border-color .15s, box-shadow .15s; }
+    select:focus, input:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
     table { width: 100%; border-collapse: collapse; }
-    td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+    td, th { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: left; }
     th { color: var(--muted); font-weight: 500; font-size: 13px; }
     td.num, th.num { text-align: right; }
-    input[type=number] { width: 72px; }
-    button { margin-top: 16px; width: 100%; padding: 10px; border: 0; border-radius: 6px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
+    tr.chosen td:first-child { font-weight: 600; }
+    td.qty, th.qty { text-align: center; }
+    table.products { table-layout: fixed; }
+    table.products th.num { width: 110px; } table.products th.qty { width: 150px; }
+    .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); overflow: hidden; }
+    .stepper button { width: 32px; height: 32px; border: 0; background: transparent; color: var(--accent); font: 600 18px/1 system-ui, sans-serif; cursor: pointer; transition: background .15s, transform .1s; }
+    .stepper button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .stepper button:active { transform: scale(.88); }
+    .stepper input { width: 40px; padding: 4px 0; border: 0; background: transparent; text-align: center; font-weight: 600; -moz-appearance: textfield; }
+    .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .stepper input:focus { box-shadow: none; }
+    .stepper:focus-within { border-color: var(--accent); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
     .hint { color: var(--muted); font-size: 13px; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1px solid currentColor; }
-    .confirmed { color: var(--ok); } .pending_review { color: var(--warn); } .rejected { color: var(--bad); }
-    .total td { font-weight: 600; border-bottom: 0; }
+    .cart { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .cart b { font-size: 18px; }
+    .button { display: inline-flex; justify-content: center; align-items: center; gap: 10px; padding: 11px 22px; border: 0; border-radius: 10px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; transition: transform .1s, filter .15s; }
+    .button:hover { filter: brightness(1.08); }
+    .button:active { transform: scale(.98); }
+    .button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    form.sending { pointer-events: none; }
+    form.sending .fields { opacity: .45; transition: opacity .3s; }
+    .spinner { display: none; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+    form.sending .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(1turn); } }
+    .outcome { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+    .icon { flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; font-weight: 700; color: #fff; animation: pop .45s cubic-bezier(.2, 1.6, .4, 1); }
+    @keyframes pop { from { transform: scale(.3); opacity: 0; } }
+    .confirmed .icon { background: var(--ok); } .pending_review .icon { background: var(--warn); } .rejected .icon { background: var(--bad); }
+    .total td { font-weight: 600; border-bottom: 0; font-size: 17px; }
+    .actions { margin-top: 20px; }
     code { font-size: 13px; }
 </style>
 {% endblock %}
 
+{% block javascripts %}
+<script>
+    // The total of the cart, and a spinner while the order is placed
+    addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        if (!form) return;
+        const total = () => {
+            let cents = 0;
+            for (const input of form.querySelectorAll('input[type=number]')) {
+                const quantity = Math.max(0, parseInt(input.value) || 0);
+                cents += quantity * Number(input.dataset.cents);
+                input.closest('tr').classList.toggle('chosen', quantity > 0);
+            }
+            form.querySelector('#total').textContent = (cents / 100).toFixed(2) + ' €';
+        };
+        form.addEventListener('input', total);
+        form.addEventListener('click', event => {
+            const button = event.target.closest('[data-step]');
+            if (!button) return;
+            const input = button.parentElement.querySelector('input');
+            input.value = Math.max(0, (parseInt(input.value) || 0) + Number(button.dataset.step));
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        form.addEventListener('submit', () => form.classList.add('sending'));
+        total();
+    });
+</script>
+{% endblock %}
+
 {% block body %}
+<header><div><strong>Demo shop</strong><span>Keyboards, mice and more</span></div></header>
 <main>
-    <h1>Demo shop</h1>
-
-    <section>
-        <h2>New order</h2>
-        <form method="post">
-            <label for="customer">Customer</label>
-            <select id="customer" name="customer">
-                {% for customer in customers %}
-                    <option value="{{ customer.id }}" {{ customer.id == form.customer ? 'selected' }}>
-                        {{ customer.name }} ({{ customer.tier.value }}, since {{ customer.registeredAt|date('Y-m-d') }}{{ customer.blocked ? ', blocked' }})
-                    </option>
-                {% endfor %}
-            </select>
-
-            <label>Products</label>
-            <table>
-                <tr><th>Product</th><th class="num">Price</th><th class="num">Qty</th></tr>
-                {% for product in products %}
-                    <tr>
-                        <td>{{ product.name }} <span class="hint">{{ product.sku }}</span></td>
-                        <td class="num">{{ eur(product.priceCents) }}</td>
-                        <td class="num"><input type="number" min="0" name="quantities[{{ product.sku }}]" value="{{ form.quantities[product.sku] ?? 0 }}" aria-label="Quantity of {{ product.name }}"></td>
-                    </tr>
-                {% endfor %}
-            </table>
-
-            <label for="coupon">Coupon</label>
-            <input id="coupon" name="coupon" value="{{ form.coupon }}" list="coupons" autocomplete="off">
-            <datalist id="coupons">
-                {% for coupon in coupons %}<option value="{{ coupon.code }}">{% endfor %}
-            </datalist>
-
-            <label for="country">Ship to</label>
-            <select id="country" name="country">
-                {% for code, name in countries %}
-                    <option value="{{ code }}" {{ code == form.country ? 'selected' }}>{{ name }}</option>
-                {% endfor %}
-            </select>
-
-            <button type="submit">Place order</button>
-        </form>
-    </section>
-
-    <section>
-        <h2>Result</h2>
-        {% if order %}
-            <p><span class="badge {{ order.status.value }}">{{ order.status.value|replace({'_': ' '}) }}</span> <code>{{ order.id }}</code></p>
+    {% if order %}
+        <section class="card {{ order.status.value }}">
+            <div class="outcome">
+                {% if order.status.value == 'confirmed' %}
+                    <div class="icon">✓</div>
+                    <div><h2>Thanks for your order!</h2><span class="hint">Order <code>{{ order.id }}</code> is paid and on its way.</span></div>
+                {% else %}
+                    <div class="icon">…</div>
+                    <div><h2>Order received</h2><span class="hint">Order <code>{{ order.id }}</code> waits for a manual review before it is charged.</span></div>
+                {% endif %}
+            </div>
             <table>
                 {% for line in order.quote.lines %}
                     <tr><td>{{ line.quantity }} × {{ line.product.name }}</td><td class="num">{{ eur(line.product.priceCents * line.quantity) }}</td></tr>
@@ -92,13 +115,72 @@
                 <tr><td>Shipping</td><td class="num">{{ order.quote.shippingCents ? eur(order.quote.shippingCents) : 'free' }}</td></tr>
                 <tr class="total"><td>Total</td><td class="num">{{ eur(order.quote.totalCents) }}</td></tr>
             </table>
-            <p class="hint">{{ order.paymentId ? 'Payment ' ~ order.paymentId : 'Not charged: waiting for manual review.' }}</p>
-        {% elseif error %}
-            <p><span class="badge rejected">rejected</span> <code>{{ error.reason }}</code></p>
-            <p>{{ error.message }}</p>
-        {% else %}
-            <p class="hint">Place an order to see the result.</p>
-        {% endif %}
-    </section>
+            {% if order.paymentId %}<p class="hint">Payment <code>{{ order.paymentId }}</code></p>{% endif %}
+            <div class="actions"><a class="button" href="/">Place another order</a></div>
+        </section>
+    {% elseif error %}
+        <section class="card rejected">
+            <div class="outcome">
+                <div class="icon">!</div>
+                <div><h2>We couldn't place your order</h2><span class="hint">Something went wrong. Please try again later.</span></div>
+            </div>
+            <div class="actions"><a class="button secondary" href="/">Back to the shop</a></div>
+        </section>
+    {% else %}
+        <section class="card">
+            <h2>New order</h2>
+            <form method="post">
+                <div class="fields">
+                    <label for="customer">Customer</label>
+                    <select id="customer" name="customer">
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" {{ customer.id == form.customer ? 'selected' }}>
+                                {{ customer.name }} ({{ customer.tier.value }}, since {{ customer.registeredAt|date('Y-m-d') }}{{ customer.blocked ? ', blocked' }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Products</label>
+                    <table class="products">
+                        <tr><th>Product</th><th class="num">Price</th><th class="qty">Qty</th></tr>
+                        {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }} <span class="hint">{{ product.sku }}</span></td>
+                                <td class="num">{{ eur(product.priceCents) }}</td>
+                                <td class="qty"><span class="stepper">
+                                    <button type="button" data-step="-1" aria-label="One {{ product.name }} less">−</button>
+                                    <input type="number" min="0" name="quantities[{{ product.sku }}]" value="{{ form.quantities[product.sku] ?? 0 }}" data-cents="{{ product.priceCents }}" aria-label="Quantity of {{ product.name }}">
+                                    <button type="button" data-step="1" aria-label="One {{ product.name }} more">+</button>
+                                </span></td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                    <div class="row">
+                        <div>
+                            <label for="coupon">Coupon</label>
+                            <input id="coupon" name="coupon" value="{{ form.coupon }}" list="coupons" autocomplete="off">
+                            <datalist id="coupons">
+                                {% for coupon in coupons %}<option value="{{ coupon.code }}">{% endfor %}
+                            </datalist>
+                        </div>
+                        <div>
+                            <label for="country">Ship to</label>
+                            <select id="country" name="country">
+                                {% for code, name in countries %}
+                                    <option value="{{ code }}" {{ code == form.country ? 'selected' }}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cart">
+                    <span class="hint">Cart <b id="total">0.00 €</b> <span class="hint">before discounts and shipping</span></span>
+                    <button class="button" type="submit"><span class="spinner"></span>Place order</button>
+                </div>
+            </form>
+        </section>
+    {% endif %}
 </main>
 {% endblock %}

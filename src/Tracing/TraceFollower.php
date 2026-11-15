@@ -75,6 +75,8 @@ final class TraceFollower
                         $record = ['type' => 'step', 'fn' => $function, 'line' => $line, 'depth' => $depth, 'at' => $this->startedAt[$requestId] + $microseconds / 1e6];
                     }
                     if ('request' === $record['type']) {
+                        // The steps are timed from the start of the request, which the store writes some time later
+                        $record['at'] = is_numeric($record['startedAt'] ?? null) ? (float) $record['startedAt'] : $record['at'];
                         $this->startedAt[$requestId] = $record['at'];
                     }
                     $recordsByRequest[$requestId][] = ['request' => $requestId] + $record;

@@ -45,6 +45,21 @@ final class TraceFollowerTest extends TestCase
         static::assertSame(range(31, 40), $this->exits($follower->poll()));
     }
 
+    public function testTimesTheStepsFromTheStartOfTheRequest(): void
+    {
+        // The recorder starts the request before the store writes its record, which the store stamps later
+        $this->store->start('59f1b6a0c3d2e417', ['traceId' => str_repeat('b', 32), 'parentSpanId' => null, 'startedAt' => 1000.0]);
+        $this->store->describeFunction('59f1b6a0c3d2e417', ['fn' => 0, 'function' => 'App\\Shop->charge', 'file' => 0, 'line' => null, 'endLine' => null]);
+        $this->store->addStep('59f1b6a0c3d2e417', 0, 1, 1, 40_000);
+
+        $records = (new TraceFollower($this->store, new BlobStore($this->directory.'/blobs', $this->directory), '59f1b6a0c3d2e417'))->poll();
+
+        $request = array_values(array_filter($records, static fn (array $record): bool => 'request' === $record['type']))[0] ?? [];
+        $step = array_values(array_filter($records, static fn (array $record): bool => 'step' === $record['type']))[0] ?? [];
+        static::assertSame(1000.0, $request['at'] ?? null);
+        static::assertEqualsWithDelta(1000.04, $step['at'] ?? null, 0.000001);
+    }
+
     private function write(int $from, int $to): void
     {
         for ($depth = $from; $depth <= $to; $depth++) {

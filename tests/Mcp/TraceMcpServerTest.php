@@ -39,7 +39,7 @@ final class TraceMcpServerTest extends KernelTestCase
         ]);
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
-        static::assertSame(['domain_trace'], array_keys($tools));
+        static::assertSame(['domain_trace', 'domain_trace_events'], array_keys($tools));
         static::assertSame(['request', 'values'], array_keys($tools['domain_trace']['inputSchema']['properties'] ?? []), 'Calling the tool means that the caller wants the trace described with AI');
         $appUri = $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null;
         static::assertIsString($appUri);
@@ -131,18 +131,19 @@ final class TraceMcpServerTest extends KernelTestCase
         $server = static fn (): TraceMcpServer => new TraceMcpServer($store, $stream, new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'app'])), new TracePoller($store, $stream, $directory, 'test'), false);
         $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
         $store->end('aaaaaaaaaaaaaaaa', microtime(true));
-        $read = static fn (int $cursor): array => ['method' => 'resources/read', 'params' => ['uri' => TraceMcpServer::EVENTS_URI.'/current/'.$cursor]];
+        $read = ['method' => 'resources/read', 'params' => ['uri' => TraceMcpServer::EVENTS_URI]];
 
         try {
-            [$before] = $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], $read(0)]);
+            [$before] = $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], $read]);
             $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => []]]]);
-            // Claude Desktop lets an app read resources, but not call tools, and the CLI that runs the server may use another process
-            [$after] = $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], ['method' => 'resources/templates/list'], $read(0)]);
+            // Claude Desktop lets an app read the resources that a tool declares, but not call tools, and the CLI that runs the server may use another process
+            [$after] = $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], ['method' => 'tools/list'], $read]);
         } finally {
             (new Filesystem())->remove($directory);
         }
 
-        static::assertSame([TraceMcpServer::EVENTS_URI.'/{id}/{cursor}'], array_column($after[2]['result']['resourceTemplates'] ?? [], 'uriTemplate'));
+        $tools = array_column($after[2]['result']['tools'] ?? [], null, 'name');
+        static::assertSame(['resourceUri' => TraceMcpServer::EVENTS_URI, 'visibility' => ['app']], $tools['domain_trace_events']['_meta']['ui'] ?? null, 'Claude Desktop lets an app read only the resources that tools declare');
         static::assertSame(['id' => null], json_decode($before[2]['result']['contents'][0]['text'] ?? '', true), 'No tool call followed a trace yet');
         $trace = json_decode($after[3]['result']['contents'][0]['text'] ?? '', true);
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);

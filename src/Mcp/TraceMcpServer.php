@@ -9,12 +9,12 @@ use Mcp\Capability\Registry;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Extension\Apps\McpApps;
+use Mcp\Schema\Extension\Apps\ToolVisibility;
 use Mcp\Schema\Extension\Apps\UiToolMeta;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\Notification\ResourceListChangedNotification;
 use Mcp\Schema\Notification\ToolListChangedNotification;
 use Mcp\Schema\ResourceDefinition;
-use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ServerCapabilities;
 use Mcp\Schema\Tool;
@@ -77,13 +77,22 @@ final readonly class TraceMcpServer
             return $this->trace($request, $values);
         };
         $this->register($registry, $app, $tool);
-        // The app reads the events of a trace that the tool follows, or that the AI describes after the result of the
-        // tool. Claude Desktop lets an app read ui:// resources but not call tools, and another process of the server
-        // may answer, so "current", the trace that the last tool call follows, is in the trace store.
-        $registry->registerResourceTemplate(
-            new ResourceTemplate(self::EVENTS_URI.'/{id}/{cursor}', 'domain-trace-events', 'Domain trace events', 'The events of a trace, or of the trace that the last "domain_trace" call follows ("current"), after a cursor', 'application/json'),
-            fn (string $id, string $cursor): TextResourceContents => new TextResourceContents(self::EVENTS_URI.'/'.$id.'/'.$cursor, 'application/json', json_encode($this->events($id, $cursor), \JSON_THROW_ON_ERROR)),
+        // The app reads the events of the trace that the last tool call follows, while the tool runs and while the AI
+        // describes the trace after its result. Claude Desktop lets an app read only a ui:// resource that a tool
+        // declares, and not call tools, so an app-only tool declares the resource. Another process of the server may
+        // answer, so the trace that the tool follows is in the trace store.
+        $registry->registerResource(
+            new ResourceDefinition(self::EVENTS_URI, 'domain-trace-events', 'Domain trace events', 'The events of the trace that the last "domain_trace" call follows', 'application/json'),
+            fn (): TextResourceContents => new TextResourceContents(self::EVENTS_URI, 'application/json', json_encode($this->events(), \JSON_THROW_ON_ERROR)),
         );
+        $registry->registerTool(new Tool(
+            'domain_trace_events',
+            'Domain trace events',
+            ['type' => 'object', 'properties' => new \stdClass()],
+            'Gives the app the events of the trace that the last "domain_trace" call follows.',
+            null,
+            meta: ['ui' => new UiToolMeta(self::EVENTS_URI, [ToolVisibility::App])],
+        ), fn (): CallToolResult => new CallToolResult([new TextContent(json_encode($this->events(), \JSON_THROW_ON_ERROR))]));
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
         $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
@@ -148,11 +157,11 @@ final readonly class TraceMcpServer
     /**
      * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
      */
-    public function events(string $id = 'current', string $cursor = '0'): array
+    public function events(): array
     {
-        $id = 'current' === $id ? $this->store->followedByMcp() : ($this->store->has($id) ? $this->store->rootOf($id) : null);
+        $id = $this->store->followedByMcp();
 
-        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, $cursor);
+        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, '0');
     }
 
     private function register(Registry $registry, string $app, \Closure $tool): void

@@ -9,12 +9,12 @@ use Mcp\Capability\Registry;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Extension\Apps\McpApps;
-use Mcp\Schema\Extension\Apps\ToolVisibility;
 use Mcp\Schema\Extension\Apps\UiToolMeta;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\Notification\ResourceListChangedNotification;
 use Mcp\Schema\Notification\ToolListChangedNotification;
 use Mcp\Schema\ResourceDefinition;
+use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ServerCapabilities;
 use Mcp\Schema\Tool;
@@ -41,6 +41,7 @@ final readonly class TraceMcpServer
 {
     public const string APP_URI = 'ui://domain-tracing/trace';
     public const string META_KEY = 'valtzu/domain-tracing';
+    public const string EVENTS_URI = 'domain-tracing://events';
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
@@ -77,22 +78,12 @@ final readonly class TraceMcpServer
         };
         $this->register($registry, $app, $tool);
         // The app shows the trace while the tool follows it, because the host gives the app the result of the tool
-        // only at its end. The host calls this tool on another connection, so it finds the trace by itself.
-        $registry->registerTool(new Tool(
-            'domain_trace_events',
-            'Domain trace events',
-            [
-                'type' => 'object',
-                'properties' => [
-                    'request' => ['type' => 'string', 'description' => 'The "request" argument of the "domain_trace" call'],
-                    'since' => ['type' => 'number', 'description' => 'For "next": the Unix time after which the request started'],
-                    'cursor' => ['type' => 'string', 'description' => 'The cursor of the previous call, or "0"'],
-                ],
-            ],
-            'Gives the app the events of the trace that a "domain_trace" call follows, after a cursor.',
-            null,
-            meta: ['ui' => new UiToolMeta(visibility: [ToolVisibility::App])],
-        ), $this->events(...));
+        // only at its end. Claude Desktop lets an app read resources but not call tools, and another process of the
+        // server may answer, so the trace that the tool follows is in the trace store.
+        $registry->registerResourceTemplate(
+            new ResourceTemplate(self::EVENTS_URI.'/{cursor}', 'domain-trace-events', 'Domain trace events', 'The events of the trace that the last "domain_trace" call follows, after a cursor', 'application/json'),
+            fn (string $cursor): TextResourceContents => new TextResourceContents(self::EVENTS_URI.'/'.$cursor, 'application/json', json_encode($this->events($cursor), \JSON_THROW_ON_ERROR)),
+        );
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
         $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
@@ -118,6 +109,7 @@ final readonly class TraceMcpServer
         $wait = static function (): void {
             null === \Fiber::getCurrent() ? usleep(100_000) : \Fiber::suspend();
         };
+        $this->store->followByMcp(null);
         $id = $this->store->find($request, $stop, $wait);
         if (null === $id) {
             return new CallToolResult([new TextContent(match ($request) {
@@ -128,6 +120,7 @@ final readonly class TraceMcpServer
         }
 
         $id = $this->store->rootOf($id);
+        $this->store->followByMcp($id);
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
@@ -146,22 +139,14 @@ final readonly class TraceMcpServer
         );
     }
 
-    public function events(string $request = 'latest', ?float $since = null, string $cursor = '0'): CallToolResult
+    /**
+     * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
+     */
+    public function events(string $cursor = '0'): array
     {
-        $id = 'next' === $request ? $this->store->startedAfter($since ?? microtime(true))[0]['id'] ?? null : $this->store->find($request, static fn (): bool => true);
-        if (null !== $id) {
-            $id = $this->store->rootOf($id);
-        }
-        if (null === $id) {
-            return new CallToolResult([new TextContent('No trace yet.')], meta: [self::META_KEY => ['id' => null]]);
-        }
+        $id = $this->store->followedByMcp();
 
-        $events = $this->poller->events($id, $this->describes, $cursor);
-
-        return new CallToolResult(
-            [new TextContent(\sprintf('%d events.', \count($events['events'])))],
-            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes] + $events],
-        );
+        return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, $cursor);
     }
 
     private function register(Registry $registry, string $app, \Closure $tool): void
@@ -197,6 +182,7 @@ final readonly class TraceMcpServer
             'style' => (string) file_get_contents($public.'/trace.css'),
             'script' => (string) file_get_contents($public.'/trace.js'),
             'meta_key' => self::META_KEY,
+            'events_uri' => self::EVENTS_URI,
         ]);
     }
 }

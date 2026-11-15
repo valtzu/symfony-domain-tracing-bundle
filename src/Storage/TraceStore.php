@@ -278,6 +278,25 @@ final readonly class TraceStore
         return touch($path);
     }
 
+    /**
+     * Keeps the trace that the last MCP tool call follows, or null while it waits for one, for the other processes of
+     * the MCP server.
+     */
+    public function followByMcp(?string $rootId): void
+    {
+        $this->createDirectory();
+        $temporary = $this->directory.'/.mcp-followed.'.bin2hex(random_bytes(4));
+        file_put_contents($temporary, (string) $rootId);
+        rename($temporary, $this->directory.'/.mcp-followed');
+    }
+
+    public function followedByMcp(): ?string
+    {
+        $id = @file_get_contents($this->directory.'/.mcp-followed');
+
+        return \is_string($id) && self::isValidId($id) ? $id : null;
+    }
+
     public function clearNarration(string $rootId): void
     {
         @unlink($this->narrationPath($rootId));

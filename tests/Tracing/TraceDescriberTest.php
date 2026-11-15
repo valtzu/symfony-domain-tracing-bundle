@@ -70,4 +70,40 @@ final class TraceDescriberTest extends TestCase
         static::assertStringContainsString('called 5000 times in a loop', $prompt);
         static::assertTrue($store->isDescribed(self::ROOT));
     }
+
+    public function testDescribesAShortRequestInOneCallAlsoWhenItStartsBeforeTheRequestEnds(): void
+    {
+        $store = new TraceStore($this->directory.'/traces');
+        $store->start(self::ROOT, ['spanId' => self::ROOT, 'traceId' => str_repeat('a', 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/checkout']);
+        $store->describeFunction(self::ROOT, ['fn' => 0, 'function' => 'App\Checkout->place', 'file' => 0, 'line' => 1, 'endLine' => 3]);
+        $store->describeFunction(self::ROOT, ['fn' => 1, 'function' => 'App\Inventory->reserve', 'file' => 0, 'line' => 5, 'endLine' => 7]);
+        $store->addStep(self::ROOT, 0, 2, 1, 10);
+
+        $narrations = 0;
+        $execution = $this->createStub(ExecutionInterface::class);
+        $execution->method('getContent')->willReturnCallback(static fn () => new \ArrayIterator([]));
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturnCallback(static function (MessageBag $messages) use (&$narrations, $execution): ExecutionInterface {
+            if (str_starts_with((string) $messages->getUserMessage()?->asText(), 'Events so far')) {
+                $narrations++;
+            }
+
+            return $execution;
+        });
+
+        $describer = new TraceDescriber($store, new BlobStore($this->directory.'/blobs', $this->directory), new OperationNamer($agent, new ArrayAdapter()), new TraceNarrator($agent));
+        $description = $describer->describe(self::ROOT);
+        for ($poll = 0; $poll < 5; $poll++) {
+            $description->next();
+        }
+        $store->addStep(self::ROOT, 1, 6, 2, 20);
+        $store->addExit(self::ROOT, 2, 0.0);
+        $store->addExit(self::ROOT, 1, 0.0);
+        $store->end(self::ROOT, microtime(true), ['status' => 200]);
+        while ($description->valid()) {
+            $description->next();
+        }
+
+        static::assertSame(1, $narrations);
+    }
 }

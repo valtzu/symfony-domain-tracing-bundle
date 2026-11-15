@@ -18,11 +18,11 @@ use Valtzu\DomainTracingBundle\Storage\TraceStore;
 final readonly class TraceDescriber
 {
     /**
-     * The calls that arrive while the AI describes the previous ones are described together in the next call, so a
-     * trace gets at most one call of the AI at a time, and the number of calls grows with the time the AI takes, not
-     * with the number of calls in the trace.
+     * While the request runs, its calls are held until they fill a prompt or until they waited this long, so that a
+     * short request gets one call of the AI, and a long one is still described while it runs. The AI calls run one
+     * after another, so each extra call adds the time that the AI takes.
      */
-    private const float MIN_SECONDS_BETWEEN_CALLS = 0.02;
+    private const float MAX_SECONDS_TO_HOLD_STEPS = 2.0;
     /** The calls listed in one prompt; the others are counted, such as in a loop over many rows */
     private const int MAX_STEPS_PER_CALL = 200;
     /** The events of the previous calls that a prompt repeats */
@@ -69,7 +69,7 @@ final readonly class TraceDescriber
         $events = [];
         $pending = [];
         $lastActivity = $startedAt = microtime(true);
-        $lastCall = 0.0;
+        $heldSince = 0.0;
         $seenRecords = false;
         $describedAPart = false;
         $describedTheEnd = false;
@@ -80,6 +80,7 @@ final readonly class TraceDescriber
                 $seenRecords = true;
                 $builder->add($record);
                 if ('step' === $record['type'] && null !== $span = $builder->currentSpanOf($record['request'])) {
+                    $heldSince = [] === $pending ? microtime(true) : $heldSince;
                     $pending[] = ['span' => $span] + $record;
                 }
             }
@@ -87,8 +88,7 @@ final readonly class TraceDescriber
             $ended = $follower->hasEnded();
             $idle = microtime(true) - $lastActivity;
             // The last part tells how the request ended, even when it has no new calls
-            if ([] !== $pending && ($ended || microtime(true) - $lastCall >= self::MIN_SECONDS_BETWEEN_CALLS) || $ended && $describedAPart && !$describedTheEnd) {
-                $lastCall = microtime(true);
+            if ([] !== $pending && ($ended || \count($pending) >= self::MAX_STEPS_PER_CALL || microtime(true) - $heldSince >= self::MAX_SECONDS_TO_HOLD_STEPS) || $ended && $describedAPart && !$describedTheEnd) {
                 $describedAPart = true;
                 $describedTheEnd = $ended;
                 $names = $this->nameOperations($rootId, $builder, $names);

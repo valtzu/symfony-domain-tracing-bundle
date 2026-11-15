@@ -131,7 +131,7 @@ final class TraceMcpServerTest extends KernelTestCase
         $server = static fn (): TraceMcpServer => new TraceMcpServer($store, $stream, new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'app'])), new TracePoller($store, $stream, $directory, 'test'), false);
         $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
         $store->end('aaaaaaaaaaaaaaaa', microtime(true));
-        $read = static fn (int $cursor): array => ['method' => 'resources/read', 'params' => ['uri' => TraceMcpServer::EVENTS_URI.'/'.$cursor]];
+        $read = static fn (int $cursor): array => ['method' => 'resources/read', 'params' => ['uri' => TraceMcpServer::EVENTS_URI.'/current/'.$cursor]];
 
         try {
             [$before] = $this->serveWith($server(), [self::INITIALIZE, ['method' => 'notifications/initialized'], $read(0)]);
@@ -142,7 +142,7 @@ final class TraceMcpServerTest extends KernelTestCase
             (new Filesystem())->remove($directory);
         }
 
-        static::assertSame([TraceMcpServer::EVENTS_URI.'/{cursor}'], array_column($after[2]['result']['resourceTemplates'] ?? [], 'uriTemplate'));
+        static::assertSame([TraceMcpServer::EVENTS_URI.'/{id}/{cursor}'], array_column($after[2]['result']['resourceTemplates'] ?? [], 'uriTemplate'));
         static::assertSame(['id' => null], json_decode($before[2]['result']['contents'][0]['text'] ?? '', true), 'No tool call followed a trace yet');
         $trace = json_decode($after[3]['result']['contents'][0]['text'] ?? '', true);
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
@@ -175,6 +175,32 @@ final class TraceMcpServerTest extends KernelTestCase
         static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
         static::assertFalse($trace['describe'] ?? null);
         static::assertSame(['request', 'span', 'end', 'span', 'done'], array_column($trace['events'] ?? [], 0));
+    }
+
+    public function testGivesTheTraceBeforeTheAiDescribesIt(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader()), new TracePoller($store, $stream, $directory, 'test'), true);
+        $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
+        $store->end('aaaaaaaaaaaaaaaa', microtime(true));
+
+        try {
+            $result = $server->trace('latest');
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        static::assertInstanceOf(TextContent::class, $result->content[0]);
+        static::assertStringContainsString('GET /products [shop]', $result->content[0]->text);
+        static::assertStringContainsString('request "aaaaaaaaaaaaaaaa"', $result->content[0]->text, 'The model can wait for the description with another call');
+        $trace = $result->meta[TraceMcpServer::META_KEY] ?? [];
+        static::assertTrue($trace['describe'] ?? null);
+        static::assertFalse($trace['described'] ?? null, 'The app reads the events of the AI from the server after the result');
     }
 
     /**

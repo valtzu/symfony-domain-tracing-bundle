@@ -41,7 +41,7 @@ final readonly class TraceMcpServer
 {
     public const string APP_URI = 'ui://domain-tracing/trace';
     public const string META_KEY = 'valtzu/domain-tracing';
-    public const string EVENTS_URI = 'domain-tracing://events';
+    public const string EVENTS_URI = 'ui://domain-tracing/events';
     public function __construct(
         private TraceStore $store,
         private TraceStream $traces,
@@ -77,12 +77,12 @@ final readonly class TraceMcpServer
             return $this->trace($request, $values);
         };
         $this->register($registry, $app, $tool);
-        // The app shows the trace while the tool follows it, because the host gives the app the result of the tool
-        // only at its end. Claude Desktop lets an app read resources but not call tools, and another process of the
-        // server may answer, so the trace that the tool follows is in the trace store.
+        // The app reads the events of a trace that the tool follows, or that the AI describes after the result of the
+        // tool. Claude Desktop lets an app read ui:// resources but not call tools, and another process of the server
+        // may answer, so "current", the trace that the last tool call follows, is in the trace store.
         $registry->registerResourceTemplate(
-            new ResourceTemplate(self::EVENTS_URI.'/{cursor}', 'domain-trace-events', 'Domain trace events', 'The events of the trace that the last "domain_trace" call follows, after a cursor', 'application/json'),
-            fn (string $cursor): TextResourceContents => new TextResourceContents(self::EVENTS_URI.'/'.$cursor, 'application/json', json_encode($this->events($cursor), \JSON_THROW_ON_ERROR)),
+            new ResourceTemplate(self::EVENTS_URI.'/{id}/{cursor}', 'domain-trace-events', 'Domain trace events', 'The events of a trace, or of the trace that the last "domain_trace" call follows ("current"), after a cursor', 'application/json'),
+            fn (string $id, string $cursor): TextResourceContents => new TextResourceContents(self::EVENTS_URI.'/'.$id.'/'.$cursor, 'application/json', json_encode($this->events($id, $cursor), \JSON_THROW_ON_ERROR)),
         );
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
@@ -128,23 +128,29 @@ final readonly class TraceMcpServer
             // The AI calls would block the server, so another process makes them
             $this->poller->describeInBackground($id);
         }
-        foreach ($this->traces->follow($id, $this->describes, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
+        // The host shows the app only with the result, so the tool gives the trace as soon as it is recorded, and the
+        // app reads the events of the AI after it. For a request that the caller names, the tool waits for them.
+        $waitsForTheAi = $this->describes && ($this->store->isDescribed($id) || !\in_array($request, ['latest', 'next'], true));
+        foreach ($this->traces->follow($id, $waitsForTheAi, $stop, describeHere: false, wait: $wait) as [$event, $data]) {
             array_push($lines, ...$formatter->format($event, $data));
             $events[] = [$event, $data];
+        }
+        if ($this->describes && !$waitsForTheAi) {
+            $lines[] = \sprintf('The AI is describing what happened. To read it, call domain_trace with request "%s".', $id);
         }
 
         return new CallToolResult(
             [new TextContent(implode("\n", $lines))],
-            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'events' => $events]],
+            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'described' => $waitsForTheAi || !$this->describes, 'events' => $events]],
         );
     }
 
     /**
      * @return array{id: ?string, describe?: bool, events?: list<array{string, mixed}>, cursor?: string, done?: bool}
      */
-    public function events(string $cursor = '0'): array
+    public function events(string $id = 'current', string $cursor = '0'): array
     {
-        $id = $this->store->followedByMcp();
+        $id = 'current' === $id ? $this->store->followedByMcp() : ($this->store->has($id) ? $this->store->rootOf($id) : null);
 
         return null === $id ? ['id' => null] : ['id' => $id, 'describe' => $this->describes] + $this->poller->events($id, $this->describes, $cursor);
     }

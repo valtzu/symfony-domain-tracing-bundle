@@ -44,13 +44,13 @@ const follow = (trace, load) => {
 
 // The host gives the result of the tool only at its end, so meanwhile the app reads the events of the trace that the
 // tool follows from the server, as the live page does. Claude Desktop lets an app read resources, but not call tools.
-const events = async cursor => JSON.parse((await request('resources/read', { uri: `{{ events_uri }}/${cursor}` })).contents[0].text);
+const eventsOf = id => async cursor => JSON.parse((await request('resources/read', { uri: `{{ events_uri }}/${id}/${cursor}` })).contents[0].text);
 const followWhileTheToolRuns = async () => {
     while (!followed && !final) {
         try {
-            const trace = await events('0');
+            const trace = await eventsOf('current')('0');
             if (trace.id && !final) {
-                follow(trace, events);
+                follow(trace, eventsOf(trace.id));
             }
         } catch {
         }
@@ -69,10 +69,29 @@ window.addEventListener('message', ({ data }) => {
     } else if ('ui/notifications/tool-input' === data.method && 'next' === data.params?.arguments?.request && !followed) {
         panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
     } else if ('ui/notifications/tool-result' === data.method) {
-        // The result tells which trace the call followed, also when the app shows an earlier call
+        // The result tells which trace the call followed, also when the app shows an earlier call. The tool gives the
+        // trace before the AI describes it, so then the app reads the events of the AI from the server.
         final = true;
         const trace = data.params?._meta?.['{{ meta_key }}'];
-        follow(trace, async () => ({ events: trace.events, cursor: '', done: true }));
+        const recorded = async () => ({ events: trace.events, cursor: '', done: true });
+        if (trace?.described ?? true) {
+            follow(trace, recorded);
+        } else {
+            const events = eventsOf(trace.id);
+            let polled = false;
+            follow(trace, async cursor => {
+                try {
+                    const response = await events(cursor);
+                    polled = true;
+                    return response;
+                } catch (error) {
+                    if (polled) {
+                        throw error;
+                    }
+                    return recorded();
+                }
+            });
+        }
     }
 });
 

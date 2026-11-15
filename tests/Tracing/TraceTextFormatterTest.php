@@ -40,6 +40,25 @@ final class TraceTextFormatterTest extends TestCase
             TEXT, implode("\n", \array_slice($this->format(new TraceTextFormatter(values: true)), offset: 0, length: 7)));
     }
 
+    public function testWritesTheReturnValueOfTheActionOnceWhenTheRequestEnds(): void
+    {
+        $formatter = new TraceTextFormatter(values: true);
+        $builder = new SpanBuilder();
+        $lines = [];
+        foreach ([
+            ['request' => 'shop', 'type' => 'request', 'at' => 1.0, 'spanId' => 'aaaaaaaaaaaaaaaa', 'traceId' => str_repeat('a', times: 32), 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/'],
+            self::step('shop', 1.05, 'App\HomeController->show', 7),
+            ['request' => 'shop', 'type' => 'exit', 'depth' => 7, 'return' => 'Welcome', 'at' => 1.5],
+            ['request' => 'shop', 'type' => 'end', 'at' => 1.6],
+        ] as $record) {
+            foreach ($builder->add($record) as [$change, $span]) {
+                $lines = [...$lines, ...$formatter->format('span', ['change' => $change] + $span)];
+            }
+        }
+
+        static::assertSame(['            returned: "Welcome"'], array_values(preg_grep('/returned:/', $lines) ?: []));
+    }
+
     /**
      * @return list<string>
      */

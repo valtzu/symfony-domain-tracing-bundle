@@ -21,6 +21,9 @@ final class TraceTextFormatter
 
     /** @var array<array-key, true> spans whose arguments are printed */
     private array $arguments = [];
+
+    /** @var array<array-key, true> spans whose return value is printed */
+    private array $returnValues = [];
     private ?float $startedAt = null;
 
     public function __construct(
@@ -57,7 +60,9 @@ final class TraceTextFormatter
 
         $level = $this->levels[$span['id']] ?? 0;
         $lines = [];
-        if ($this->values && \array_key_exists('returnValue', $span)) {
+        // The span of a request closes when its action returns, and again when the request ends
+        if ($this->values && \array_key_exists('returnValue', $span) && !isset($this->returnValues[$span['id']])) {
+            $this->returnValues[$span['id']] = true;
             $lines[] = $this->line(null, $level + 1, 'returned: '.self::value($span['returnValue']));
         }
         if (isset($span['exception']) && \in_array($span['exception']['span'] ?? $span['id'], [$span['id'], null], strict: true)) {

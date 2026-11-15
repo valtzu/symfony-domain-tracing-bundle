@@ -26,17 +26,35 @@ const request = (method, params) => new Promise((resolve, reject) => {
     post({ id: lastId, method, params });
 });
 
+const panel = document.getElementById('domain-tracing');
+panel.className = 'trace-panel';
+panel.innerHTML = '<p class="trace-status"><span class="trace-spinner" role="status" aria-label="Loading"></span><span class="trace-status-text">Waiting for the trace…</span></p>';
+
 let followed = null;
-const follow = result => {
-    const trace = result?._meta?.['{{ meta_key }}'];
-    if (!trace?.id || trace.id === followed) {
+const follow = (trace, load) => {
+    if (!trace?.id || followed) {
         return;
     }
     followed = trace.id;
-    followTrace(trace.id, document.getElementById('domain-tracing'), {
-        describe: trace.describe,
-        load: async () => ({ events: trace.events, cursor: '', done: true }),
-    });
+    followTrace(trace.id, panel, { describe: trace.describe, load });
+};
+const traceOf = result => result?._meta?.['{{ meta_key }}'];
+
+// The host gives the result of the tool only at its end, so meanwhile the app reads the events of the trace from the
+// server, as the live page does
+const events = async cursor => traceOf(await request('tools/call', { name: 'domain_trace_events', arguments: { cursor } }));
+const followWhileTheToolRuns = async () => {
+    while (!followed) {
+        try {
+            const trace = await events('0');
+            if (trace?.id) {
+                follow(trace, events);
+            }
+        } catch {
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
 };
 
 window.addEventListener('message', ({ data }) => {
@@ -47,8 +65,11 @@ window.addEventListener('message', ({ data }) => {
         const { resolve, reject } = pending.get(data.id);
         pending.delete(data.id);
         data.error ? reject(data.error) : resolve(data.result);
+    } else if ('ui/notifications/tool-input' === data.method && 'next' === data.params?.arguments?.request) {
+        panel.querySelector('.trace-status-text').textContent = 'Waiting for the next request…';
     } else if ('ui/notifications/tool-result' === data.method) {
-        follow(data.params);
+        const trace = traceOf(data.params);
+        follow(trace, async () => ({ events: trace.events, cursor: '', done: true }));
     }
 });
 
@@ -61,13 +82,15 @@ new ResizeObserver(() => {
     }
 }).observe(document.body);
 
-try {
-    // The names of the fields changed while the extension was drafted, so the app sends both
-    const app = { name: 'domain-tracing', version: '1.0.0' };
-    await request('ui/initialize', { protocolVersion: '2026-01-26', appInfo: app, appCapabilities: {}, clientInfo: app, capabilities: {} });
-} catch {
-}
+// The names of the fields changed while the extension was drafted, so the app sends both. The app does not wait long
+// for the answer, because a host may answer only after the tool call.
+const app = { name: 'domain-tracing', version: '1.0.0' };
+await Promise.race([
+    request('ui/initialize', { protocolVersion: '2026-01-26', appInfo: app, appCapabilities: {}, clientInfo: app, capabilities: {} }).catch(() => {}),
+    new Promise(resolve => setTimeout(resolve, 1000)),
+]);
 post({ method: 'ui/notifications/initialized', params: {} });
+followWhileTheToolRuns();
 </script>
 </body>
 </html>

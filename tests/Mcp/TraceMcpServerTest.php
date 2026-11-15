@@ -39,7 +39,7 @@ final class TraceMcpServerTest extends KernelTestCase
         ]);
 
         $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
-        static::assertSame(['domain_trace'], array_keys($tools));
+        static::assertSame(['domain_trace', 'domain_trace_events'], array_keys($tools));
         static::assertSame(['request', 'values'], array_keys($tools['domain_trace']['inputSchema']['properties'] ?? []), 'Calling the tool means that the caller wants the trace described with AI');
         $appUri = $tools['domain_trace']['_meta']['ui']['resourceUri'] ?? null;
         static::assertIsString($appUri);
@@ -118,6 +118,40 @@ final class TraceMcpServerTest extends KernelTestCase
 
         static::assertSame([0, 3, 2], array_keys($responses), 'The host reads the app while the tool waits for the next request');
         static::assertSame('No request started.', $responses[2]['result']['content'][0]['text'] ?? null);
+    }
+
+    public function testGivesTheAppTheEventsOfTheTraceThatTheToolFollows(): void
+    {
+        $directory = sys_get_temp_dir().'/domain-tracing-'.bin2hex(random_bytes(4));
+        $store = new TraceStore($directory.'/traces');
+        $blobs = new BlobStore($directory.'/blobs', null);
+        $agent = $this->createStub(AgentInterface::class);
+        $namer = new OperationNamer($agent, new ArrayAdapter());
+        $stream = new TraceStream($store, $blobs, $namer, new TraceIngester($store, new XdebugValue(new SecretRedactor([])), new SecretRedactor([])), new TraceDescriber($store, $blobs, $namer, new TraceNarrator($agent)));
+        $server = new TraceMcpServer($store, $stream, new Environment(new ArrayLoader(['@DomainTracing/mcp_app.html.twig' => 'app'])), new TracePoller($store, $stream, $directory, 'test'), false);
+        $store->start('aaaaaaaaaaaaaaaa', ['traceId' => str_repeat('a', times: 32), 'spanId' => 'aaaaaaaaaaaaaaaa', 'parentSpanId' => null, 'service' => 'shop', 'method' => 'GET', 'uri' => '/products']);
+        $store->end('aaaaaaaaaaaaaaaa', microtime(true));
+
+        try {
+            [$responses] = $this->serveWith($server, [
+                self::INITIALIZE,
+                ['method' => 'notifications/initialized'],
+                ['method' => 'tools/list'],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => []]],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace', 'arguments' => []]],
+                ['method' => 'tools/call', 'params' => ['name' => 'domain_trace_events', 'arguments' => ['cursor' => '0']]],
+            ]);
+        } finally {
+            (new Filesystem())->remove($directory);
+        }
+
+        $tools = array_column($responses[2]['result']['tools'] ?? [], null, 'name');
+        static::assertSame(['app'], $tools['domain_trace_events']['_meta']['ui']['visibility'] ?? null, 'Only the app reads the events');
+        static::assertNull($responses[3]['result']['_meta'][TraceMcpServer::META_KEY]['id'] ?? null, 'The tool has not found the trace yet');
+        $trace = $responses[5]['result']['_meta'][TraceMcpServer::META_KEY] ?? [];
+        static::assertSame('aaaaaaaaaaaaaaaa', $trace['id'] ?? null);
+        static::assertSame(['request', 'span', 'end', 'span', 'done'], array_column($trace['events'] ?? [], 0));
+        static::assertTrue($trace['done'] ?? null);
     }
 
     public function testGivesTheTraceAsTextToTheModelAndItsEventsToTheApp(): void

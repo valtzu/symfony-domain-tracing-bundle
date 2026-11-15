@@ -9,6 +9,7 @@ use Mcp\Capability\Registry;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Extension\Apps\McpApps;
+use Mcp\Schema\Extension\Apps\ToolVisibility;
 use Mcp\Schema\Extension\Apps\UiToolMeta;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\Notification\ResourceListChangedNotification;
@@ -62,7 +63,8 @@ final readonly class TraceMcpServer
 
         $registry = new Registry();
         $app = $this->app();
-        $tool = function (ClientGateway $client, string $request = 'latest', bool $values = false) use ($registry, &$app, &$tool): CallToolResult {
+        $followed = null;
+        $tool = function (ClientGateway $client, string $request = 'latest', bool $values = false) use ($registry, &$app, &$tool, &$followed): CallToolResult {
             // The hosts keep the app of a tool until the server says that its tools changed
             $latest = $this->app();
             if ($latest !== $app) {
@@ -72,9 +74,24 @@ final readonly class TraceMcpServer
                 $client->notify(new ResourceListChangedNotification());
             }
 
-            return $this->trace($request, $values);
+            return $this->trace($request, $values, static function (string $id) use (&$followed): void {
+                $followed = $id;
+            });
         };
         $this->register($registry, $app, $tool);
+        // The app shows the trace while the tool follows it, because the host gives the app the result of the tool
+        // only at its end
+        $events = function (string $cursor = '0') use (&$followed): CallToolResult {
+            return $this->events($followed, $cursor);
+        };
+        $registry->registerTool(new Tool(
+            'domain_trace_events',
+            'Domain trace events',
+            ['type' => 'object', 'properties' => ['cursor' => ['type' => 'string', 'description' => 'The cursor of the previous call, or "0"']]],
+            'Gives the app the events of the trace that the "domain_trace" tool follows, after a cursor.',
+            null,
+            meta: ['ui' => new UiToolMeta(visibility: [ToolVisibility::App])],
+        ), $events);
 
         $serverInfo = new Implementation('domain-tracing', '1.0.0');
         $instructions = 'The traces of the requests of this Symfony application, in the terms of the business: what each request did, decided and why. Use them to find out what a request did, such as why it failed, instead of reading the code.';
@@ -91,7 +108,10 @@ final readonly class TraceMcpServer
             ->run(new StdioTransport($input, $output));
     }
 
-    public function trace(string $request = 'latest', bool $values = false): CallToolResult
+    /**
+     * @param ?\Closure(string): void $found gets the ID of the trace when the tool found it
+     */
+    public function trace(string $request = 'latest', bool $values = false, ?\Closure $found = null): CallToolResult
     {
         $startedAt = microtime(true);
         $stop = fn (): bool => microtime(true) - $startedAt >= $this->timeoutSeconds;
@@ -110,6 +130,9 @@ final readonly class TraceMcpServer
         }
 
         $id = $this->store->rootOf($id);
+        if (null !== $found) {
+            $found($id);
+        }
         $formatter = new TraceTextFormatter($values);
         $lines = [];
         $events = [];
@@ -125,6 +148,20 @@ final readonly class TraceMcpServer
         return new CallToolResult(
             [new TextContent(implode("\n", $lines))],
             meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes, 'events' => $events]],
+        );
+    }
+
+    public function events(?string $id, string $cursor = '0'): CallToolResult
+    {
+        if (null === $id) {
+            return new CallToolResult([new TextContent('No trace yet.')], meta: [self::META_KEY => ['id' => null]]);
+        }
+
+        $events = $this->poller->events($id, $this->describes, $cursor);
+
+        return new CallToolResult(
+            [new TextContent(\sprintf('%d events.', \count($events['events'])))],
+            meta: [self::META_KEY => ['id' => $id, 'describe' => $this->describes] + $events],
         );
     }
 

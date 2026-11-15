@@ -54,6 +54,13 @@ final class RequestContextTest extends TestCase
         $this->assertNotNull(RequestContext::fromServer(['REQUEST_URI' => '/_tracing_report']));
     }
 
+    public function testNeverRecordsTheReloadsOfFrankenPhpHotReload()
+    {
+        $this->assertNull(RequestContext::fromServer(['REQUEST_URI' => '/?frankenphp_hot_reloading=true&reload=1794747767101']));
+        $this->assertNull(RequestContext::fromServer(['REQUEST_URI' => '/cart?step=2&frankenphp_hot_reloading=true']));
+        $this->assertNotNull(RequestContext::fromServer(['REQUEST_URI' => '/?not_frankenphp_hot_reloading=true']));
+    }
+
     public function testRecordsAConsoleCommandOnlyWhenItIsProfiled()
     {
         $this->assertNull(RequestContext::fromServer(['argv' => ['bin/console', 'app:import'], 'SCRIPT_FILENAME' => '/srv/greetings/bin/console']));

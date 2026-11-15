@@ -13,7 +13,7 @@ final class RequestContext
      * its profile. Without OTEL_SERVICE_NAME, the service is named after the project directory, the parent of the
      * directory of the entry script (public/index.php or bin/console).
      *
-     * @return array{traceId: string, spanId: string, parentSpanId: string|null, service: string|null, method: string|null, uri: string|null}|null null for the requests that are never recorded
+     * @return array{traceId: string, spanId: string, parentSpanId: string|null, service: string|null, method: string|null, uri: string|null}|null null for the requests that are never recorded: the pages of the bundle and of the profiler, and the page reloads of the FrankenPHP hot reload
      */
     public static function fromServer(array $server): ?array
     {
@@ -21,7 +21,7 @@ final class RequestContext
         $method = $server['REQUEST_METHOD'] ?? null;
         /** @var string|null $uri */
         $uri = $server['REQUEST_URI'] ?? null;
-        if (null !== $uri && preg_match('{^/_(tracing|profiler|wdt)(/|\?|$)}', $uri)) {
+        if (null !== $uri && preg_match('{^/_(tracing|profiler|wdt)(/|\?|$)|[?&]frankenphp_hot_reloading=}', $uri)) {
             return null;
         }
         if (null === $method && \is_array($argv = $server['argv'] ?? null)) {

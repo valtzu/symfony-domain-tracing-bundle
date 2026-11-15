@@ -37,6 +37,28 @@ final class TraceNarratorTest extends TestCase
         $this->assertSame(['greet', 'request'], array_column($events, 'span'));
     }
 
+    public function testGivesTheLastEventBeforeTheAnswerEnds(): void
+    {
+        $answerEnded = false;
+        $execution = $this->createStub(ExecutionInterface::class);
+        $execution->method('getContent')->willReturn((static function () use (&$answerEnded) {
+            yield new TextDelta('{"outcome": true, "text": "Greeting page ');
+            yield new TextDelta('shown to Ada"}');
+            $answerEnded = true;
+        })());
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn($execution);
+
+        $first = null;
+        foreach ((new TraceNarrator($agent))->narrate(self::STEPS, self::SPANS, 'request', [], true) as $event) {
+            $first = $event;
+            break;
+        }
+
+        static::assertSame('Greeting page shown to Ada', $first['text'] ?? null);
+        static::assertFalse($answerEnded);
+    }
+
     public function testTellsHowTheRequestFailed(): void
     {
         $builder = new SpanBuilder();

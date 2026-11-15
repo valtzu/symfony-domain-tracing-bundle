@@ -74,6 +74,12 @@ final readonly class TraceNarrator
                 yield from $this->toEvent(substr($buffer, 0, $newline), $steps, $spans, $rootSpanId);
                 $buffer = substr($buffer, $newline + 1);
             }
+            // The last line has no newline after it, and the answer can end seconds after it, such as when the CLI of
+            // Claude Code summarizes the turn
+            if (str_ends_with(rtrim($buffer), '}') && \is_array(json_decode($buffer, true))) {
+                yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
+                $buffer = '';
+            }
         }
         yield from $this->toEvent($buffer, $steps, $spans, $rootSpanId);
     }

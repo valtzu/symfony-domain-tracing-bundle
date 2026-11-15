@@ -7,6 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <style>
     html { background: var(--trace-bg); }
+    html.trace-resizing { overflow-y: hidden; }
     body { margin: 0; }
     {{ style|raw }}
     .trace-panel { border: 0; border-radius: 0; }
@@ -117,12 +118,28 @@ window.addEventListener('message', ({ data }) => {
     }
 });
 
+const root = document.documentElement;
+let settling;
+const settle = () => {
+    clearTimeout(settling);
+    if (root.scrollHeight <= window.innerHeight) {
+        root.classList.remove('trace-resizing');
+    } else {
+        settling = setTimeout(() => root.classList.remove('trace-resizing'), 500);
+    }
+};
+window.addEventListener('resize', settle);
+
 let size = '';
 new ResizeObserver(() => {
-    const height = Math.ceil(document.documentElement.scrollHeight);
+    const height = Math.ceil(root.scrollHeight);
     if (String(height) !== size) {
         size = String(height);
         post({ method: 'ui/notifications/size-changed', params: { height } });
+        if (height > window.innerHeight) {
+            root.classList.add('trace-resizing');
+            settle();
+        }
     }
 }).observe(document.body);
 

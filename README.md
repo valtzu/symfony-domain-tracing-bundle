@@ -252,6 +252,9 @@ In the demo, both services write their traces into the same `traces` volume, mou
 - Secret redaction finds the values of secret-like environment variables and of the secrets vault, credentials in
   URLs, headers and query strings, values with secret-like names, and well-known or random-looking tokens. A secret
   without any of these, such as a short password in a variable named `$value`, goes to the AI.
+- Personal data (PII): the bundle expects no real data in the development environment, so it does not mask names,
+  email addresses or other personal data. A trace holds the values that the request used, and they go to the AI and
+  to the trace files as they are. Use fake data. Secret redaction is best-effort only.
 - Development only: recording makes requests about 4 times slower. Median of 50 requests in the dev environment of
   the demo, with the web profiler enabled and no page open that follows the traces, in six runs that alternate
   between the two settings:
